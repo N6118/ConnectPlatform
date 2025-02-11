@@ -96,9 +96,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-              Activity Feed
+              Your Activity
             </h2>
-            <p className="text-gray-500 mt-1">Stay updated with your network</p>
+            <p className="text-gray-500 mt-1">Keep your network updated </p>
           </div>
           <div className="flex items-center gap-6 flex-wrap">
             <div className="flex items-center gap-2">
