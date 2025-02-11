@@ -49,10 +49,10 @@ const FacultyDashboard = () => {
 
       <div className="w-1/4 pl-4">
         <div className="mb-6">
-          <CalendarView />
+          <ProjectTracker />
         </div>
         <div className="mb-6">
-          <ProjectTracker />
+          <CalendarView />
         </div>
       </div>
     </div>

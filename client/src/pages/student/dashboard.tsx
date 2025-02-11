@@ -1,11 +1,11 @@
-import React from 'react';
-import Carousel from '../../components/Carousel';
-import ActivityFeed from '../../components/ActivityFeed';
-import PerformanceOverview from '../../components/PerformanceOverview';
-import ProjectTracker from '../../components/ProjectTracker';
-import SkillDevelopment from '../../components/SkillDevelopment';
-import CalendarView from '../../components/CalendarView';
-import CreatePostButton from '../../components/CreatePostButton';
+import React from "react";
+import Carousel from "../../components/Carousel";
+import ActivityFeed from "../../components/ActivityFeed";
+import PerformanceOverview from "../../components/PerformanceOverview";
+import ProjectTracker from "../../components/ProjectTracker";
+import SkillDevelopment from "../../components/SkillDevelopment";
+import CalendarView from "../../components/CalendarView";
+import CreatePostButton from "../../components/CreatePostButton";
 
 export default function StudentDashboard() {
   return (
@@ -32,10 +32,10 @@ export default function StudentDashboard() {
       {/* Right Column: Calendar and Project Tracker */}
       <div className="w-1/4 space-y-4">
         <div>
-          <CalendarView />
+          <ProjectTracker />
         </div>
         <div>
-          <ProjectTracker />
+          <CalendarView />
         </div>
       </div>
     </div>
