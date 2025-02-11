@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Custom Calendar Styles */
+.react-calendar {
+  @apply w-full max-w-full bg-transparent border-none shadow-none font-sans;
+}
+
+.react-calendar__navigation {
+  @apply mb-4;
+}
+
+.react-calendar__navigation button {
+  @apply text-foreground min-w-[44px] bg-transparent hover:bg-accent/50 rounded-md transition-all duration-200;
+}
+
+.react-calendar__navigation button:disabled {
+  @apply bg-transparent opacity-50 cursor-not-allowed;
+}
+
+.react-calendar__month-view__weekdays {
+  @apply text-muted-foreground font-normal text-xs sm:text-sm mb-2;
+}
+
+.react-calendar__month-view__days__day {
+  @apply aspect-square rounded-md hover:bg-accent/50 transition-all duration-200 text-xs sm:text-sm;
+}
+
+.react-calendar__tile {
+  @apply text-foreground text-xs sm:text-sm font-medium p-1 sm:p-2 rounded-md hover:bg-accent/50 transition-all duration-200;
+}
+
+.react-calendar__tile--now {
+  @apply bg-primary/10 text-primary;
+}
+
+.react-calendar__tile--active {
+  @apply bg-primary text-primary-foreground;
+}
+
+.react-calendar__tile--hasActive {
+  @apply bg-primary text-primary-foreground;
+}
+
+/* Additional Mobile Responsive Styles */
+@media (max-width: 640px) {
+  .react-calendar__navigation__label {
+    font-size: 0.875rem;
+  }
+
+  .react-calendar__navigation button {
+    padding: 0.5rem;
+  }
+}
