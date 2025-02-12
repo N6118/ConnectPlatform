@@ -7,7 +7,7 @@ import ProjectModal from "@/components/ProjectModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-interface Project {
+export interface Project {
   title: string;
   description: string;
   tag: string;
@@ -19,6 +19,14 @@ interface Project {
   techStack: string;
   skills: string;
   maxTeamSize: string;
+  team?: { name: string; role: string }[];
+  tasks?: {
+    title: string;
+    assignedTo: string;
+    deadline: string;
+    status: "Pending" | "Completed";
+  }[];
+  progress?: number;
 }
 
 export default function MySpace() {
@@ -36,6 +44,19 @@ export default function MySpace() {
       techStack: "Python, TensorFlow",
       skills: "Machine Learning, Data Analysis",
       maxTeamSize: "4",
+      team: [
+        { name: "John Doe", role: "Team Lead" },
+        { name: "Jane Smith", role: "Developer" }
+      ],
+      tasks: [
+        {
+          title: "Setup Development Environment",
+          assignedTo: "John Doe",
+          deadline: "2024-03-30",
+          status: "Completed"
+        }
+      ],
+      progress: 60
     },
     {
       title: "Web Development",
@@ -49,19 +70,9 @@ export default function MySpace() {
       techStack: "React, Node.js",
       skills: "Frontend Development, API Integration",
       maxTeamSize: "3",
-    },
-    {
-      title: "Data Analysis",
-      description: "Analyzing student performance patterns",
-      tag: "Data",
-      status: "Completed",
-      level: "Difficult",
-      duration: "4 months",
-      mentor: "Dr. Brown",
-      prerequisites: "Statistics, Python",
-      techStack: "Python, Pandas, SQL",
-      skills: "Data Analysis, Visualization",
-      maxTeamSize: "2",
+      team: [],
+      tasks: [],
+      progress: 0
     },
   ]);
 
@@ -89,7 +100,12 @@ export default function MySpace() {
         ),
       );
     } else {
-      setProjects([...projects, projectData]);
+      setProjects([...projects, {
+        ...projectData,
+        team: [],
+        tasks: [],
+        progress: 0
+      }]);
     }
     setShowModal(false);
     setEditingProject(null);
