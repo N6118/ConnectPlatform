@@ -1,11 +1,28 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Filter, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/App";
 import ProjectCard from "@/components/ProjectCard";
 import ProjectModal from "@/components/ProjectModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export interface Project {
   title: string;
@@ -16,17 +33,18 @@ export interface Project {
   duration: string;
   mentor: string;
   prerequisites: string;
-  techStack: string;
+  techStack: string[];
   skills: string;
-  maxTeamSize: string;
-  team?: { name: string; role: string }[];
-  tasks?: {
+  maxTeamSize: number;
+  imageUrl?: string;
+  team: { name: string; role: string }[];
+  tasks: {
     title: string;
     assignedTo: string;
     deadline: string;
     status: "Pending" | "Completed";
   }[];
-  progress?: number;
+  progress: number;
 }
 
 export default function MySpace() {
@@ -41,9 +59,10 @@ export default function MySpace() {
       duration: "3 months",
       mentor: "Dr. Smith",
       prerequisites: "Basic ML knowledge",
-      techStack: "Python, TensorFlow",
+      techStack: ["Python", "TensorFlow"],
       skills: "Machine Learning, Data Analysis",
-      maxTeamSize: "4",
+      maxTeamSize: 4,
+      imageUrl: "/project-images/ai-research.jpg",
       team: [
         { name: "John Doe", role: "Team Lead" },
         { name: "Jane Smith", role: "Developer" }
@@ -67,9 +86,10 @@ export default function MySpace() {
       duration: "2 months",
       mentor: "Prof. Johnson",
       prerequisites: "HTML, CSS, JS",
-      techStack: "React, Node.js",
+      techStack: ["React", "Node.js"],
       skills: "Frontend Development, API Integration",
-      maxTeamSize: "3",
+      maxTeamSize: 3,
+      imageUrl: "/project-images/web-dev.jpg",
       team: [],
       tasks: [],
       progress: 0
@@ -77,8 +97,13 @@ export default function MySpace() {
   ]);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    show: boolean;
+    projectTitle: string;
+  }>({ show: false, projectTitle: "" });
 
   const handleEditProject = (projectTitle: string) => {
     const project = projects.find((p) => p.title === projectTitle);
@@ -88,32 +113,40 @@ export default function MySpace() {
     }
   };
 
-  const handleDeleteProject = (projectTitle: string) => {
-    setProjects(projects.filter((p) => p.title !== projectTitle));
+  const handleDeleteConfirmation = (projectTitle: string) => {
+    setDeleteConfirmation({ show: true, projectTitle });
+  };
+
+  const handleDeleteProject = () => {
+    setProjects(projects.filter((p) => p.title !== deleteConfirmation.projectTitle));
+    setDeleteConfirmation({ show: false, projectTitle: "" });
   };
 
   const handleSaveProject = (projectData: Project) => {
     if (editingProject) {
       setProjects(
         projects.map((p) =>
-          p.title === editingProject.title ? projectData : p,
-        ),
+          p.title === editingProject.title ? { ...projectData, team: p.team, tasks: p.tasks, progress: p.progress } : p
+        )
       );
     } else {
       setProjects([...projects, {
         ...projectData,
         team: [],
         tasks: [],
-        progress: 0
+        progress: 0,
+        imageUrl: "/project-images/default.jpg"
       }]);
     }
     setShowModal(false);
     setEditingProject(null);
   };
 
-  const filteredProjects = projects.filter((project) =>
-    project.title.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const filteredProjects = projects.filter((project) => {
+    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || project.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -140,6 +173,17 @@ export default function MySpace() {
                 size={20}
               />
             </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="Not Started">Not Started</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
             <Button
               onClick={() => setShowModal(true)}
               className="w-full md:w-auto"
@@ -156,7 +200,7 @@ export default function MySpace() {
               key={project.title}
               project={project}
               onEdit={() => handleEditProject(project.title)}
-              onDelete={() => handleDeleteProject(project.title)}
+              onDelete={() => handleDeleteConfirmation(project.title)}
             />
           ))}
         </div>
@@ -192,6 +236,29 @@ export default function MySpace() {
           onSave={handleSaveProject}
         />
       )}
+
+      <AlertDialog
+        open={deleteConfirmation.show}
+        onOpenChange={(open) =>
+          setDeleteConfirmation({ show: open, projectTitle: deleteConfirmation.projectTitle })
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the project
+              "{deleteConfirmation.projectTitle}" and remove all of its data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProject}>
+              Delete Project
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
