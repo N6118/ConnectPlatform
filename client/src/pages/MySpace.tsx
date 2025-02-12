@@ -65,17 +65,17 @@ export default function MySpace() {
       imageUrl: "/project-images/ai-research.jpg",
       team: [
         { name: "John Doe", role: "Team Lead" },
-        { name: "Jane Smith", role: "Developer" }
+        { name: "Jane Smith", role: "Developer" },
       ],
       tasks: [
         {
           title: "Setup Development Environment",
           assignedTo: "John Doe",
           deadline: "2024-03-30",
-          status: "Completed"
-        }
+          status: "Completed",
+        },
       ],
-      progress: 60
+      progress: 60,
     },
     {
       title: "Web Development",
@@ -92,7 +92,7 @@ export default function MySpace() {
       imageUrl: "/project-images/web-dev.jpg",
       team: [],
       tasks: [],
-      progress: 0
+      progress: 0,
     },
   ]);
 
@@ -118,7 +118,9 @@ export default function MySpace() {
   };
 
   const handleDeleteProject = () => {
-    setProjects(projects.filter((p) => p.title !== deleteConfirmation.projectTitle));
+    setProjects(
+      projects.filter((p) => p.title !== deleteConfirmation.projectTitle),
+    );
     setDeleteConfirmation({ show: false, projectTitle: "" });
   };
 
@@ -126,25 +128,38 @@ export default function MySpace() {
     if (editingProject) {
       setProjects(
         projects.map((p) =>
-          p.title === editingProject.title ? { ...projectData, team: p.team, tasks: p.tasks, progress: p.progress } : p
-        )
+          p.title === editingProject.title
+            ? {
+                ...projectData,
+                team: p.team,
+                tasks: p.tasks,
+                progress: p.progress,
+              }
+            : p,
+        ),
       );
     } else {
-      setProjects([...projects, {
-        ...projectData,
-        team: [],
-        tasks: [],
-        progress: 0,
-        imageUrl: "/project-images/default.jpg"
-      }]);
+      setProjects([
+        ...projects,
+        {
+          ...projectData,
+          team: [],
+          tasks: [],
+          progress: 0,
+          imageUrl: "/project-images/default.jpg",
+        },
+      ]);
     }
     setShowModal(false);
     setEditingProject(null);
   };
 
   const filteredProjects = projects.filter((project) => {
-    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || project.status === statusFilter;
+    const matchesSearch = project.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || project.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -236,19 +251,22 @@ export default function MySpace() {
           onSave={handleSaveProject}
         />
       )}
-
       <AlertDialog
         open={deleteConfirmation.show}
         onOpenChange={(open) =>
-          setDeleteConfirmation({ show: open, projectTitle: deleteConfirmation.projectTitle })
+          setDeleteConfirmation({
+            show: open,
+            projectTitle: deleteConfirmation.projectTitle,
+          })
         }
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the project
-              "{deleteConfirmation.projectTitle}" and remove all of its data.
+              This action cannot be undone. This will permanently delete the
+              project "{deleteConfirmation.projectTitle}" and remove all of its
+              data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

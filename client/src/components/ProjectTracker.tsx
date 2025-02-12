@@ -21,6 +21,22 @@ const projects: Project[] = [
   },
   {
     id: 2,
+    title: "Mobile App Development",
+    description: "Cross-platform mobile app for fitness tracking",
+    deadline: "2024-03-30",
+    status: "completed",
+    progress: 100,
+  },
+  {
+    id: 3,
+    title: "AI Integration",
+    description: "Machine learning integration for data analysis",
+    deadline: "2024-05-01",
+    status: "dropped",
+    progress: 30,
+  },
+  {
+    id: 4,
     title: "Dashboard Redesign",
     description: "Modernizing the analytics dashboard UI",
     deadline: "2024-04-20",
@@ -28,7 +44,7 @@ const projects: Project[] = [
     progress: 45,
   },
   {
-    id: 3,
+    id: 5,
     title: "New AI Model",
     description: "Developing an AI model for predictive analysis",
     deadline: "2024-06-10",
@@ -38,7 +54,9 @@ const projects: Project[] = [
 ];
 
 const ProjectOverview: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"ongoing" | "completed" | "dropped">("ongoing");
+  const [activeTab, setActiveTab] = useState<
+    "ongoing" | "completed" | "dropped"
+  >("ongoing");
   const [showAll, setShowAll] = useState(false);
 
   const getStatusColor = (status: string) => {
@@ -83,112 +101,119 @@ const ProjectOverview: React.FC = () => {
     return diffDays >= 0 ? `${diffDays} days left` : "Deadline passed";
   };
 
-  const filteredProjects = projects.filter((project) => project.status === activeTab);
-  const visibleProjects = showAll ? filteredProjects : filteredProjects.slice(0, 3);
+  const filteredProjects = projects.filter(
+    (project) => project.status === activeTab,
+  );
+  const visibleProjects = showAll
+    ? filteredProjects
+    : filteredProjects.slice(0, 3);
 
   return (
-    <div className="h-full flex flex-col">
-      <h2 className="text-xl font-semibold mb-4">Project Overview</h2>
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        Project Overview
+      </h1>
 
       {/* Tabs Section */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex space-x-6 border-b mb-6">
         {["ongoing", "completed", "dropped"].map((tab) => (
           <button
             key={tab}
             onClick={() => {
               setActiveTab(tab as "ongoing" | "completed" | "dropped");
-              setShowAll(false);
+              setShowAll(false); // Reset view when switching tabs
             }}
-            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
+            className={`py-2 px-4 font-medium border-b-2 transition-colors duration-200 ${
               activeTab === tab
-                ? "bg-blue-100 text-blue-700"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-600 hover:text-gray-800"
             }`}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)} ({projects.filter((p) => p.status === tab).length})
+            {tab.charAt(0).toUpperCase() + tab.slice(1)} (
+            {projects.filter((p) => p.status === tab).length})
           </button>
         ))}
       </div>
 
       {/* Project Cards */}
-      <div className="flex-1 overflow-auto">
-        <div className="space-y-3">
-          {visibleProjects.map((project) => (
-            <div
-              key={project.id}
-              className={`rounded-lg border p-4 transition-all duration-300 hover:shadow-lg ${getStatusColor(
-                project.status
-              )}`}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900">
-                    {project.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {project.description}
-                  </p>
-                </div>
-                {getStatusIcon(project.status)}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {visibleProjects.map((project) => (
+          <div
+            key={project.id}
+            className={`rounded-lg border p-6 transition-all duration-300 hover:shadow-lg ${getStatusColor(project.status)}`}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {project.title}
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  {project.description}
+                </p>
               </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">
-                    Deadline: {formatDate(project.deadline)}
-                  </span>
-                </div>
-
-                {project.status === "ongoing" && (
-                  <>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-500 rounded-full h-2 transition-all duration-300"
-                        style={{ width: `${project.progress}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">
-                        {project.progress}% Complete
-                      </span>
-                      <span className="text-blue-600 font-medium">
-                        {getDaysRemaining(project.deadline)}
-                      </span>
-                    </div>
-                  </>
-                )}
-                {project.status === "completed" && (
-                  <span className="inline-flex items-center text-sm text-green-600">
-                    <CheckCircle2 className="w-4 h-4 mr-1" />
-                    Completed
-                  </span>
-                )}
-                {project.status === "dropped" && (
-                  <span className="inline-flex items-center text-sm text-red-600">
-                    <AlertCircle className="w-4 h-4 mr-1" />
-                    Dropped
-                  </span>
-                )}
-              </div>
+              {getStatusIcon(project.status)}
             </div>
-          ))}
-        </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-gray-500" />
+                <span className="text-sm text-gray-600">
+                  Deadline: {formatDate(project.deadline)}
+                </span>
+              </div>
+
+              {project.status === "ongoing" && (
+                <>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-500 rounded-full h-2 transition-all duration-300"
+                      style={{ width: `${project.progress}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">
+                      {project.progress}% Complete
+                    </span>
+                    <span className="text-blue-600 font-medium">
+                      {getDaysRemaining(project.deadline)}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {project.status === "completed" && (
+                <span className="inline-flex items-center text-sm text-green-600">
+                  <CheckCircle2 className="w-4 h-4 mr-1" />
+                  Completed
+                </span>
+              )}
+
+              {project.status === "dropped" && (
+                <span className="inline-flex items-center text-sm text-red-600">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  Dropped
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* View More Button */}
       {filteredProjects.length > 3 && (
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="mt-4 w-full text-blue-600 font-medium py-2 px-4 rounded-lg border border-blue-500 hover:bg-blue-50 transition"
-        >
-          {showAll ? "View Less" : "View More"}
-        </button>
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="text-blue-600 font-medium border border-blue-500 rounded-lg px-4 py-2 hover:bg-blue-100 transition"
+          >
+            {showAll ? "View Less" : "View More"}
+          </button>
+        </div>
       )}
 
-      {/* Empty State */}
+      {/* Show a message if there are no projects in the selected tab */}
       {filteredProjects.length === 0 && (
-        <p className="text-gray-600 text-center py-4">
+        <p className="text-gray-600 text-center mt-6">
           No projects in this category.
         </p>
       )}

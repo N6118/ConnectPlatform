@@ -2,7 +2,12 @@ import { useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { FaPlus, FaClock, FaTimes } from "react-icons/fa";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +20,6 @@ interface Event {
 interface Events {
   [key: string]: Event[];
 }
-
 function CalendarView() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,7 +47,9 @@ function CalendarView() {
     const newEvent = { name: newReminder, time: "All Day" };
     setEvents((prevEvents) => ({
       ...prevEvents,
-      [dateKey]: prevEvents[dateKey] ? [...prevEvents[dateKey], newEvent] : [newEvent],
+      [dateKey]: prevEvents[dateKey]
+        ? [...prevEvents[dateKey], newEvent]
+        : [newEvent],
     }));
     setNewReminder("");
     setIsModalOpen(false);
@@ -56,7 +62,9 @@ function CalendarView() {
   const handleDeleteEvent = (dateKey: string, eventIndex: number) => {
     setEvents((prevEvents) => {
       const updatedEvents = { ...prevEvents };
-      updatedEvents[dateKey] = updatedEvents[dateKey].filter((_, index) => index !== eventIndex);
+      updatedEvents[dateKey] = updatedEvents[dateKey].filter(
+        (_, index) => index !== eventIndex,
+      );
       if (updatedEvents[dateKey].length === 0) {
         delete updatedEvents[dateKey];
       }
@@ -68,7 +76,8 @@ function CalendarView() {
     });
   };
 
-  const eventsForSelectedDate = events[selectedDate.toISOString().split("T")[0]] || [];
+  const eventsForSelectedDate =
+    events[selectedDate.toISOString().split("T")[0]] || [];
 
   return (
     <div className="h-full flex flex-col space-y-4">

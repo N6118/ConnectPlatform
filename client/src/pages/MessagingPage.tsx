@@ -8,7 +8,6 @@ import { Phone, Bell, MoreVertical } from "lucide-react";
 import type { Message, Chat } from "../types";
 import NewMessageModal from "../components/NewMessageModal";
 
-// Initial data (in a real app, this would come from an API)
 const initialChats: Chat[] = [
   {
     id: 1,
@@ -111,8 +110,8 @@ export default function MessagingPage() {
     const handleResize = () => {
       setIsMobileView(window.innerWidth < 768);
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Initialize WebSocket connection
@@ -341,7 +340,9 @@ export default function MessagingPage() {
   return (
     <div className="flex h-screen bg-gray-100 py-14 px-4 sm:px-10">
       {/* Chat List - Always visible on mobile */}
-      <div className={`${selectedChat && isMobileView ? 'hidden' : 'flex'} w-full sm:w-80 sm:flex`}>
+      <div
+        className={`${selectedChat && isMobileView ? "hidden" : "flex"} w-full sm:w-80 sm:flex`}
+      >
         <ChatList
           chats={chats}
           selectedChat={selectedChat}
@@ -353,7 +354,9 @@ export default function MessagingPage() {
       </div>
 
       {/* Chat Window */}
-      <div className={`${!selectedChat && isMobileView ? 'hidden' : 'flex'} flex-1 flex flex-col bg-white shadow-lg`}>
+      <div
+        className={`${!selectedChat && isMobileView ? "hidden" : "flex"} flex-1 flex flex-col bg-white shadow-lg`}
+      >
         {selectedChat ? (
           <>
             {/* Chat Header */}
@@ -363,8 +366,18 @@ export default function MessagingPage() {
                   onClick={() => setSelectedChat(null)}
                   className="mr-2 p-2 hover:bg-gray-100 rounded-full"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
                   </svg>
                 </button>
               )}
@@ -391,7 +404,9 @@ export default function MessagingPage() {
                 </button>
                 <button
                   className={`p-2 hover:bg-gray-100 rounded-full transition-colors ${
-                    selectedChatData?.isMuted ? "text-blue-500" : "text-gray-600"
+                    selectedChatData?.isMuted
+                      ? "text-blue-500"
+                      : "text-gray-600"
                   }`}
                 >
                   <Bell size={20} />
@@ -434,12 +449,16 @@ export default function MessagingPage() {
                     onPin={(messageId) => {
                       setMessages((prev) =>
                         prev.map((m) =>
-                          m.id === messageId ? { ...m, isPinned: !m.isPinned } : m,
+                          m.id === messageId
+                            ? { ...m, isPinned: !m.isPinned }
+                            : m,
                         ),
                       );
                     }}
                     onReply={(messageId) => {
-                      const replyToMessage = messages.find((m) => m.id === messageId);
+                      const replyToMessage = messages.find(
+                        (m) => m.id === messageId,
+                      );
                       if (replyToMessage) {
                         setInput(`Replying to: "${replyToMessage.text}"\n`);
                       }
@@ -481,8 +500,8 @@ export default function MessagingPage() {
                   Welcome to CONNECT Messages
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Start a conversation, create a group, or select an existing chat
-                  to begin messaging.
+                  Start a conversation, create a group, or select an existing
+                  chat to begin messaging.
                 </p>
                 <button
                   onClick={() => setShowCreateGroup(true)}

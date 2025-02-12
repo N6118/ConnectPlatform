@@ -103,6 +103,5 @@ export default function StudentDashboard() {
       </div>
     </div>
   );
-
   return isMobileView ? renderMobileView() : renderDesktopView();
 }
