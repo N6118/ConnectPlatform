@@ -21,22 +21,6 @@ const projects: Project[] = [
   },
   {
     id: 2,
-    title: "Mobile App Development",
-    description: "Cross-platform mobile app for fitness tracking",
-    deadline: "2024-03-30",
-    status: "completed",
-    progress: 100,
-  },
-  {
-    id: 3,
-    title: "AI Integration",
-    description: "Machine learning integration for data analysis",
-    deadline: "2024-05-01",
-    status: "dropped",
-    progress: 30,
-  },
-  {
-    id: 4,
     title: "Dashboard Redesign",
     description: "Modernizing the analytics dashboard UI",
     deadline: "2024-04-20",
@@ -44,7 +28,7 @@ const projects: Project[] = [
     progress: 45,
   },
   {
-    id: 5,
+    id: 3,
     title: "New AI Model",
     description: "Developing an AI model for predictive analysis",
     deadline: "2024-06-10",
@@ -103,11 +87,11 @@ const ProjectOverview: React.FC = () => {
   const visibleProjects = showAll ? filteredProjects : filteredProjects.slice(0, 3);
 
   return (
-    <div className="space-y-4 p-6 max-w-7xl mx-auto">
-      <h2 className="text-xl font-semibold">Project Overview</h2>
+    <div className="h-full flex flex-col">
+      <h2 className="text-xl font-semibold mb-4">Project Overview</h2>
 
       {/* Tabs Section */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-4">
         {["ongoing", "completed", "dropped"].map((tab) => (
           <button
             key={tab}
@@ -127,74 +111,76 @@ const ProjectOverview: React.FC = () => {
       </div>
 
       {/* Project Cards */}
-      <div className="grid grid-cols-1 gap-3">
-        {visibleProjects.map((project) => (
-          <div
-            key={project.id}
-            className={`rounded-lg border p-4 transition-all duration-300 hover:shadow-lg ${getStatusColor(
-              project.status
-            )}`}
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="text-base font-semibold text-gray-900">
-                  {project.title}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {project.description}
-                </p>
-              </div>
-              {getStatusIcon(project.status)}
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-600">
-                  Deadline: {formatDate(project.deadline)}
-                </span>
+      <div className="flex-1 overflow-auto">
+        <div className="space-y-3">
+          {visibleProjects.map((project) => (
+            <div
+              key={project.id}
+              className={`rounded-lg border p-4 transition-all duration-300 hover:shadow-lg ${getStatusColor(
+                project.status
+              )}`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900">
+                    {project.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {project.description}
+                  </p>
+                </div>
+                {getStatusIcon(project.status)}
               </div>
 
-              {project.status === "ongoing" && (
-                <>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-500 rounded-full h-2 transition-all duration-300"
-                      style={{ width: `${project.progress}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">
-                      {project.progress}% Complete
-                    </span>
-                    <span className="text-blue-600 font-medium">
-                      {getDaysRemaining(project.deadline)}
-                    </span>
-                  </div>
-                </>
-              )}
-              {project.status === "completed" && (
-                <span className="inline-flex items-center text-sm text-green-600">
-                  <CheckCircle2 className="w-4 h-4 mr-1" />
-                  Completed
-                </span>
-              )}
-              {project.status === "dropped" && (
-                <span className="inline-flex items-center text-sm text-red-600">
-                  <AlertCircle className="w-4 h-4 mr-1" />
-                  Dropped
-                </span>
-              )}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">
+                    Deadline: {formatDate(project.deadline)}
+                  </span>
+                </div>
+
+                {project.status === "ongoing" && (
+                  <>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-500 rounded-full h-2 transition-all duration-300"
+                        style={{ width: `${project.progress}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">
+                        {project.progress}% Complete
+                      </span>
+                      <span className="text-blue-600 font-medium">
+                        {getDaysRemaining(project.deadline)}
+                      </span>
+                    </div>
+                  </>
+                )}
+                {project.status === "completed" && (
+                  <span className="inline-flex items-center text-sm text-green-600">
+                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    Completed
+                  </span>
+                )}
+                {project.status === "dropped" && (
+                  <span className="inline-flex items-center text-sm text-red-600">
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    Dropped
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* View More Button */}
       {filteredProjects.length > 3 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="w-full text-blue-600 font-medium py-2 px-4 rounded-lg border border-blue-500 hover:bg-blue-50 transition"
+          className="mt-4 w-full text-blue-600 font-medium py-2 px-4 rounded-lg border border-blue-500 hover:bg-blue-50 transition"
         >
           {showAll ? "View Less" : "View More"}
         </button>

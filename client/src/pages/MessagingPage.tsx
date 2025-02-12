@@ -104,6 +104,16 @@ export default function MessagingPage() {
   const [showChatSettings, setShowChatSettings] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -329,25 +339,35 @@ export default function MessagingPage() {
   const selectedChatData = chats.find((chat) => chat.id === selectedChat);
 
   return (
-    <div className="flex h-screen bg-gray-100 py-14 px-10">
-      {/* Chat List */}
-      <ChatList
-        chats={chats}
-        selectedChat={selectedChat}
-        onSelectChat={setSelectedChat}
-        onCreateGroup={() => setShowCreateGroup(true)}
-        onMuteChat={handleMuteChat}
-        onArchiveChat={handleArchiveChat}
-        onDeleteChat={handleDeleteChat}
-        onCreateChat={handleCreateChat}
-      />
+    <div className="flex h-screen bg-gray-100 py-14 px-4 sm:px-10">
+      {/* Chat List - Always visible on mobile */}
+      <div className={`${selectedChat && isMobileView ? 'hidden' : 'flex'} w-full sm:w-80 sm:flex`}>
+        <ChatList
+          chats={chats}
+          selectedChat={selectedChat}
+          onSelectChat={(chatId) => {
+            setSelectedChat(chatId);
+          }}
+          onCreateChat={handleCreateChat}
+        />
+      </div>
 
       {/* Chat Window */}
-      <div className="flex-1 flex flex-col bg-white shadow-lg">
+      <div className={`${!selectedChat && isMobileView ? 'hidden' : 'flex'} flex-1 flex flex-col bg-white shadow-lg`}>
         {selectedChat ? (
           <>
             {/* Chat Header */}
             <div className="flex items-center justify-between p-4 border-b">
+              {isMobileView && (
+                <button
+                  onClick={() => setSelectedChat(null)}
+                  className="mr-2 p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
               <div className="flex items-center">
                 <img
                   src={selectedChatData?.avatar}
@@ -371,9 +391,7 @@ export default function MessagingPage() {
                 </button>
                 <button
                   className={`p-2 hover:bg-gray-100 rounded-full transition-colors ${
-                    selectedChatData?.isMuted
-                      ? "text-blue-500"
-                      : "text-gray-600"
+                    selectedChatData?.isMuted ? "text-blue-500" : "text-gray-600"
                   }`}
                 >
                   <Bell size={20} />
@@ -416,16 +434,12 @@ export default function MessagingPage() {
                     onPin={(messageId) => {
                       setMessages((prev) =>
                         prev.map((m) =>
-                          m.id === messageId
-                            ? { ...m, isPinned: !m.isPinned }
-                            : m,
+                          m.id === messageId ? { ...m, isPinned: !m.isPinned } : m,
                         ),
                       );
                     }}
                     onReply={(messageId) => {
-                      const replyToMessage = messages.find(
-                        (m) => m.id === messageId,
-                      );
+                      const replyToMessage = messages.find((m) => m.id === messageId);
                       if (replyToMessage) {
                         setInput(`Replying to: "${replyToMessage.text}"\n`);
                       }
@@ -460,27 +474,29 @@ export default function MessagingPage() {
             />
           </>
         ) : (
-          <div className="flex items-center justify-center flex-1 bg-gray-50">
-            <div className="text-center max-w-md p-8">
-              <h3 className="text-2xl font-semibold text-gray-800 mb-4">
-                Welcome to CONNECT Messages
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Start a conversation, create a group, or select an existing chat
-                to begin messaging.
-              </p>
-              <button
-                onClick={() => setShowCreateGroup(true)}
-                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                Create New Group
-              </button>
+          !isMobileView && (
+            <div className="flex items-center justify-center flex-1 bg-gray-50">
+              <div className="text-center max-w-md p-8">
+                <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+                  Welcome to CONNECT Messages
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Start a conversation, create a group, or select an existing chat
+                  to begin messaging.
+                </p>
+                <button
+                  onClick={() => setShowCreateGroup(true)}
+                  className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Create New Group
+                </button>
+              </div>
             </div>
-          </div>
+          )
         )}
       </div>
 
-      {/* Create Group Modal */}
+      {/* Modals */}
       {showCreateGroup && (
         <CreateGroup
           onClose={() => setShowCreateGroup(false)}
@@ -488,7 +504,6 @@ export default function MessagingPage() {
         />
       )}
 
-      {/* Chat Settings Modal */}
       {showChatSettings && selectedChatData && (
         <ChatSettings
           chat={selectedChatData}

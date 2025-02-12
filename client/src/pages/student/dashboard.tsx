@@ -21,15 +21,23 @@ export default function StudentDashboard() {
         setActiveComponent(null);
       }
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const components = [
-    { id: 'performance', title: 'Performance Overview', component: <PerformanceOverview /> },
-    { id: 'skills', title: 'Skill Development', component: <SkillDevelopment /> },
-    { id: 'projects', title: 'Project Tracker', component: <ProjectTracker /> },
-    { id: 'calendar', title: 'Calendar', component: <CalendarView /> },
+    {
+      id: "performance",
+      title: "Performance Overview",
+      component: <PerformanceOverview />,
+    },
+    {
+      id: "skills",
+      title: "Skill Development",
+      component: <SkillDevelopment />,
+    },
+    { id: "projects", title: "Project Tracker", component: <ProjectTracker /> },
+    { id: "calendar", title: "Calendar", component: <CalendarView /> },
   ];
 
   const renderMobileView = () => (
@@ -39,7 +47,9 @@ export default function StudentDashboard() {
           <Button
             key={comp.id}
             variant={activeComponent === comp.id ? "default" : "outline"}
-            onClick={() => setActiveComponent(activeComponent === comp.id ? null : comp.id)}
+            onClick={() =>
+              setActiveComponent(activeComponent === comp.id ? null : comp.id)
+            }
             className="flex-1"
           >
             {comp.title}
@@ -49,7 +59,7 @@ export default function StudentDashboard() {
 
       {activeComponent && (
         <div className="bg-card rounded-lg p-4 shadow-lg">
-          {components.find(c => c.id === activeComponent)?.component}
+          {components.find((c) => c.id === activeComponent)?.component}
         </div>
       )}
 
@@ -85,10 +95,10 @@ export default function StudentDashboard() {
       {/* Right Column: Calendar and Project Tracker */}
       <div className="w-full lg:w-1/4 space-y-4">
         <div className="bg-card rounded-lg p-4 shadow">
-          <ProjectTracker />
+          <CalendarView />
         </div>
         <div className="bg-card rounded-lg p-4 shadow">
-          <CalendarView />
+          <ProjectTracker />
         </div>
       </div>
     </div>
