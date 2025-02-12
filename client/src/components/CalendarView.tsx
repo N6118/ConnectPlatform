@@ -82,7 +82,7 @@ function CalendarView() {
   return (
     <div className="h-full flex flex-col space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Calendar</h2>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Calendar</h1>
         <Button
           onClick={() => setIsModalOpen(true)}
           className="rounded-full w-8 h-8 p-0"

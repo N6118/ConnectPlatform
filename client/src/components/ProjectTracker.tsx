@@ -51,6 +51,22 @@ const projects: Project[] = [
     status: "ongoing",
     progress: 25,
   },
+  {
+    id: 4,
+    title: "Dashboard Redesign",
+    description: "Modernizing the analytics dashboard UI",
+    deadline: "2024-04-20",
+    status: "ongoing",
+    progress: 45,
+  },
+  {
+    id: 5,
+    title: "New AI Model",
+    description: "Developing an AI model for predictive analysis",
+    deadline: "2024-06-10",
+    status: "ongoing",
+    progress: 25,
+  },
 ];
 
 const ProjectOverview: React.FC = () => {
@@ -136,7 +152,7 @@ const ProjectOverview: React.FC = () => {
       </div>
 
       {/* Project Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex flex-col space-y-4">
         {visibleProjects.map((project) => (
           <div
             key={project.id}
