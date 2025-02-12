@@ -70,7 +70,7 @@ export default function MySpace() {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   const handleEditProject = (projectTitle: string) => {
-    const project = projects.find(p => p.title === projectTitle);
+    const project = projects.find((p) => p.title === projectTitle);
     if (project) {
       setEditingProject(project);
       setShowModal(true);
@@ -78,14 +78,16 @@ export default function MySpace() {
   };
 
   const handleDeleteProject = (projectTitle: string) => {
-    setProjects(projects.filter(p => p.title !== projectTitle));
+    setProjects(projects.filter((p) => p.title !== projectTitle));
   };
 
   const handleSaveProject = (projectData: Project) => {
     if (editingProject) {
-      setProjects(projects.map(p =>
-        p.title === editingProject.title ? projectData : p
-      ));
+      setProjects(
+        projects.map((p) =>
+          p.title === editingProject.title ? projectData : p,
+        ),
+      );
     } else {
       setProjects([...projects, projectData]);
     }
@@ -93,8 +95,8 @@ export default function MySpace() {
     setEditingProject(null);
   };
 
-  const filteredProjects = projects.filter(project =>
-    project.title.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProjects = projects.filter((project) =>
+    project.title.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -105,7 +107,9 @@ export default function MySpace() {
         transition={{ duration: 0.5 }}
       >
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-4 md:mb-0">My Space</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-4 md:mb-0">
+            My Space
+          </h1>
           <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
             <div className="relative w-full md:w-64">
               <Input
@@ -115,9 +119,15 @@ export default function MySpace() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+                size={20}
+              />
             </div>
-            <Button onClick={() => setShowModal(true)} className="w-full md:w-auto">
+            <Button
+              onClick={() => setShowModal(true)}
+              className="w-full md:w-auto"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add Project
             </Button>
@@ -149,8 +159,9 @@ export default function MySpace() {
         <div className="bg-card p-6 rounded-lg shadow-sm mt-8 border">
           <h2 className="text-2xl font-semibold mb-4">Welcome, {user?.name}</h2>
           <p className="text-muted-foreground">
-            This is your personal space where you can manage your projects and activities.
-            Create, track, and collaborate on various academic and research initiatives.
+            This is your personal space where you can manage your projects and
+            activities. Create, track, and collaborate on various academic and
+            research initiatives.
           </p>
         </div>
       </motion.div>
