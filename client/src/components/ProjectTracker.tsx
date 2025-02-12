@@ -21,6 +21,22 @@ const projects: Project[] = [
   },
   {
     id: 2,
+    title: "Mobile App Development",
+    description: "Cross-platform mobile app for fitness tracking",
+    deadline: "2024-03-30",
+    status: "completed",
+    progress: 100,
+  },
+  {
+    id: 3,
+    title: "AI Integration",
+    description: "Machine learning integration for data analysis",
+    deadline: "2024-05-01",
+    status: "dropped",
+    progress: 30,
+  },
+  {
+    id: 4,
     title: "Dashboard Redesign",
     description: "Modernizing the analytics dashboard UI",
     deadline: "2024-04-20",
@@ -28,7 +44,7 @@ const projects: Project[] = [
     progress: 45,
   },
   {
-    id: 3,
+    id: 5,
     title: "New AI Model",
     description: "Developing an AI model for predictive analysis",
     deadline: "2024-06-10",
@@ -87,11 +103,11 @@ const ProjectOverview: React.FC = () => {
   const visibleProjects = showAll ? filteredProjects : filteredProjects.slice(0, 3);
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">Project Overview</h2>
+    <div className="space-y-4 p-6 max-w-7xl mx-auto">
+      <h2 className="text-xl font-semibold">Project Overview</h2>
 
       {/* Tabs Section */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex gap-2 mb-4">
         {["ongoing", "completed", "dropped"].map((tab) => (
           <button
             key={tab}
@@ -111,7 +127,7 @@ const ProjectOverview: React.FC = () => {
       </div>
 
       {/* Project Cards */}
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-3">
         {visibleProjects.map((project) => (
           <div
             key={project.id}

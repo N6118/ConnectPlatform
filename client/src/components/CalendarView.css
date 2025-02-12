@@ -38,10 +38,11 @@
 /* Custom Calendar Styles */
 .react-calendar {
   @apply w-full max-w-full bg-transparent border-none shadow-none font-sans;
+  height: auto !important;
 }
 
 .react-calendar__navigation {
-  @apply mb-4;
+  @apply mb-2;
 }
 
 .react-calendar__navigation button {
@@ -62,6 +63,7 @@
 
 .react-calendar__tile {
   @apply text-foreground text-xs sm:text-sm font-medium p-1 sm:p-2 rounded-md hover:bg-accent/50 transition-all duration-200;
+  height: auto !important;
 }
 
 .react-calendar__tile--now {
@@ -79,10 +81,14 @@
 /* Additional Mobile Responsive Styles */
 @media (max-width: 640px) {
   .react-calendar__navigation__label {
-    font-size: 0.875rem;
+    @apply text-sm;
   }
 
   .react-calendar__navigation button {
-    padding: 0.5rem;
+    @apply p-2;
+  }
+
+  .react-calendar__tile {
+    @apply p-1 text-xs;
   }
 }
