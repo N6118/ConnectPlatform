@@ -6,6 +6,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -46,8 +48,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface Club {
   id: number;
@@ -264,7 +271,11 @@ export default function ClubDetailView({
   const [showPostModal, setShowPostModal] = useState(false);
   const [showAchievementModal, setShowAchievementModal] = useState(false);
   const [showMemberModal, setShowMemberModal] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<ActivityPost | null>(null);
+  const [newPostContent, setNewPostContent] = useState("");
+  const [newPostImage, setNewPostImage] = useState<File | null>(null);
   const { toast } = useToast();
 
   const getMembershipStatusColor = (status: string) => {
@@ -287,31 +298,46 @@ export default function ClubDetailView({
   ];
 
   const handleDeletePost = (postId: string) => {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    setPostToDelete(postId);
+    setShowDeleteAlert(true);
+  };
 
-    setClub((prev) => ({
-      ...prev,
-      activityFeed: prev.activityFeed.filter((post) => post.id !== postId),
-    }));
-    toast({
-      title: "Post deleted",
-      description: "The post has been removed successfully.",
-    });
+  const confirmDelete = () => {
+    if (postToDelete) {
+      setClub((prev) => ({
+        ...prev,
+        activityFeed: prev.activityFeed.filter((post) => post.id !== postToDelete),
+      }));
+      toast({
+        title: "Post deleted",
+        description: "The post has been removed successfully.",
+      });
+      setShowDeleteAlert(false);
+      setPostToDelete(null);
+    }
   };
 
   const handleEditPost = (post: ActivityPost) => {
     setEditingPost(post);
+    setNewPostContent(post.content);
     setShowPostModal(true);
   };
 
-  const handleSavePost = (content: string, image?: File) => {
+  const handleSavePost = () => {
+    if (!newPostContent.trim()) return;
+
     if (editingPost) {
       setClub((prev) => ({
         ...prev,
         activityFeed: prev.activityFeed.map((post) =>
           post.id === editingPost.id
-            ? { ...post, content, timestamp: new Date().toISOString() }
-            : post,
+            ? {
+                ...post,
+                content: newPostContent,
+                timestamp: new Date().toISOString(),
+                images: newPostImage ? [URL.createObjectURL(newPostImage)] : post.images,
+              }
+            : post
         ),
       }));
       toast({
@@ -327,13 +353,14 @@ export default function ClubDetailView({
           role: "Member",
           avatar: "https://ui-avatars.com/api/?name=Current+User",
         },
-        content,
+        content: newPostContent,
         type: "announcement",
         timestamp: new Date().toISOString(),
         likes: 0,
         comments: 0,
         shares: 0,
         isEditable: true,
+        images: newPostImage ? [URL.createObjectURL(newPostImage)] : undefined,
       };
       setClub((prev) => ({
         ...prev,
@@ -346,6 +373,8 @@ export default function ClubDetailView({
     }
     setShowPostModal(false);
     setEditingPost(null);
+    setNewPostContent("");
+    setNewPostImage(null);
   };
 
   const handleAddAchievement = (name: string, description: string) => {
@@ -466,7 +495,12 @@ export default function ClubDetailView({
     <div className="space-y-6 mt-8">
       <div className="flex justify-between items-center">
         <h3 className="text-2xl font-semibold">Activity Feed</h3>
-        <Button onClick={() => setShowPostModal(true)} className="gap-2">
+        <Button onClick={() => {
+          setEditingPost(null);
+          setNewPostContent("");
+          setNewPostImage(null);
+          setShowPostModal(true);
+        }} className="gap-2">
           <Plus className="h-4 w-4" />
           Create Post
         </Button>
@@ -528,10 +562,7 @@ export default function ClubDetailView({
                 </div>
               )}
               {post.type && (
-                <Badge
-                  variant="secondary"
-                  className="capitalize"
-                >
+                <Badge variant="secondary" className="capitalize">
                   {post.type.replace('-', ' ')}
                 </Badge>
               )}
@@ -791,32 +822,46 @@ export default function ClubDetailView({
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={showPostModal}
-        onOpenChange={() => {
-          setShowPostModal(false);
-          setEditingPost(null);
-        }}
-      >
+      <Dialog open={showPostModal} onOpenChange={setShowPostModal}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
               {editingPost ? "Edit Post" : "Create New Post"}
             </DialogTitle>
+            <DialogDescription>
+              Share updates, announcements, or achievements with your club members
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <Textarea
               placeholder="What's on your mind?"
-              defaultValue={editingPost?.content}
+              value={newPostContent}
+              onChange={(e) => setNewPostContent(e.target.value)}
+              className="min-h-[100px]"
             />
-            <Input type="file" accept="image/*" />
-            <div className="flex justify-end">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Add Image (optional)</label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setNewPostImage(e.target.files?.[0] || null)}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
               <Button
+                variant="outline"
                 onClick={() => {
-                  handleSavePost(
-                    document.querySelector("textarea")?.value || "",
-                  );
+                  setShowPostModal(false);
+                  setEditingPost(null);
+                  setNewPostContent("");
+                  setNewPostImage(null);
                 }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSavePost} 
+                disabled={!newPostContent.trim()}
               >
                 {editingPost ? "Save Changes" : "Post"}
               </Button>
@@ -825,10 +870,24 @@ export default function ClubDetailView({
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={showAchievementModal}
-        onOpenChange={setShowAchievementModal}
-      >
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your post.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={showAchievementModal} onOpenChange={setShowAchievementModal}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Add New Achievement</DialogTitle>
