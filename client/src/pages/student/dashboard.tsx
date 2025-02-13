@@ -8,6 +8,7 @@ import CalendarView from "../../components/CalendarView";
 import CreatePostButton from "../../components/CreatePostButton";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import StudentNavbar from "@/components/navigation/StudentNavbar";
 
 export default function StudentDashboard() {
   const [activeComponent, setActiveComponent] = useState<string | null>(null);
@@ -72,36 +73,39 @@ export default function StudentDashboard() {
   );
 
   const renderDesktopView = () => (
-    <div className="min-h-screen p-4 flex flex-wrap lg:flex-nowrap gap-4">
-      {/* Left Column: Performance Overview and Skill Development */}
-      <div className="w-full lg:w-1/4 space-y-4">
-        <div className="bg-card rounded-lg p-4 shadow">
-          <PerformanceOverview />
+    <>
+      <StudentNavbar />
+      <div className="min-h-screen p-4 flex flex-wrap lg:flex-nowrap gap-4">
+        {/* Left Column: Performance Overview and Skill Development */}
+        <div className="w-full lg:w-1/4 space-y-4">
+          <div className="bg-card rounded-lg p-4 shadow">
+            <PerformanceOverview />
+          </div>
+          <div className="bg-card rounded-lg p-4 shadow">
+            <SkillDevelopment />
+          </div>
         </div>
-        <div className="bg-card rounded-lg p-4 shadow">
-          <SkillDevelopment />
-        </div>
-      </div>
 
-      {/* Center Column: Activity Feed */}
-      <div className="w-full lg:w-2/4 space-y-4">
-        <div>
-          <Carousel />
+        {/* Center Column: Activity Feed */}
+        <div className="w-full lg:w-2/4 space-y-4">
+          <div>
+            <Carousel />
+          </div>
+          <CreatePostButton />
+          <ActivityFeed />
         </div>
-        <CreatePostButton />
-        <ActivityFeed />
-      </div>
 
-      {/* Right Column: Calendar and Project Tracker */}
-      <div className="w-full lg:w-1/4 space-y-4">
-        <div className="bg-card rounded-lg p-4 shadow">
-          <CalendarView />
-        </div>
-        <div className="bg-card rounded-lg p-4 shadow">
-          <ProjectTracker />
+        {/* Right Column: Calendar and Project Tracker */}
+        <div className="w-full lg:w-1/4 space-y-4">
+          <div className="bg-card rounded-lg p-4 shadow">
+            <CalendarView />
+          </div>
+          <div className="bg-card rounded-lg p-4 shadow">
+            <ProjectTracker />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
   return isMobileView ? renderMobileView() : renderDesktopView();
 }

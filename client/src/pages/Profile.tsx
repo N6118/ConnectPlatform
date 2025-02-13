@@ -38,6 +38,7 @@ import {
 
 import ActivityFeed from "@/components/Profile-ActivityFeed";
 import { useToast } from "@/hooks/use-toast";
+import StudentNavbar from "@/components/navigation/StudentNavbar";
 
 interface ProfileFormData {
   about: string;
