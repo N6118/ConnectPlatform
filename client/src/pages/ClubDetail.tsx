@@ -7,13 +7,65 @@ import { ArrowLeft } from "lucide-react";
 const clubData = {
   id: 1,
   name: "Idea Club",
-  banner: "https://via.placeholder.com/1200x300",
-  logo: "https://via.placeholder.com/100",
+  banner: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80",
+  logo: "https://images.unsplash.com/photo-1633409361618-c73427e4e206?auto=format&fit=crop&q=80",
   description: "A club focused on AI and ML projects.",
-  currentActivities: ["AI Chatbot", "Image Recognition System"],
-  pastActivities: ["AI Research Paper", "ML Competition"],
-  achievements: ["Won AI Hackathon", "Best Research Paper Award"],
-  members: ["John Doe", "Jane Smith", "Alice Johnson"],
+  membershipStatus: "active",
+  memberCount: {
+    total: 128,
+    leaders: 4,
+    members: 124,
+  },
+  roles: [
+    { name: "President", member: "Alice Johnson" },
+    { name: "Vice President", member: "Bob Smith" },
+    { name: "Secretary", member: "Carol White" },
+    { name: "Tech Lead", member: "David Brown" },
+  ],
+  upcomingEvents: [
+    {
+      id: "1",
+      title: "AI Workshop Series",
+      description: "Learn about the latest developments in AI",
+      date: "2024-03-15",
+      type: "Workshop",
+      location: "Tech Lab 101"
+    }
+  ],
+  activityFeed: [
+    {
+      id: "1",
+      author: {
+        name: "John Doe",
+        role: "Club President",
+        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80"
+      },
+      content: "Excited to announce our upcoming AI Workshop!",
+      type: "announcement",
+      timestamp: new Date().toISOString(),
+      likes: 24,
+      comments: 5,
+      shares: 3
+    }
+  ],
+  achievements: [
+    {
+      id: "1",
+      name: "Best Innovation Award",
+      description: "First place in Regional Tech Competition",
+      date: new Date().toISOString(),
+      icon: "trophy"
+    }
+  ],
+  members: [
+    {
+      id: "1",
+      name: "John Doe",
+      role: "President",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
+      joinDate: "2024-01-01"
+    }
+  ]
 };
 
 export default function ClubDetail() {
@@ -32,7 +84,7 @@ export default function ClubDetail() {
           </Link>
         </Button>
       </div>
-      <ClubDetailView club={club} /> {/*Passing the club prop here*/}
+      <ClubDetailView club={club} />
     </div>
   );
 }

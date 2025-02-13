@@ -212,7 +212,11 @@ const initialClub: Club = {
   ],
 };
 
-export default function ClubDetailView({ club: initialClubData }: { club: Club }) {
+export default function ClubDetailView({
+  club: initialClubData,
+}: {
+  club: Club;
+}) {
   const [club, setClub] = useState<Club>(initialClubData || initialClub);
   const [activeSection, setActiveSection] = useState("Activities");
   const [showEventModal, setShowEventModal] = useState(false);
@@ -352,7 +356,7 @@ export default function ClubDetailView({ club: initialClubData }: { club: Club }
         </Button>
       </div>
       <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {club.upcomingEvents.map((event) => (
+        {club.upcomingEvents?.map((event) => (
           <Card
             key={event.id}
             className="hover:shadow-lg transition-all duration-300"
@@ -415,17 +419,24 @@ export default function ClubDetailView({ club: initialClubData }: { club: Club }
         </Button>
       </div>
       <div className="space-y-6">
-        {club.activityFeed.map((post) => (
+        {club.activityFeed?.map((post) => (
           <Card key={post.id} className="hover:shadow-lg transition-all">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
                   <Avatar>
-                    <AvatarImage src={post.author.avatar} alt={post.author.name} />
-                    <AvatarFallback>{post.author.name.slice(0, 2)}</AvatarFallback>
+                    <AvatarImage
+                      src={post.author.avatar}
+                      alt={post.author.name}
+                    />
+                    <AvatarFallback>
+                      {post.author.name.slice(0, 2)}
+                    </AvatarFallback>
                   </Avatar>
                   <div>
-                    <CardTitle className="text-lg">{post.author.name}</CardTitle>
+                    <CardTitle className="text-lg">
+                      {post.author.name}
+                    </CardTitle>
                     <CardDescription>{post.author.role}</CardDescription>
                   </div>
                 </div>
@@ -637,7 +648,7 @@ export default function ClubDetailView({ club: initialClubData }: { club: Club }
   return (
     <div className="min-h-screen bg-background antialiased">
       {/* Banner with logo and title */}
-      <div className="relative w-full h-[250px] sm:h-[300px] lg:h-[400px] mt-4">
+      <div className="relative w-full h-[250px] sm:h-[300px] lg:h-[400px] mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-8">
         <img
           src={club.banner}
           alt={club.name}
@@ -672,7 +683,7 @@ export default function ClubDetailView({ club: initialClubData }: { club: Club }
 
       {/* Navigation */}
       <div className="sticky top-0 bg-background/80 backdrop-blur-lg z-10 border-b">
-        <nav className="flex justify-center px-2 py-2 sm:py-3 container">
+        <nav className="flex justify-center px-2 py-2 sm:py-3 max-w-7xl mx-auto">
           <div className="flex gap-1 sm:gap-2 w-full sm:w-auto justify-between sm:justify-center">
             {sections.map(({ name, icon: Icon }) => (
               <Button
@@ -690,7 +701,7 @@ export default function ClubDetailView({ club: initialClubData }: { club: Club }
       </div>
 
       {/* Content section */}
-      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-card rounded-xl shadow-sm p-4 sm:p-6 lg:p-8">
           {renderSection()}
         </div>
