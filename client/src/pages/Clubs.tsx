@@ -18,7 +18,10 @@ import {
   Rocket,
   Code,
   Gamepad2,
+  Users,
+  Trophy,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const upcomingEvents = [
   {
@@ -77,6 +80,18 @@ const clubs = [
     achievements: 12,
     icon: Brain,
     joined: false,
+    membershipStatus: "active", // New field
+    memberCount: {
+      total: 128,
+      leaders: 4,
+      members: 124,
+    },
+    roles: [
+      { name: "President", member: "Alice Johnson" },
+      { name: "Vice President", member: "Bob Smith" },
+      { name: "Secretary", member: "Carol White" },
+      { name: "Tech Lead", member: "David Brown" },
+    ],
   },
   {
     id: 2,
@@ -90,6 +105,17 @@ const clubs = [
     achievements: 15,
     icon: Rocket,
     joined: false,
+    membershipStatus: "pending", // New field
+    memberCount: {
+      total: 95,
+      leaders: 3,
+      members: 92,
+    },
+    roles: [
+      { name: "President", member: "Eve Wilson" },
+      { name: "Vice President", member: "Frank Miller" },
+      { name: "Tech Lead", member: "Grace Davis" },
+    ],
   },
   {
     id: 3,
@@ -103,6 +129,19 @@ const clubs = [
     achievements: 18,
     icon: Code,
     joined: false,
+    membershipStatus: "active", // New field
+    memberCount: {
+      total: 156,
+      leaders: 5,
+      members: 151,
+    },
+    roles: [
+      { name: "President", member: "Henry Lee" },
+      { name: "Vice President", member: "Ivy Chen" },
+      { name: "Secretary", member: "Jack Wilson" },
+      { name: "Tech Lead", member: "Kelly Zhang" },
+      { name: "Event Coordinator", member: "Liam Murphy" },
+    ],
   },
   {
     id: 4,
@@ -116,6 +155,17 @@ const clubs = [
     achievements: 8,
     icon: Gamepad2,
     joined: false,
+    membershipStatus: "inactive", // New field
+    memberCount: {
+      total: 89,
+      leaders: 3,
+      members: 86,
+    },
+    roles: [
+      { name: "President", member: "Mike Thompson" },
+      { name: "Vice President", member: "Nina Patel" },
+      { name: "Event Coordinator", member: "Oscar Rodriguez" },
+    ],
   },
 ];
 
@@ -124,13 +174,33 @@ export default function Clubs() {
   const [showJoinedOnly, setShowJoinedOnly] = useState(false);
   const [sortBy, setSortBy] = useState("popular");
   const [clubsList, setClubsList] = useState(clubs);
+  const [selectedClub, setSelectedClub] = useState(null);
 
   const handleJoinToggle = (clubId: number) => {
     setClubsList((prevClubs) =>
       prevClubs.map((club) =>
-        club.id === clubId ? { ...club, joined: !club.joined } : club,
+        club.id === clubId
+          ? {
+              ...club,
+              joined: !club.joined,
+              membershipStatus: !club.joined ? "pending" : "inactive",
+            }
+          : club,
       ),
     );
+  };
+
+  const getMembershipStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-green-500/10 text-green-500";
+      case "pending":
+        return "bg-yellow-500/10 text-yellow-500";
+      case "inactive":
+        return "bg-gray-500/10 text-gray-500";
+      default:
+        return "bg-gray-500/10 text-gray-500";
+    }
   };
 
   const filteredClubs = clubsList
@@ -175,15 +245,27 @@ export default function Clubs() {
         {/* Clubs Section */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <h2 className="text-2xl font-bold text-foreground">
-              Clubs
-              {filteredClubs.length > 0 && (
-                <span className="ml-2 text-sm text-muted-foreground">
-                  ({filteredClubs.length}{" "}
-                  {filteredClubs.length === 1 ? "club" : "clubs"})
-                </span>
-              )}
-            </h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-2xl font-bold text-foreground">
+                Clubs
+                {filteredClubs.length > 0 && (
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    ({filteredClubs.length}{" "}
+                    {filteredClubs.length === 1 ? "club" : "clubs"})
+                  </span>
+                )}
+              </h2>
+              <div className="flex gap-2">
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {clubsList.reduce((acc, club) => acc + club.memberCount.total, 0)}
+                </Badge>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Trophy className="h-3 w-3" />
+                  {clubsList.reduce((acc, club) => acc + club.achievements, 0)}
+                </Badge>
+              </div>
+            </div>
 
             <div className="flex items-center gap-4 flex-wrap">
               <div className="relative flex-1 md:w-64">
@@ -204,9 +286,7 @@ export default function Clubs() {
                 <SelectContent>
                   <SelectItem value="popular">Most Popular</SelectItem>
                   <SelectItem value="rating">Highest Rated</SelectItem>
-                  <SelectItem value="achievements">
-                    Most Achievements
-                  </SelectItem>
+                  <SelectItem value="achievements">Most Achievements</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -240,11 +320,31 @@ export default function Clubs() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredClubs.map((club) => (
-                <ClubCard
-                  key={club.id}
-                  club={club}
-                  onJoinToggle={handleJoinToggle}
-                />
+                <div key={club.id} className="space-y-2">
+                  <ClubCard club={club} onJoinToggle={handleJoinToggle} />
+                  <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="outline"
+                        className={`${getMembershipStatusColor(
+                          club.membershipStatus,
+                        )}`}
+                      >
+                        {club.membershipStatus}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="flex items-center gap-1"
+                      >
+                        <Users className="h-3 w-3" />
+                        {club.memberCount.total}
+                      </Badge>
+                    </div>
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      Leaders: {club.memberCount.leaders}
+                    </Badge>
+                  </div>
+                </div>
               ))}
             </div>
           )}

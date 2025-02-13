@@ -49,6 +49,16 @@ interface Club {
   banner: string;
   logo: string;
   description: string;
+  membershipStatus: string;
+  memberCount: {
+    total: number;
+    leaders: number;
+    members: number;
+  };
+  roles: {
+    name: string;
+    member: string;
+  }[];
   upcomingEvents: Event[];
   activityFeed: ActivityPost[];
   achievements: Achievement[];
@@ -104,6 +114,17 @@ const initialClub: Club = {
     "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80",
   logo: "https://images.unsplash.com/photo-1633409361618-c73427e4e206?auto=format&fit=crop&q=80",
   description: "A community of tech enthusiasts building the future",
+  membershipStatus: "active",
+  memberCount: {
+    total: 128,
+    leaders: 4,
+    members: 124,
+  },
+  roles: [
+    { name: "President", member: "John Doe" },
+    { name: "Vice President", member: "Jane Smith" },
+    { name: "Secretary", member: "Alice Johnson" },
+  ],
   upcomingEvents: [
     {
       id: "1",
@@ -191,8 +212,8 @@ const initialClub: Club = {
   ],
 };
 
-export default function ClubDetailView() {
-  const [club, setClub] = useState<Club>(initialClub);
+export default function ClubDetailView({ club: initialClubData }: { club: Club }) {
+  const [club, setClub] = useState<Club>(initialClubData || initialClub);
   const [activeSection, setActiveSection] = useState("Activities");
   const [showEventModal, setShowEventModal] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
@@ -200,6 +221,19 @@ export default function ClubDetailView() {
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [editingPost, setEditingPost] = useState<ActivityPost | null>(null);
   const { toast } = useToast();
+
+  const getMembershipStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-green-500/10 text-green-500";
+      case "pending":
+        return "bg-yellow-500/10 text-yellow-500";
+      case "inactive":
+        return "bg-gray-500/10 text-gray-500";
+      default:
+        return "bg-gray-500/10 text-gray-500";
+    }
+  };
 
   const sections = [
     { name: "Activities", icon: CalendarDays },
@@ -497,13 +531,54 @@ export default function ClubDetailView() {
   const renderMembers = () => (
     <>
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-2xl font-semibold">Members</h3>
+        <div className="flex items-center gap-4">
+          <h3 className="text-2xl font-semibold">Members</h3>
+          <div className="flex gap-2">
+            <Badge variant="outline" className="flex items-center gap-1">
+              Total: {club.memberCount.total}
+            </Badge>
+            <Badge variant="outline" className="flex items-center gap-1">
+              Leaders: {club.memberCount.leaders}
+            </Badge>
+          </div>
+        </div>
         <Button onClick={() => setShowMemberModal(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Add Member
         </Button>
       </div>
+
       <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {/* Club Leadership Section */}
+        <Card className="col-span-full bg-muted/50">
+          <CardHeader>
+            <CardTitle className="text-xl">Club Leadership</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {club.roles.map((role, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-background"
+                >
+                  <Avatar>
+                    <AvatarImage
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        role.member,
+                      )}`}
+                    />
+                    <AvatarFallback>{role.member.slice(0, 2)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{role.member}</p>
+                    <p className="text-sm text-muted-foreground">{role.name}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         <AnimatePresence>
           {club.members.map((member) => (
             <motion.div
@@ -576,9 +651,17 @@ export default function ClubDetailView() {
               <AvatarFallback>{club.name.slice(0, 2)}</AvatarFallback>
             </Avatar>
             <div className="text-center sm:text-left">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
-                {club.name}
-              </h1>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
+                  {club.name}
+                </h1>
+                <Badge
+                  variant="outline"
+                  className={`${getMembershipStatusColor(club.membershipStatus)}`}
+                >
+                  {club.membershipStatus}
+                </Badge>
+              </div>
               <p className="text-sm sm:text-base text-white/90 max-w-2xl">
                 {club.description}
               </p>

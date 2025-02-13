@@ -1,8 +1,9 @@
 import * as React from "react"
 import { useLocation } from "wouter"
-import { LucideIcon } from "lucide-react"
+import { LucideIcon, Users } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 interface Club {
   id: number
@@ -14,6 +15,12 @@ interface Club {
   achievements: number
   icon: LucideIcon
   joined: boolean
+  membershipStatus: string
+  memberCount: {
+    total: number
+    leaders: number
+    members: number
+  }
 }
 
 interface ClubCardProps {
@@ -33,6 +40,19 @@ export function ClubCard({ club, onJoinToggle }: ClubCardProps) {
     setLocation(`/clubs/${club.id}`)
   }
 
+  const getMembershipStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-green-500/10 text-green-500"
+      case "pending":
+        return "bg-yellow-500/10 text-yellow-500"
+      case "inactive":
+        return "bg-gray-500/10 text-gray-500"
+      default:
+        return "bg-gray-500/10 text-gray-500"
+    }
+  }
+
   return (
     <Card 
       className="overflow-hidden transition-all hover:shadow-lg cursor-pointer h-full"
@@ -49,6 +69,12 @@ export function ClubCard({ club, onJoinToggle }: ClubCardProps) {
           <div className="absolute top-4 left-4 bg-white/90 dark:bg-gray-800/90 p-2 rounded-full">
             <Icon className="h-6 w-6" />
           </div>
+          <Badge
+            variant="outline"
+            className={`absolute top-4 right-4 ${getMembershipStatusColor(club.membershipStatus)}`}
+          >
+            {club.membershipStatus}
+          </Badge>
         </div>
       </CardHeader>
       <CardContent className="p-6">
@@ -61,7 +87,10 @@ export function ClubCard({ club, onJoinToggle }: ClubCardProps) {
           </div>
         </div>
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-          <span>{club.members.toLocaleString()} members</span>
+          <span className="flex items-center gap-1">
+            <Users className="h-4 w-4" />
+            {club.memberCount.total}
+          </span>
           <span>★ {club.rating.toFixed(1)}</span>
           <span>{club.achievements} achievements</span>
         </div>
