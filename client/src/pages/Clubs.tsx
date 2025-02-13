@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { EventCarousel } from "@/components/ui/event-carousel";
-import { ClubCard } from "@/components/ui/club-card";
+import { ClubCard } from "@/components/ui/club-card"; // Using the unified club-card from ui folder
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +22,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import type { Club } from "@/components/ui/club-card"; // Import the Club type
 
 const upcomingEvents = [
   {
@@ -67,7 +68,7 @@ const upcomingEvents = [
   },
 ];
 
-const clubs = [
+const clubs: Club[] = [
   {
     id: 1,
     name: "AI Club",
