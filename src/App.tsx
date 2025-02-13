@@ -10,6 +10,8 @@ import Profile from "@/pages/Profile";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
+import StudentClubDetail from "@/pages/student/clubdetails";
+import StudentProjectDetails from "@/pages/student/projectdetails";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -30,7 +32,9 @@ export default function App() {
                 <Switch>
                   <Route path="/student/myspace" component={MySpace} />
                   <Route path="/student/clubs" component={Clubs} />
+                  <Route path="/student/clubs/:id" component={StudentClubDetail} />
                   <Route path="/student/projects" component={Projects} />
+                  <Route path="/student/projects/:id" component={StudentProjectDetails} />
                   <Route path="/student/profile" component={Profile} />
                   <Route path="/student/:rest*" component={NotFound} />
                 </Switch>
