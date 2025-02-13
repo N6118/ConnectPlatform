@@ -80,7 +80,6 @@ const clubs = [
     achievements: 12,
     icon: Brain,
     joined: false,
-    membershipStatus: "active", // New field
     memberCount: {
       total: 128,
       leaders: 4,
@@ -105,7 +104,6 @@ const clubs = [
     achievements: 15,
     icon: Rocket,
     joined: false,
-    membershipStatus: "pending", // New field
     memberCount: {
       total: 95,
       leaders: 3,
@@ -129,7 +127,6 @@ const clubs = [
     achievements: 18,
     icon: Code,
     joined: false,
-    membershipStatus: "active", // New field
     memberCount: {
       total: 156,
       leaders: 5,
@@ -155,7 +152,6 @@ const clubs = [
     achievements: 8,
     icon: Gamepad2,
     joined: false,
-    membershipStatus: "inactive", // New field
     memberCount: {
       total: 89,
       leaders: 3,
@@ -174,7 +170,6 @@ export default function Clubs() {
   const [showJoinedOnly, setShowJoinedOnly] = useState(false);
   const [sortBy, setSortBy] = useState("popular");
   const [clubsList, setClubsList] = useState(clubs);
-  const [selectedClub, setSelectedClub] = useState(null);
 
   const handleJoinToggle = (clubId: number) => {
     setClubsList((prevClubs) =>
@@ -183,24 +178,10 @@ export default function Clubs() {
           ? {
               ...club,
               joined: !club.joined,
-              membershipStatus: !club.joined ? "pending" : "inactive",
             }
           : club,
       ),
     );
-  };
-
-  const getMembershipStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-500/10 text-green-500";
-      case "pending":
-        return "bg-yellow-500/10 text-yellow-500";
-      case "inactive":
-        return "bg-gray-500/10 text-gray-500";
-      default:
-        return "bg-gray-500/10 text-gray-500";
-    }
   };
 
   const filteredClubs = clubsList
@@ -320,31 +301,7 @@ export default function Clubs() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredClubs.map((club) => (
-                <div key={club.id} className="space-y-2">
-                  <ClubCard club={club} onJoinToggle={handleJoinToggle} />
-                  <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant="outline"
-                        className={`${getMembershipStatusColor(
-                          club.membershipStatus,
-                        )}`}
-                      >
-                        {club.membershipStatus}
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className="flex items-center gap-1"
-                      >
-                        <Users className="h-3 w-3" />
-                        {club.memberCount.total}
-                      </Badge>
-                    </div>
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      Leaders: {club.memberCount.leaders}
-                    </Badge>
-                  </div>
-                </div>
+                <ClubCard key={club.id} club={club} onJoinToggle={handleJoinToggle} />
               ))}
             </div>
           )}

@@ -49,7 +49,6 @@ interface Club {
   banner: string;
   logo: string;
   description: string;
-  membershipStatus: string;
   memberCount: {
     total: number;
     leaders: number;
@@ -114,7 +113,6 @@ const initialClub: Club = {
     "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80",
   logo: "https://images.unsplash.com/photo-1633409361618-c73427e4e206?auto=format&fit=crop&q=80",
   description: "A community of tech enthusiasts building the future",
-  membershipStatus: "active",
   memberCount: {
     total: 128,
     leaders: 4,
@@ -440,24 +438,26 @@ export default function ClubDetailView({
                     <CardDescription>{post.author.role}</CardDescription>
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEditPost(post)}
-                    className="h-8 w-8"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeletePost(post.id)}
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                {post.author.name === "John Doe" && (
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditPost(post)}
+                      className="h-8 w-8"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeletePost(post.id)}
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -560,35 +560,26 @@ export default function ClubDetailView({
       </div>
 
       <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {/* Club Leadership Section */}
-        <Card className="col-span-full bg-muted/50">
-          <CardHeader>
-            <CardTitle className="text-xl">Club Leadership</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {club.roles.map((role, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-background"
-                >
-                  <Avatar>
-                    <AvatarImage
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        role.member,
-                      )}`}
-                    />
-                    <AvatarFallback>{role.member.slice(0, 2)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">{role.member}</p>
-                    <p className="text-sm text-muted-foreground">{role.name}</p>
-                  </div>
+        {club.roles.map((role, index) => (
+          <Card key={index} className="bg-muted/50">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Avatar>
+                  <AvatarImage
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      role.member,
+                    )}`}
+                  />
+                  <AvatarFallback>{role.member.slice(0, 2)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium">{role.member}</p>
+                  <p className="text-sm text-muted-foreground">{role.name}</p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardHeader>
+          </Card>
+        ))}
 
         <AnimatePresence>
           {club.members.map((member) => (
@@ -647,7 +638,6 @@ export default function ClubDetailView({
 
   return (
     <div className="min-h-screen bg-background antialiased">
-      {/* Banner with logo and title */}
       <div className="relative w-full h-[250px] sm:h-[300px] lg:h-[400px] mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-8">
         <img
           src={club.banner}
@@ -662,17 +652,9 @@ export default function ClubDetailView({
               <AvatarFallback>{club.name.slice(0, 2)}</AvatarFallback>
             </Avatar>
             <div className="text-center sm:text-left">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
-                  {club.name}
-                </h1>
-                <Badge
-                  variant="outline"
-                  className={`${getMembershipStatusColor(club.membershipStatus)}`}
-                >
-                  {club.membershipStatus}
-                </Badge>
-              </div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+                {club.name}
+              </h1>
               <p className="text-sm sm:text-base text-white/90 max-w-2xl">
                 {club.description}
               </p>
@@ -681,7 +663,6 @@ export default function ClubDetailView({
         </div>
       </div>
 
-      {/* Navigation */}
       <div className="sticky top-0 bg-background/80 backdrop-blur-lg z-10 border-b">
         <nav className="flex justify-center px-2 py-2 sm:py-3 max-w-7xl mx-auto">
           <div className="flex gap-1 sm:gap-2 w-full sm:w-auto justify-between sm:justify-center">
@@ -700,14 +681,12 @@ export default function ClubDetailView({
         </nav>
       </div>
 
-      {/* Content section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-card rounded-xl shadow-sm p-4 sm:p-6 lg:p-8">
           {renderSection()}
         </div>
       </div>
 
-      {/* Modals with improved styling */}
       <Dialog open={showEventModal} onOpenChange={setShowEventModal}>
         <DialogContent className="sm:max-w-[425px] p-6">
           <DialogHeader className="space-y-3">
@@ -754,7 +733,6 @@ export default function ClubDetailView({
         </DialogContent>
       </Dialog>
 
-      {/* Create/Edit Post Modal */}
       <Dialog
         open={showPostModal}
         onOpenChange={() => {
@@ -789,7 +767,6 @@ export default function ClubDetailView({
         </DialogContent>
       </Dialog>
 
-      {/* Add Achievement Modal */}
       <Dialog
         open={showAchievementModal}
         onOpenChange={setShowAchievementModal}
@@ -817,7 +794,6 @@ export default function ClubDetailView({
         </DialogContent>
       </Dialog>
 
-      {/* Add Member Modal */}
       <Dialog open={showMemberModal} onOpenChange={setShowMemberModal}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
