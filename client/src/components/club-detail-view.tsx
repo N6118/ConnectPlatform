@@ -20,6 +20,7 @@ import {
   Calendar,
   Trash2,
   Edit2,
+  ExternalLink,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -77,6 +78,7 @@ interface Event {
 interface ActivityPost {
   id: string;
   author: {
+    id: string; // Added to check post ownership
     name: string;
     role: string;
     avatar: string;
@@ -88,6 +90,7 @@ interface ActivityPost {
   likes: number;
   comments: number;
   shares: number;
+  isEditable?: boolean; // Added to control edit rights
 }
 
 interface Achievement {
@@ -148,6 +151,7 @@ const initialClub: Club = {
     {
       id: "1",
       author: {
+        id: "1",
         name: "John Doe",
         role: "Club President",
         avatar:
@@ -160,10 +164,12 @@ const initialClub: Club = {
       likes: 24,
       comments: 5,
       shares: 3,
+      isEditable: true,
     },
     {
       id: "2",
       author: {
+        id: "2",
         name: "Jane Smith",
         role: "Event Coordinator",
         avatar:
@@ -179,6 +185,7 @@ const initialClub: Club = {
       likes: 45,
       comments: 8,
       shares: 12,
+      isEditable: true,
     },
   ],
   achievements: [
@@ -212,8 +219,10 @@ const initialClub: Club = {
 
 export default function ClubDetailView({
   club: initialClubData,
+  currentUserId = "1", // Added to track current user
 }: {
   club: Club;
+  currentUserId?: string;
 }) {
   const [club, setClub] = useState<Club>(initialClubData || initialClub);
   const [activeSection, setActiveSection] = useState("Activities");
@@ -244,6 +253,8 @@ export default function ClubDetailView({
   ];
 
   const handleDeletePost = (postId: string) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+
     setClub((prev) => ({
       ...prev,
       activityFeed: prev.activityFeed.filter((post) => post.id !== postId),
@@ -277,10 +288,10 @@ export default function ClubDetailView({
       const newPost: ActivityPost = {
         id: Math.random().toString(36).substr(2, 9),
         author: {
-          name: "John Doe",
-          role: "Club President",
-          avatar:
-            "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
+          id: currentUserId,
+          name: "Current User", // This would come from auth context in real app
+          role: "Member",
+          avatar: "https://ui-avatars.com/api/?name=Current+User",
         },
         content,
         type: "announcement",
@@ -288,6 +299,7 @@ export default function ClubDetailView({
         likes: 0,
         comments: 0,
         shares: 0,
+        isEditable: true,
       };
       setClub((prev) => ({
         ...prev,
@@ -340,6 +352,13 @@ export default function ClubDetailView({
     });
   };
 
+  const handleEventRegistration = (eventId: string) => {
+    toast({
+      title: "Registration successful",
+      description: "You have been registered for the event.",
+    });
+  };
+
   const renderUpcomingEvents = () => (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -384,20 +403,22 @@ export default function ClubDetailView({
                 <span>{event.location}</span>
               </div>
             </CardContent>
-            <CardFooter className="p-6 pt-3">
+            <CardFooter className="p-6 pt-3 flex gap-2">
+              <Button 
+                variant="default"
+                className="flex-1"
+                onClick={() => handleEventRegistration(event.id)}
+              >
+                Register
+              </Button>
               {event.registrationLink && (
                 <Button
                   variant="outline"
-                  className="w-full hover:bg-primary hover:text-primary-foreground transition-colors"
-                  asChild
+                  className="flex-1"
+                  onClick={() => window.open(event.registrationLink, '_blank')}
                 >
-                  <a
-                    href={event.registrationLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Register Now
-                  </a>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Details
                 </Button>
               )}
             </CardFooter>
@@ -438,7 +459,7 @@ export default function ClubDetailView({
                     <CardDescription>{post.author.role}</CardDescription>
                   </div>
                 </div>
-                {post.author.name === "John Doe" && (
+                {(post.isEditable || post.author.id === currentUserId) && (
                   <div className="flex gap-1">
                     <Button
                       variant="ghost"
