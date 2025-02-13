@@ -7,7 +7,8 @@ import { ArrowLeft } from "lucide-react";
 const clubData = {
   id: 1,
   name: "Idea Club",
-  banner: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80",
+  banner:
+    "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80",
   logo: "https://images.unsplash.com/photo-1633409361618-c73427e4e206?auto=format&fit=crop&q=80",
   description: "A club focused on AI and ML projects.",
   membershipStatus: "active",
@@ -16,12 +17,7 @@ const clubData = {
     leaders: 4,
     members: 124,
   },
-  roles: [
-    { name: "President", member: "Alice Johnson" },
-    { name: "Vice President", member: "Bob Smith" },
-    { name: "Secretary", member: "Carol White" },
-    { name: "Tech Lead", member: "David Brown" },
-  ],
+  roles: [],
   upcomingEvents: [
     {
       id: "1",
@@ -29,8 +25,8 @@ const clubData = {
       description: "Learn about the latest developments in AI",
       date: "2024-03-15",
       type: "Workshop",
-      location: "Tech Lab 101"
-    }
+      location: "Tech Lab 101",
+    },
   ],
   activityFeed: [
     {
@@ -38,15 +34,16 @@ const clubData = {
       author: {
         name: "John Doe",
         role: "Club President",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80"
+        avatar:
+          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
       },
       content: "Excited to announce our upcoming AI Workshop!",
       type: "announcement",
       timestamp: new Date().toISOString(),
       likes: 24,
       comments: 5,
-      shares: 3
-    }
+      shares: 3,
+    },
   ],
   achievements: [
     {
@@ -54,18 +51,19 @@ const clubData = {
       name: "Best Innovation Award",
       description: "First place in Regional Tech Competition",
       date: new Date().toISOString(),
-      icon: "trophy"
-    }
+      icon: "trophy",
+    },
   ],
   members: [
     {
       id: "1",
       name: "John Doe",
       role: "President",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
-      joinDate: "2024-01-01"
-    }
-  ]
+      avatar:
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
+      joinDate: "2024-01-01",
+    },
+  ],
 };
 
 export default function ClubDetail() {

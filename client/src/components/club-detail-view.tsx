@@ -21,6 +21,9 @@ import {
   Trash2,
   Edit2,
   ExternalLink,
+  MoreHorizontal,
+  Repeat2,
+  Heart,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -43,6 +46,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
+
 
 interface Club {
   id: number;
@@ -78,7 +83,7 @@ interface Event {
 interface ActivityPost {
   id: string;
   author: {
-    id: string; // Added to check post ownership
+    id: string;
     name: string;
     role: string;
     avatar: string;
@@ -90,7 +95,7 @@ interface ActivityPost {
   likes: number;
   comments: number;
   shares: number;
-  isEditable?: boolean; // Added to control edit rights
+  isEditable?: boolean;
 }
 
 interface Achievement {
@@ -121,11 +126,7 @@ const initialClub: Club = {
     leaders: 4,
     members: 124,
   },
-  roles: [
-    { name: "President", member: "John Doe" },
-    { name: "Vice President", member: "Jane Smith" },
-    { name: "Secretary", member: "Alice Johnson" },
-  ],
+  roles: [{ name: "President", member: "John Doe" }],
   upcomingEvents: [
     {
       id: "1",
@@ -187,6 +188,39 @@ const initialClub: Club = {
       shares: 12,
       isEditable: true,
     },
+    {
+      id: "3",
+      author: {
+        id: "3",
+        name: "Alice Johnson",
+        role: "Technical Lead",
+        avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80",
+      },
+      content: "Our club just won the 'Best Technical Innovation' award at the Inter-College Tech Summit 2024! 🏆 Proud of our amazing team's dedication and hard work. #TechInnovators #Achievement",
+      images: ["https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&q=80"],
+      type: "achievement",
+      timestamp: "2024-03-10T09:15:00Z",
+      likes: 78,
+      comments: 15,
+      shares: 25,
+      isEditable: true,
+    },
+    {
+      id: "4",
+      author: {
+        id: "4",
+        name: "David Chen",
+        role: "Project Manager",
+        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80",
+      },
+      content: "📢 Important Update: We're starting a new project series on Blockchain Development! If you're interested in learning about Web3 technologies, join us this Friday for the kickoff meeting. No prior experience needed! #blockchain #learning",
+      type: "announcement",
+      timestamp: "2024-03-05T16:45:00Z",
+      likes: 56,
+      comments: 12,
+      shares: 18,
+      isEditable: true,
+    },
   ],
   achievements: [
     {
@@ -219,7 +253,7 @@ const initialClub: Club = {
 
 export default function ClubDetailView({
   club: initialClubData,
-  currentUserId = "1", // Added to track current user
+  currentUserId = "1",
 }: {
   club: Club;
   currentUserId?: string;
@@ -289,7 +323,7 @@ export default function ClubDetailView({
         id: Math.random().toString(36).substr(2, 9),
         author: {
           id: currentUserId,
-          name: "Current User", // This would come from auth context in real app
+          name: "Current User",
           role: "Member",
           avatar: "https://ui-avatars.com/api/?name=Current+User",
         },
@@ -404,7 +438,7 @@ export default function ClubDetailView({
               </div>
             </CardContent>
             <CardFooter className="p-6 pt-3 flex gap-2">
-              <Button 
+              <Button
                 variant="default"
                 className="flex-1"
                 onClick={() => handleEventRegistration(event.id)}
@@ -415,7 +449,7 @@ export default function ClubDetailView({
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => window.open(event.registrationLink, '_blank')}
+                  onClick={() => window.open(event.registrationLink, "_blank")}
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Details
@@ -444,47 +478,42 @@ export default function ClubDetailView({
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
                   <Avatar>
-                    <AvatarImage
-                      src={post.author.avatar}
-                      alt={post.author.name}
-                    />
-                    <AvatarFallback>
-                      {post.author.name.slice(0, 2)}
-                    </AvatarFallback>
+                    <AvatarImage src={post.author.avatar} alt={post.author.name} />
+                    <AvatarFallback>{post.author.name.slice(0, 2)}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <CardTitle className="text-lg">
-                      {post.author.name}
-                    </CardTitle>
+                    <CardTitle className="text-lg">{post.author.name}</CardTitle>
                     <CardDescription>{post.author.role}</CardDescription>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {new Date(post.timestamp).toLocaleString()}
+                    </p>
                   </div>
                 </div>
                 {(post.isEditable || post.author.id === currentUserId) && (
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditPost(post)}
-                      className="h-8 w-8"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeletePost(post.id)}
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEditPost(post)}>
+                        <Edit2 className="h-4 w-4 mr-2" />
+                        Edit post
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDeletePost(post.id)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete post
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {new Date(post.timestamp).toLocaleString()}
-              </p>
               <p>{post.content}</p>
               {post.images && post.images.length > 0 && (
                 <div className="grid gap-4 grid-cols-1">
@@ -498,11 +527,19 @@ export default function ClubDetailView({
                   ))}
                 </div>
               )}
+              {post.type && (
+                <Badge
+                  variant="secondary"
+                  className="capitalize"
+                >
+                  {post.type.replace('-', ' ')}
+                </Badge>
+              )}
             </CardContent>
             <CardFooter className="flex justify-between text-sm text-muted-foreground pt-2">
               <div className="flex gap-6">
                 <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                  <ThumbsUp className="h-4 w-4" />
+                  <Heart className={`h-4 w-4 ${post.likes > 0 ? 'fill-current' : ''}`} />
                   {post.likes}
                 </button>
                 <button className="flex items-center gap-1 hover:text-primary transition-colors">
@@ -510,7 +547,7 @@ export default function ClubDetailView({
                   {post.comments}
                 </button>
                 <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                  <Share2 className="h-4 w-4" />
+                  <Repeat2 className="h-4 w-4" />
                   {post.shares}
                 </button>
               </div>
