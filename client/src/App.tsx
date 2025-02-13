@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, RouteComponentProps } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -12,18 +12,21 @@ import ResetPassword from "@/pages/reset-password";
 import AdminDashboard from "@/pages/admin/dashboard";
 import FacultyDashboard from "@/pages/faculty/dashboard";
 import StudentDashboard from "@/pages/student/dashboard";
-import Clubs from "@/pages/Clubs";
-import Navbar from "@/components/Navbar";
-import SearchResults from "@/pages/SearchResults";
-import React, { createContext, useContext, useState } from "react";
+import AdminNavbar from "@/components/navigation/AdminNavbar";
+import FacultyNavbar from "@/components/navigation/FacultyNavbar";
+import StudentNavbar from "@/components/navigation/StudentNavbar";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import type { User } from "@/lib/auth";
 import { useLocation } from "wouter";
+import Clubs from "@/pages/Clubs";
 import ClubDetail from "@/pages/ClubDetail";
 import MySpace from "@/pages/MySpace";
 import ProjectDetails from "@/pages/ProjectDetails";
 import Projects from "@/pages/Projects";
 import MessagingPage from "@/pages/MessagingPage";
 import MyProfile from "@/pages/Profile";
+import SearchResults from "@/pages/SearchResults";
+
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -87,10 +90,21 @@ function PrivateRoute({
   component: React.ComponentType;
   roles?: string[];
 }) {
+  const { isAuthenticated, userRole } = useAuth();
+  const [_, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+    } else if (roles && !roles.includes(userRole)) {
+      navigate("/unauthorized");
+    }
+  }, [isAuthenticated, userRole, roles, navigate]);
+
   return <Component />;
 }
 
-function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+function RoleBasedLayout({ children }: { children: React.ReactNode }) {
   const { userRole } = useAuth();
   const [location] = useLocation();
 
@@ -101,11 +115,20 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
     "/reset-password",
     "/",
   ];
-  const shouldShowNavbar = !hideNavbarPaths.includes(location);
+
+  if (hideNavbarPaths.includes(location)) {
+    return <>{children}</>;
+  }
+
+  const NavbarComponent = {
+    admin: AdminNavbar,
+    faculty: FacultyNavbar,
+    student: StudentNavbar,
+  }[userRole];
 
   return (
     <>
-      {shouldShowNavbar && <Navbar userRole={userRole} />}
+      {NavbarComponent && <NavbarComponent />}
       {children}
     </>
   );
@@ -113,18 +136,39 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
 
 function Router() {
   return (
-    <AuthenticatedLayout>
+    <RoleBasedLayout>
       <Switch>
-        <Route path="/" component={Landing as React.ComponentType} />
+        <Route path="/" component={Landing} />
         <Route path="/login" component={Login} />
         <Route path="/forgot-credentials" component={ForgotCredentials} />
         <Route path="/otp-verification" component={OTPVerification} />
         <Route path="/reset-password" component={ResetPassword} />
+
+        {/* Admin Routes */}
+        <Route 
+          path="/admin"
+          component={() => (
+            <PrivateRoute component={AdminDashboard} roles={["admin"]} />
+          )}
+        />
+
+        {/* Faculty Routes */}
+        <Route
+          path="/faculty"
+          component={() => (
+            <PrivateRoute component={FacultyDashboard} roles={["faculty"]} />
+          )}
+        />
+
+        {/* Student Routes */}
+        <Route
+          path="/student"
+          component={() => (
+            <PrivateRoute component={StudentDashboard} roles={["student"]} />
+          )}
+        />
         <Route path="/clubs" component={Clubs} />
         <Route path="/clubs/:id" component={ClubDetail} />
-        <Route path="/admin" component={AdminDashboard} />
-        <Route path="/faculty" component={FacultyDashboard} />
-        <Route path="/student" component={StudentDashboard} />
         <Route path="/my-space" component={MySpace} />
         <Route path="/project/:title" component={ProjectDetails} />
         <Route path="/projects" component={Projects} />
@@ -133,7 +177,7 @@ function Router() {
         <Route path="/profile" component={MyProfile} />
         <Route component={NotFound} />
       </Switch>
-    </AuthenticatedLayout>
+    </RoleBasedLayout>
   );
 }
 
