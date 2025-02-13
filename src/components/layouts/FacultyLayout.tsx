@@ -1,3 +1,4 @@
+import React from "react";
 import { FacultyNavbar } from "@/components/navigation/FacultyNavbar";
 
 export function FacultyLayout({ children }: { children: React.ReactNode }) {

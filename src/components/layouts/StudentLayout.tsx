@@ -1,3 +1,4 @@
+import React from "react";
 import { StudentNavbar } from "@/components/navigation/StudentNavbar";
 
 export function StudentLayout({ children }: { children: React.ReactNode }) {

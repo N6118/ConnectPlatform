@@ -1,3 +1,4 @@
+import React from "react";
 import { AdminNavbar } from "@/components/navigation/AdminNavbar";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {

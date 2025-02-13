@@ -1,6 +1,7 @@
-import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import React from "react"
+import { Link } from "wouter"
+import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 export function FacultyNavbar() {
   return (
@@ -24,5 +25,5 @@ export function FacultyNavbar() {
         <ThemeToggle />
       </div>
     </nav>
-  );
+  )
 }
