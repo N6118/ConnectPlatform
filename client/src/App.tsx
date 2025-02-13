@@ -9,24 +9,32 @@ import Login from "@/pages/login";
 import ForgotCredentials from "@/pages/forgot-credentials";
 import OTPVerification from "@/pages/otp-verification";
 import ResetPassword from "@/pages/reset-password";
+
+// Admin pages
 import AdminDashboard from "@/pages/admin/dashboard";
+import { default as AdminClubs } from "@/pages/admin/clubs";
+import { default as AdminProjects } from "@/pages/admin/projects";
+import { default as AdminProfile } from "@/pages/admin/profile";
+
+// Faculty pages
 import FacultyDashboard from "@/pages/faculty/dashboard";
+import { default as FacultyClubs } from "@/pages/faculty/clubs";
+import { default as FacultyProjects } from "@/pages/faculty/projects";
+import { default as FacultyProfile } from "@/pages/faculty/profile";
+import { default as FacultyMessaging } from "@/pages/faculty/messaging";
+
+// Student pages
 import StudentDashboard from "@/pages/student/dashboard";
-import AdminNavbar from "@/components/navigation/AdminNavbar";
-import FacultyNavbar from "@/components/navigation/FacultyNavbar";
-import StudentNavbar from "@/components/navigation/StudentNavbar";
+import { default as StudentClubs } from "@/pages/student/clubs";
+import { default as StudentProjects } from "@/pages/student/projects";
+import { default as StudentProfile } from "@/pages/student/profile";
+import { default as StudentMessaging } from "@/pages/student/messaging";
+import { default as StudentMySpace } from "@/pages/student/my-space";
+import { default as StudentProjectDetails } from "@/pages/student/project-details/[id]";
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { User } from "@/lib/auth";
 import { useLocation } from "wouter";
-import Clubs from "@/pages/Clubs";
-import ClubDetail from "@/pages/ClubDetail";
-import MySpace from "@/pages/MySpace";
-import ProjectDetails from "@/pages/ProjectDetails";
-import Projects from "@/pages/Projects";
-import MessagingPage from "@/pages/MessagingPage";
-import MyProfile from "@/pages/Profile";
-import SearchResults from "@/pages/SearchResults";
-
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -104,80 +112,42 @@ function PrivateRoute({
   return <Component />;
 }
 
-function RoleBasedLayout({ children }: { children: React.ReactNode }) {
-  const { userRole } = useAuth();
-  const [location] = useLocation();
-
-  const hideNavbarPaths = [
-    "/login",
-    "/forgot-credentials",
-    "/otp-verification",
-    "/reset-password",
-    "/",
-  ];
-
-  if (hideNavbarPaths.includes(location)) {
-    return <>{children}</>;
-  }
-
-  const NavbarComponent = {
-    admin: AdminNavbar,
-    faculty: FacultyNavbar,
-    student: StudentNavbar,
-  }[userRole];
-
-  return (
-    <>
-      {NavbarComponent && <NavbarComponent />}
-      {children}
-    </>
-  );
-}
 
 function Router() {
   return (
-    <RoleBasedLayout>
-      <Switch>
-        <Route path="/" component={Landing} />
-        <Route path="/login" component={Login} />
-        <Route path="/forgot-credentials" component={ForgotCredentials} />
-        <Route path="/otp-verification" component={OTPVerification} />
-        <Route path="/reset-password" component={ResetPassword} />
+    <Switch>
+      {/* Public routes */}
+      <Route path="/" component={Landing} />
+      <Route path="/login" component={Login} />
+      <Route path="/forgot-credentials" component={ForgotCredentials} />
+      <Route path="/otp-verification" component={OTPVerification} />
+      <Route path="/reset-password" component={ResetPassword} />
 
-        {/* Admin Routes */}
-        <Route 
-          path="/admin"
-          component={() => (
-            <PrivateRoute component={AdminDashboard} roles={["admin"]} />
-          )}
-        />
+      {/* Admin Routes */}
+      <Route path="/admin" component={() => <PrivateRoute component={AdminDashboard} roles={["admin"]} />} />
+      <Route path="/admin/clubs" component={() => <PrivateRoute component={AdminClubs} roles={["admin"]} />} />
+      <Route path="/admin/projects" component={() => <PrivateRoute component={AdminProjects} roles={["admin"]} />} />
+      <Route path="/admin/profile" component={() => <PrivateRoute component={AdminProfile} roles={["admin"]} />} />
 
-        {/* Faculty Routes */}
-        <Route
-          path="/faculty"
-          component={() => (
-            <PrivateRoute component={FacultyDashboard} roles={["faculty"]} />
-          )}
-        />
+      {/* Faculty Routes */}
+      <Route path="/faculty" component={() => <PrivateRoute component={FacultyDashboard} roles={["faculty"]} />} />
+      <Route path="/faculty/clubs" component={() => <PrivateRoute component={FacultyClubs} roles={["faculty"]} />} />
+      <Route path="/faculty/projects" component={() => <PrivateRoute component={FacultyProjects} roles={["faculty"]} />} />
+      <Route path="/faculty/profile" component={() => <PrivateRoute component={FacultyProfile} roles={["faculty"]} />} />
+      <Route path="/faculty/messaging" component={() => <PrivateRoute component={FacultyMessaging} roles={["faculty"]} />} />
 
-        {/* Student Routes */}
-        <Route
-          path="/student"
-          component={() => (
-            <PrivateRoute component={StudentDashboard} roles={["student"]} />
-          )}
-        />
-        <Route path="/clubs" component={Clubs} />
-        <Route path="/clubs/:id" component={ClubDetail} />
-        <Route path="/my-space" component={MySpace} />
-        <Route path="/project/:title" component={ProjectDetails} />
-        <Route path="/projects" component={Projects} />
-        <Route path="/messages" component={MessagingPage} />
-        <Route path="/search" component={SearchResults} />
-        <Route path="/profile" component={MyProfile} />
-        <Route component={NotFound} />
-      </Switch>
-    </RoleBasedLayout>
+      {/* Student Routes */}
+      <Route path="/student" component={() => <PrivateRoute component={StudentDashboard} roles={["student"]} />} />
+      <Route path="/student/clubs" component={() => <PrivateRoute component={StudentClubs} roles={["student"]} />} />
+      <Route path="/student/projects" component={() => <PrivateRoute component={StudentProjects} roles={["student"]} />} />
+      <Route path="/student/profile" component={() => <PrivateRoute component={StudentProfile} roles={["student"]} />} />
+      <Route path="/student/messaging" component={() => <PrivateRoute component={StudentMessaging} roles={["student"]} />} />
+      <Route path="/student/my-space" component={() => <PrivateRoute component={StudentMySpace} roles={["student"]} />} />
+      <Route path="/student/project/:id" component={() => <PrivateRoute component={StudentProjectDetails} roles={["student"]} />} />
+
+      {/* Fallback */}
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 
