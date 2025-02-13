@@ -230,15 +230,6 @@ export default function MySpace() {
             No projects found. Click "Add Project" to get started!
           </motion.div>
         )}
-
-        <div className="bg-card p-6 rounded-lg shadow-sm mt-8 border">
-          <h2 className="text-2xl font-semibold mb-4">Welcome, {user?.name}</h2>
-          <p className="text-muted-foreground">
-            This is your personal space where you can manage your projects and
-            activities. Create, track, and collaborate on various academic and
-            research initiatives.
-          </p>
-        </div>
       </motion.div>
 
       {showModal && (
