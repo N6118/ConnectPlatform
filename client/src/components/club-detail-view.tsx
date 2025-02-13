@@ -372,7 +372,7 @@ export default function ClubDetailView() {
   );
 
   const renderActivityFeed = () => (
-    <div className="space-y-4 mt-8">
+    <div className="space-y-6 mt-8">
       <div className="flex justify-between items-center">
         <h3 className="text-2xl font-semibold">Activity Feed</h3>
         <Button onClick={() => setShowPostModal(true)} className="gap-2">
@@ -380,29 +380,27 @@ export default function ClubDetailView() {
           Create Post
         </Button>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-6">
         {club.activityFeed.map((post) => (
           <Card key={post.id} className="hover:shadow-lg transition-all">
             <CardHeader>
-              <div className="flex items-center gap-4">
-                <Avatar>
-                  <AvatarImage
-                    src={post.author.avatar}
-                    alt={post.author.name}
-                  />
-                  <AvatarFallback>
-                    {post.author.name.slice(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{post.author.name}</CardTitle>
-                  <CardDescription>{post.author.role}</CardDescription>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-4">
+                  <Avatar>
+                    <AvatarImage src={post.author.avatar} alt={post.author.name} />
+                    <AvatarFallback>{post.author.name.slice(0, 2)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <CardTitle className="text-lg">{post.author.name}</CardTitle>
+                    <CardDescription>{post.author.role}</CardDescription>
+                  </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEditPost(post)}
+                    className="h-8 w-8"
                   >
                     <Edit2 className="h-4 w-4" />
                   </Button>
@@ -410,6 +408,7 @@ export default function ClubDetailView() {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDeletePost(post.id)}
+                    className="h-8 w-8 text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -417,6 +416,9 @@ export default function ClubDetailView() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {new Date(post.timestamp).toLocaleString()}
+              </p>
               <p>{post.content}</p>
               {post.images && post.images.length > 0 && (
                 <div className="grid gap-4 grid-cols-1">
@@ -431,22 +433,21 @@ export default function ClubDetailView() {
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex justify-between text-sm text-muted-foreground">
+            <CardFooter className="flex justify-between text-sm text-muted-foreground pt-2">
               <div className="flex gap-6">
-                <button className="flex items-center gap-1 hover:text-primary">
+                <button className="flex items-center gap-1 hover:text-primary transition-colors">
                   <ThumbsUp className="h-4 w-4" />
                   {post.likes}
                 </button>
-                <button className="flex items-center gap-1 hover:text-primary">
+                <button className="flex items-center gap-1 hover:text-primary transition-colors">
                   <MessageCircle className="h-4 w-4" />
                   {post.comments}
                 </button>
-                <button className="flex items-center gap-1 hover:text-primary">
+                <button className="flex items-center gap-1 hover:text-primary transition-colors">
                   <Share2 className="h-4 w-4" />
                   {post.shares}
                 </button>
               </div>
-              <span>{new Date(post.timestamp).toLocaleString()}</span>
             </CardFooter>
           </Card>
         ))}
@@ -561,13 +562,13 @@ export default function ClubDetailView() {
   return (
     <div className="min-h-screen bg-background antialiased">
       {/* Banner with logo and title */}
-      <div className="relative w-full h-[250px] sm:h-[300px] lg:h-[400px]">
+      <div className="relative w-full h-[250px] sm:h-[300px] lg:h-[400px] mt-4">
         <img
           src={club.banner}
           alt={club.name}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover rounded-lg"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent rounded-lg" />
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 sm:gap-6">
             <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-background shadow-xl">

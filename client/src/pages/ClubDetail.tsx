@@ -1,5 +1,7 @@
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import ClubDetailView from "@/components/club-detail-view";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 // Dummy data for a club
 const clubData = {
@@ -20,5 +22,17 @@ export default function ClubDetail() {
   // In a real app, you'd fetch the club data based on the ID
   const club = clubData;
 
-  return <ClubDetailView club={club} />;
+  return (
+    <div className="relative">
+      <div className="container mx-auto p-4">
+        <Button variant="ghost" className="mb-4" asChild>
+          <Link href="/clubs" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Clubs
+          </Link>
+        </Button>
+      </div>
+      <ClubDetailView club={club} /> {/*Passing the club prop here*/}
+    </div>
+  );
 }
