@@ -3,49 +3,48 @@ import ClubDetailView from "@/components/club-detail-view";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
-// Dummy data for a club with correct type annotations
 const clubData = {
   id: 1,
-  name: "Idea Club",
-  banner:
-    "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80",
+  name: "Tech Innovators Club",
+  banner: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80",
   logo: "https://images.unsplash.com/photo-1633409361618-c73427e4e206?auto=format&fit=crop&q=80",
-  description: "A club focused on AI and ML projects.",
+  description: "A community of tech enthusiasts building the future",
   memberCount: {
     total: 128,
     leaders: 4,
     members: 124,
   },
-  roles: [],
+  roles: [
+    { name: "President", member: "John Doe" }
+  ],
   upcomingEvents: [
     {
       id: "1",
-      title: "AI Workshop Series",
-      description: "Learn about the latest developments in AI",
-      date: "2024-03-15",
-      type: "Workshop" as const, // Using type assertion to match the enum
-      location: "Tech Lab 101",
-      registrationLink: "https://example.com/workshop"
-    },
+      title: "Spring Hackathon 2024",
+      description: "48-hour coding challenge to build innovative solutions",
+      date: "2024-04-15",
+      type: "Hackathon",
+      location: "Main Campus, Building A",
+      registrationLink: "https://example.com/register",
+    }
   ],
   activityFeed: [
     {
       id: "1",
       author: {
-        id: "1", // Added required id field
+        id: "1",
         name: "John Doe",
         role: "Club President",
-        avatar:
-          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
+        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
       },
       content: "Excited to announce our upcoming AI Workshop!",
-      type: "announcement",
+      type: "announcement" as const,
       timestamp: new Date().toISOString(),
       likes: 24,
       comments: 5,
       shares: 3,
       isEditable: true,
-    },
+    }
   ],
   achievements: [
     {
@@ -53,26 +52,22 @@ const clubData = {
       name: "Best Innovation Award",
       description: "First place in Regional Tech Competition",
       date: new Date().toISOString(),
-      icon: "trophy" as const, // Using type assertion to match the enum
-    },
+      icon: "trophy" as const,
+    }
   ],
   members: [
     {
       id: "1",
       name: "John Doe",
       role: "President",
-      avatar:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
       joinDate: "2024-01-01",
-    },
+    }
   ],
 };
 
 export default function StudentClubDetail() {
   const { id } = useParams();
-
-  // In a real app, you'd fetch the club data based on the ID
-  const club = clubData;
 
   return (
     <div className="relative">
@@ -84,7 +79,7 @@ export default function StudentClubDetail() {
           </Link>
         </Button>
       </div>
-      <ClubDetailView club={club} />
+      <ClubDetailView club={clubData} currentUserId="1" />
     </div>
   );
 }
