@@ -35,13 +35,6 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface Club {
   id: number;
@@ -72,7 +65,6 @@ interface Event {
   date: string;
   type: "Hackathon" | "Workshop" | "Meeting" | "Other";
   location: string;
-  registrationLink?: string;
 }
 
 interface ActivityPost {
@@ -83,8 +75,7 @@ interface ActivityPost {
     avatar: string;
   };
   content: string;
-  images?: string[];
-  type: "event" | "announcement" | "achievement" | "project-update";
+  type: "announcement" | "event" | "achievement";
   timestamp: string;
   likes: number;
   comments: number;
@@ -96,7 +87,7 @@ interface Achievement {
   name: string;
   description: string;
   date: string;
-  icon: "trophy" | "medal" | "certificate";
+  icon: string;
 }
 
 interface Member {
@@ -133,7 +124,6 @@ const initialClub: Club = {
       date: "2024-04-15",
       type: "Hackathon",
       location: "Main Campus, Building A",
-      registrationLink: "https://example.com/register",
     },
     {
       id: "2",
@@ -143,7 +133,6 @@ const initialClub: Club = {
       date: "2024-03-30",
       type: "Workshop",
       location: "Virtual",
-      registrationLink: "https://example.com/ai-workshop",
     },
   ],
   activityFeed: [
@@ -212,38 +201,12 @@ const initialClub: Club = {
   ],
 };
 
-export default function ClubDetailView({
-  club: initialClubData,
-}: {
-  club: Club;
-}) {
+export default function ClubDetailView({ club: initialClubData }: { club: Club }) {
   const [club, setClub] = useState<Club>(initialClubData || initialClub);
   const [activeSection, setActiveSection] = useState("Activities");
-  const [showEventModal, setShowEventModal] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
-  const [showAchievementModal, setShowAchievementModal] = useState(false);
-  const [showMemberModal, setShowMemberModal] = useState(false);
   const [editingPost, setEditingPost] = useState<ActivityPost | null>(null);
   const { toast } = useToast();
-
-  const getMembershipStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-500/10 text-green-500";
-      case "pending":
-        return "bg-yellow-500/10 text-yellow-500";
-      case "inactive":
-        return "bg-gray-500/10 text-gray-500";
-      default:
-        return "bg-gray-500/10 text-gray-500";
-    }
-  };
-
-  const sections = [
-    { name: "Activities", icon: CalendarDays },
-    { name: "Achievements", icon: Trophy },
-    { name: "Members", icon: Users },
-  ];
 
   const handleDeletePost = (postId: string) => {
     setClub((prev) => ({
@@ -261,14 +224,14 @@ export default function ClubDetailView({
     setShowPostModal(true);
   };
 
-  const handleSavePost = (content: string, image?: File) => {
+  const handleSavePost = (content: string) => {
     if (editingPost) {
       setClub((prev) => ({
         ...prev,
         activityFeed: prev.activityFeed.map((post) =>
           post.id === editingPost.id
             ? { ...post, content, timestamp: new Date().toISOString() }
-            : post,
+            : post
         ),
       }));
       toast({
@@ -281,8 +244,7 @@ export default function ClubDetailView({
         author: {
           name: "John Doe",
           role: "Club President",
-          avatar:
-            "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
+          avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
         },
         content,
         type: "announcement",
@@ -304,455 +266,130 @@ export default function ClubDetailView({
     setEditingPost(null);
   };
 
-  const handleAddAchievement = (name: string, description: string) => {
-    const newAchievement: Achievement = {
-      id: Math.random().toString(36).substr(2, 9),
-      name,
-      description,
-      date: new Date().toISOString(),
-      icon: "trophy",
-    };
-    setClub((prev) => ({
-      ...prev,
-      achievements: [...prev.achievements, newAchievement],
-    }));
-    setShowAchievementModal(false);
-    toast({
-      title: "Achievement added",
-      description: "New achievement has been added successfully.",
-    });
-  };
-
-  const handleAddMember = (name: string, role: string) => {
-    const newMember: Member = {
-      id: Math.random().toString(36).substr(2, 9),
-      name,
-      role,
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`,
-      joinDate: new Date().toISOString(),
-    };
-    setClub((prev) => ({
-      ...prev,
-      members: [...prev.members, newMember],
-    }));
-    setShowMemberModal(false);
-    toast({
-      title: "Member added",
-      description: "New member has been added successfully.",
-    });
-  };
-
-  const renderUpcomingEvents = () => (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h3 className="text-xl sm:text-2xl font-semibold">Upcoming Events</h3>
-        <Button
-          onClick={() => setShowEventModal(true)}
-          variant="default"
-          className="w-full sm:w-auto"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Event
-        </Button>
-      </div>
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {club.upcomingEvents?.map((event) => (
-          <Card
-            key={event.id}
-            className="hover:shadow-lg transition-all duration-300"
-          >
-            <CardHeader className="space-y-3 p-6">
-              <div className="flex justify-between items-start gap-4">
-                <div>
-                  <CardTitle className="text-lg sm:text-xl">
-                    {event.title}
-                  </CardTitle>
-                  <CardDescription className="mt-2 line-clamp-2">
-                    {event.description}
-                  </CardDescription>
-                </div>
-                <Badge variant="secondary" className="shrink-0">
-                  {event.type}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3 px-6">
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                {new Date(event.date).toLocaleDateString()}
-              </div>
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <div className="mt-1">📍</div>
-                <span>{event.location}</span>
-              </div>
-            </CardContent>
-            <CardFooter className="p-6 pt-3">
-              {event.registrationLink && (
-                <Button
-                  variant="outline"
-                  className="w-full hover:bg-primary hover:text-primary-foreground transition-colors"
-                  asChild
-                >
-                  <a
-                    href={event.registrationLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Register Now
-                  </a>
-                </Button>
-              )}
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderActivityFeed = () => (
-    <div className="space-y-6 mt-8">
-      <div className="flex justify-between items-center">
-        <h3 className="text-2xl font-semibold">Activity Feed</h3>
-        <Button onClick={() => setShowPostModal(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Post
-        </Button>
-      </div>
+  const renderActivities = () => (
+    <div className="space-y-8">
+      {/* Activity Feed */}
       <div className="space-y-6">
-        {club.activityFeed?.map((post) => (
-          <Card key={post.id} className="hover:shadow-lg transition-all">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarImage
-                      src={post.author.avatar}
-                      alt={post.author.name}
-                    />
-                    <AvatarFallback>
-                      {post.author.name.slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">
-                      {post.author.name}
-                    </CardTitle>
-                    <CardDescription>{post.author.role}</CardDescription>
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEditPost(post)}
-                    className="h-8 w-8"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeletePost(post.id)}
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {new Date(post.timestamp).toLocaleString()}
-              </p>
-              <p>{post.content}</p>
-              {post.images && post.images.length > 0 && (
-                <div className="grid gap-4 grid-cols-1">
-                  {post.images.map((image, index) => (
-                    <img
-                      key={index}
-                      src={image}
-                      alt="Post attachment"
-                      className="rounded-lg w-full object-cover max-h-96"
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex justify-between text-sm text-muted-foreground pt-2">
-              <div className="flex gap-6">
-                <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                  <ThumbsUp className="h-4 w-4" />
-                  {post.likes}
-                </button>
-                <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                  <MessageCircle className="h-4 w-4" />
-                  {post.comments}
-                </button>
-                <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                  <Share2 className="h-4 w-4" />
-                  {post.shares}
-                </button>
-              </div>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderAchievements = () => (
-    <>
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-2xl font-semibold">Achievements</h3>
-        <Button onClick={() => setShowAchievementModal(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Achievement
-        </Button>
-      </div>
-      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        <AnimatePresence>
-          {club.achievements.map((achievement) => (
-            <motion.div
-              key={achievement.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <Card className="group hover:shadow-lg transition-all">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <Trophy className="h-6 w-6 text-yellow-500" />
-                    <CardTitle>{achievement.name}</CardTitle>
-                  </div>
-                  <CardDescription>{achievement.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-muted-foreground">
-                    Awarded: {new Date(achievement.date).toLocaleDateString()}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-    </>
-  );
-
-  const renderMembers = () => (
-    <>
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <h3 className="text-2xl font-semibold">Members</h3>
-          <div className="flex gap-2">
-            <Badge variant="outline" className="flex items-center gap-1">
-              Total: {club.memberCount.total}
-            </Badge>
-            <Badge variant="outline" className="flex items-center gap-1">
-              Leaders: {club.memberCount.leaders}
-            </Badge>
-          </div>
+        <div className="flex justify-between items-center">
+          <h3 className="text-2xl font-semibold">Activity Feed</h3>
+          <Button onClick={() => setShowPostModal(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Post
+          </Button>
         </div>
-        <Button onClick={() => setShowMemberModal(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Member
-        </Button>
-      </div>
-
-      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {/* Club Leadership Section */}
-        <Card className="col-span-full bg-muted/50">
-          <CardHeader>
-            <CardTitle className="text-xl">Club Leadership</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {club.roles.map((role, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-background"
-                >
-                  <Avatar>
-                    <AvatarImage
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        role.member,
-                      )}`}
-                    />
-                    <AvatarFallback>{role.member.slice(0, 2)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">{role.member}</p>
-                    <p className="text-sm text-muted-foreground">{role.name}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <AnimatePresence>
-          {club.members.map((member) => (
-            <motion.div
-              key={member.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <Card className="group hover:shadow-lg transition-all">
-                <CardHeader>
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={member.avatar} alt={member.name} />
-                      <AvatarFallback>{member.name.slice(0, 2)}</AvatarFallback>
+        <div className="space-y-6">
+          {club.activityFeed.map((post) => (
+            <Card key={post.id} className="overflow-hidden">
+              <CardHeader className="space-y-0">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Avatar>
+                      <AvatarImage src={post.author.avatar} />
+                      <AvatarFallback>{post.author.name.slice(0, 2)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <CardTitle className="text-lg">{member.name}</CardTitle>
-                      <Badge variant="secondary" className="mt-1">
-                        {member.role}
-                      </Badge>
+                      <CardTitle className="text-base font-semibold">
+                        {post.author.name}
+                      </CardTitle>
+                      <CardDescription>{post.author.role}</CardDescription>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-muted-foreground">
-                    Joined: {new Date(member.joinDate).toLocaleDateString()}
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditPost(post)}
+                      className="h-8 w-8"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeletePost(post.id)}
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  {new Date(post.timestamp).toLocaleString()}
+                </p>
+                <p>{post.content}</p>
+              </CardContent>
+              <CardFooter className="border-t pt-4">
+                <div className="flex space-x-4 text-muted-foreground">
+                  <button className="flex items-center space-x-1">
+                    <ThumbsUp className="h-4 w-4" />
+                    <span>{post.likes}</span>
+                  </button>
+                  <button className="flex items-center space-x-1">
+                    <MessageCircle className="h-4 w-4" />
+                    <span>{post.comments}</span>
+                  </button>
+                  <button className="flex items-center space-x-1">
+                    <Share2 className="h-4 w-4" />
+                    <span>{post.shares}</span>
+                  </button>
+                </div>
+              </CardFooter>
+            </Card>
           ))}
-        </AnimatePresence>
+        </div>
       </div>
-    </>
+    </div>
   );
 
-  const renderSection = () => {
-    switch (activeSection) {
-      case "Activities":
-        return (
-          <>
-            {renderUpcomingEvents()}
-            <Separator className="my-8" />
-            {renderActivityFeed()}
-          </>
-        );
-      case "Achievements":
-        return renderAchievements();
-      case "Members":
-        return renderMembers();
-      default:
-        return null;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-background antialiased">
-      {/* Banner with logo and title */}
-      <div className="relative w-full h-[250px] sm:h-[300px] lg:h-[400px] mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-8">
+    <div className="min-h-screen bg-background">
+      {/* Club Banner Section */}
+      <div className="relative h-[300px] lg:h-[400px] w-full overflow-hidden">
         <img
           src={club.banner}
           alt={club.name}
-          className="w-full h-full object-cover rounded-lg"
+          className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent rounded-lg" />
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
-          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 sm:gap-6">
-            <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-background shadow-xl">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto flex items-end space-x-6">
+            <Avatar className="h-24 w-24 border-4 border-background">
               <AvatarImage src={club.logo} alt={club.name} />
               <AvatarFallback>{club.name.slice(0, 2)}</AvatarFallback>
             </Avatar>
-            <div className="text-center sm:text-left">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
-                  {club.name}
-                </h1>
-                <Badge
-                  variant="outline"
-                  className={`${getMembershipStatusColor(club.membershipStatus)}`}
-                >
-                  {club.membershipStatus}
-                </Badge>
-              </div>
-              <p className="text-sm sm:text-base text-white/90 max-w-2xl">
-                {club.description}
-              </p>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-white mb-2">{club.name}</h1>
+              <p className="text-white/80">{club.description}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="sticky top-0 bg-background/80 backdrop-blur-lg z-10 border-b">
-        <nav className="flex justify-center px-2 py-2 sm:py-3 max-w-7xl mx-auto">
-          <div className="flex gap-1 sm:gap-2 w-full sm:w-auto justify-between sm:justify-center">
-            {sections.map(({ name, icon: Icon }) => (
-              <Button
-                key={name}
-                variant={activeSection === name ? "default" : "ghost"}
-                className="flex-1 sm:flex-initial text-sm sm:text-base gap-2 px-3 sm:px-4"
-                onClick={() => setActiveSection(name)}
-              >
-                <Icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{name}</span>
-              </Button>
-            ))}
+      <div className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex h-14 items-center justify-center">
+            <div className="flex space-x-4">
+              {["Activities"].map((section) => (
+                <Button
+                  key={section}
+                  variant={activeSection === section ? "default" : "ghost"}
+                  onClick={() => setActiveSection(section)}
+                >
+                  {section}
+                </Button>
+              ))}
+            </div>
           </div>
-        </nav>
-      </div>
-
-      {/* Content section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-card rounded-xl shadow-sm p-4 sm:p-6 lg:p-8">
-          {renderSection()}
         </div>
       </div>
 
-      {/* Modals with improved styling */}
-      <Dialog open={showEventModal} onOpenChange={setShowEventModal}>
-        <DialogContent className="sm:max-w-[425px] p-6">
-          <DialogHeader className="space-y-3">
-            <DialogTitle className="text-xl">Create New Event</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Event Title</label>
-              <Input className="w-full" placeholder="Enter event title" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
-              <Textarea
-                className="w-full min-h-[100px]"
-                placeholder="Enter event description"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Date</label>
-              <Input type="date" className="w-full" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Location</label>
-              <Input className="w-full" placeholder="Enter location" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Registration Link (optional)
-              </label>
-              <Input className="w-full" placeholder="https://" />
-            </div>
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowEventModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={() => setShowEventModal(false)}>
-                Create Event
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {renderActivities()}
+      </main>
 
       {/* Create/Edit Post Modal */}
       <Dialog
@@ -762,7 +399,7 @@ export default function ClubDetailView({
           setEditingPost(null);
         }}
       >
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {editingPost ? "Edit Post" : "Create New Post"}
@@ -772,81 +409,20 @@ export default function ClubDetailView({
             <Textarea
               placeholder="What's on your mind?"
               defaultValue={editingPost?.content}
+              className="min-h-[100px]"
             />
-            <Input type="file" accept="image/*" />
             <div className="flex justify-end">
               <Button
                 onClick={() => {
-                  handleSavePost(
-                    document.querySelector("textarea")?.value || "",
-                  );
+                  const content = (
+                    document.querySelector("textarea") as HTMLTextAreaElement
+                  )?.value;
+                  if (content) {
+                    handleSavePost(content);
+                  }
                 }}
               >
                 {editingPost ? "Save Changes" : "Post"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Achievement Modal */}
-      <Dialog
-        open={showAchievementModal}
-        onOpenChange={setShowAchievementModal}
-      >
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add New Achievement</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <Input placeholder="Achievement Title" />
-            <Textarea placeholder="Achievement Description" />
-            <div className="flex justify-end">
-              <Button
-                onClick={() => {
-                  const title = document.querySelector("input")?.value || "";
-                  const description =
-                    document.querySelector("textarea")?.value || "";
-                  handleAddAchievement(title, description);
-                }}
-              >
-                Add Achievement
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Member Modal */}
-      <Dialog open={showMemberModal} onOpenChange={setShowMemberModal}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add New Member</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <Input placeholder="Member Name" />
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="president">President</SelectItem>
-                <SelectItem value="vice-president">Vice President</SelectItem>
-                <SelectItem value="secretary">Secretary</SelectItem>
-                <SelectItem value="treasurer">Treasurer</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex justify-end">
-              <Button
-                onClick={() => {
-                  const name = document.querySelector("input")?.value || "";
-                  const role =
-                    document.querySelector("select")?.value || "Member";
-                  handleAddMember(name, role);
-                }}
-              >
-                Add Member
               </Button>
             </div>
           </div>
