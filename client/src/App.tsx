@@ -124,26 +124,26 @@ function Router() {
       <Route path="/reset-password" component={ResetPassword} />
 
       {/* Admin Routes */}
-      <Route path="/admin" component={() => <PrivateRoute component={AdminDashboard} roles={["admin"]} />} />
-      <Route path="/admin/clubs" component={() => <PrivateRoute component={AdminClubs} roles={["admin"]} />} />
-      <Route path="/admin/projects" component={() => <PrivateRoute component={AdminProjects} roles={["admin"]} />} />
-      <Route path="/admin/profile" component={() => <PrivateRoute component={AdminProfile} roles={["admin"]} />} />
+      <Route path="/admin" component={() => <Route component={AdminDashboard} roles={["admin"]} />} />
+      <Route path="/admin/clubs" component={() => <Route component={AdminClubs} roles={["admin"]} />} />
+      <Route path="/admin/projects" component={() => <Route component={AdminProjects} roles={["admin"]} />} />
+      <Route path="/admin/profile" component={() => <Route component={AdminProfile} roles={["admin"]} />} />
 
       {/* Faculty Routes */}
-      <Route path="/faculty" component={() => <PrivateRoute component={FacultyDashboard} roles={["faculty"]} />} />
-      <Route path="/faculty/clubs" component={() => <PrivateRoute component={FacultyClubs} roles={["faculty"]} />} />
-      <Route path="/faculty/projects" component={() => <PrivateRoute component={FacultyProjects} roles={["faculty"]} />} />
-      <Route path="/faculty/profile" component={() => <PrivateRoute component={FacultyProfile} roles={["faculty"]} />} />
-      <Route path="/faculty/messaging" component={() => <PrivateRoute component={FacultyMessaging} roles={["faculty"]} />} />
+      <Route path="/faculty" component={() => <Route component={FacultyDashboard} roles={["faculty"]} />} />
+      <Route path="/faculty/clubs" component={() => <Route component={FacultyClubs} roles={["faculty"]} />} />
+      <Route path="/faculty/projects" component={() => <Route component={FacultyProjects} roles={["faculty"]} />} />
+      <Route path="/faculty/profile" component={() => <Route component={FacultyProfile} roles={["faculty"]} />} />
+      <Route path="/faculty/messaging" component={() => <Route component={FacultyMessaging} roles={["faculty"]} />} />
 
       {/* Student Routes */}
-      <Route path="/student" component={() => <PrivateRoute component={StudentDashboard} roles={["student"]} />} />
-      <Route path="/student/clubs" component={() => <PrivateRoute component={StudentClubs} roles={["student"]} />} />
-      <Route path="/student/projects" component={() => <PrivateRoute component={StudentProjects} roles={["student"]} />} />
-      <Route path="/student/profile" component={() => <PrivateRoute component={StudentProfile} roles={["student"]} />} />
-      <Route path="/student/messaging" component={() => <PrivateRoute component={StudentMessaging} roles={["student"]} />} />
-      <Route path="/student/my-space" component={() => <PrivateRoute component={StudentMySpace} roles={["student"]} />} />
-      <Route path="/student/project/:id" component={() => <PrivateRoute component={StudentProjectDetails} roles={["student"]} />} />
+      <Route path="/student" component={() => <Route component={StudentDashboard} roles={["student"]} />} />
+      <Route path="/student/clubs" component={() => <Route component={StudentClubs} roles={["student"]} />} />
+      <Route path="/student/projects" component={() => <Route component={StudentProjects} roles={["student"]} />} />
+      <Route path="/student/profile" component={() => <Route component={StudentProfile} roles={["student"]} />} />
+      <Route path="/student/messaging" component={() => <Route component={StudentMessaging} roles={["student"]} />} />
+      <Route path="/student/my-space" component={() => <Route component={StudentMySpace} roles={["student"]} />} />
+      <Route path="/student/project/:id" component={() => <Route component={StudentProjectDetails} roles={["student"]} />} />
 
       {/* Fallback */}
       <Route component={NotFound} />
