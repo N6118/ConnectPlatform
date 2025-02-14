@@ -80,6 +80,18 @@ export default function FacultyProjectDetails({
     type: "",
     url: "",
   });
+  const statusColors: { [key: string]: string } = {
+    "In Progress": "bg-yellow-100 text-yellow-800",
+    Completed: "bg-green-100 text-green-800",
+    Pending: "bg-gray-100 text-gray-800",
+    Canceled: "bg-red-100 text-red-800",
+  };
+  const levelColors: { [key: string]: string } = {
+    Easy: "bg-green-100 text-green-800",
+    Medium: "bg-yellow-100 text-yellow-800",
+    Hard: "bg-red-100 text-red-800",
+  };
+
   const [project, setProject] = useState({
     title: decodeURIComponent(params.title),
     description: "This is a detailed description of the project.",
@@ -213,19 +225,25 @@ export default function FacultyProjectDetails({
     }));
   };
 
-  const handleApplicantStatus = (applicantId: string, status: "Approved" | "Rejected") => {
+  const handleApplicantStatus = (
+    applicantId: string,
+    status: "Approved" | "Rejected",
+  ) => {
     setApplicants((prev) =>
-      prev.map((app) =>
-        app.id === applicantId ? { ...app, status } : app
-      )
+      prev.map((app) => (app.id === applicantId ? { ...app, status } : app)),
     );
 
     if (status === "Approved") {
-      const approvedApplicant = applicants.find((app) => app.id === applicantId);
+      const approvedApplicant = applicants.find(
+        (app) => app.id === applicantId,
+      );
       if (approvedApplicant) {
         setProject((prev) => ({
           ...prev,
-          team: [...prev.team, { name: approvedApplicant.name, role: "Team Member" }],
+          team: [
+            ...prev.team,
+            { name: approvedApplicant.name, role: "Team Member" },
+          ],
         }));
       }
     }
@@ -278,10 +296,20 @@ export default function FacultyProjectDetails({
                   {project.title}
                 </h1>
                 <div className="flex flex-wrap gap-2">
-                  <Badge className={statusColors[project.status]}>
+                  <Badge
+                    className={
+                      statusColors[project.status] ||
+                      "bg-gray-100 text-gray-800"
+                    }
+                  >
                     {project.status}
                   </Badge>
-                  <Badge className={levelColors[project.level]}>
+
+                  <Badge
+                    className={
+                      levelColors[project.level] || "bg-gray-100 text-gray-800"
+                    }
+                  >
                     {project.level}
                   </Badge>
                 </div>
@@ -710,7 +738,9 @@ export default function FacultyProjectDetails({
                         <Button
                           size="sm"
                           className="bg-green-500 hover:bg-green-600"
-                          onClick={() => handleApplicantStatus(applicant.id, "Approved")}
+                          onClick={() =>
+                            handleApplicantStatus(applicant.id, "Approved")
+                          }
                         >
                           <CheckCircle className="w-4 h-4 mr-1" />
                           Approve
@@ -718,7 +748,9 @@ export default function FacultyProjectDetails({
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => handleApplicantStatus(applicant.id, "Rejected")}
+                          onClick={() =>
+                            handleApplicantStatus(applicant.id, "Rejected")
+                          }
                         >
                           <XCircle className="w-4 h-4 mr-1" />
                           Reject
