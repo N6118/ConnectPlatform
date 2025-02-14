@@ -1,56 +1,37 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft,
-  Book,
+  X,
+  Download,
+  Mail,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  MessageSquare,
+  Search,
+  Filter,
+  User,
   Calendar,
-  Code,
-  Users,
-  Activity,
-  FileText,
-  Plus,
-  Edit2,
-  Upload,
+  Briefcase,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "wouter";
-import {
-  statusColors,
-  levelColors,
-} from "@/components/my-space-components/ProjectCard";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
-import StudentNavbar from "@/components/navigation/StudentNavbar";
-import ApplicantsModal from "@/components/ApplicantsModal";
-
-interface TeamMember {
-  name: string;
-  role: string;
-}
-
-interface Task {
-  title: string;
-  assignedTo: string;
-  deadline: string;
-  status: "Pending" | "Completed";
-}
-
-interface Resource {
-  name: string;
-  type: string;
-  url: string;
-}
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Applicant {
   id: string;
@@ -62,680 +43,511 @@ interface Applicant {
   notes?: string;
 }
 
-export default function StudentProjectDetails({
-  params,
-}: {
-  params: { title: string };
-}) {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [isEditing, setIsEditing] = useState(false);
-  const [showAddMember, setShowAddMember] = useState(false);
-  const [showAddTask, setShowAddTask] = useState(false);
-  const [showAddResource, setShowAddResource] = useState(false);
-  const [newMember, setNewMember] = useState<TeamMember>({
-    name: "",
-    role: "",
-  });
-  const [newTask, setNewTask] = useState<Task>({
-    title: "",
-    assignedTo: "",
-    deadline: "",
-    status: "Pending",
-  });
-  const [newResource, setNewResource] = useState<Resource>({
-    name: "",
-    type: "",
-    url: "",
-  });
+interface ApplicantsModalProps {
+  projectTitle: string;
+  applicants: Applicant[];
+  onClose: () => void;
+  onUpdateStatus: (applicantId: string, newStatus: Applicant["status"]) => void;
+  onAddNote: (applicantId: string, note: string) => void;
+}
 
-  const [applicants, setApplicants] = useState<Applicant[]>([
-    {
-      id: "1",
-      name: "John Smith",
-      email: "john@example.com",
-      status: "pending",
-      appliedDate: "2024-03-20",
-      experience: "3 years of web development experience",
-    },
-    {
-      id: "2",
-      name: "Emma Wilson",
-      email: "emma@example.com",
-      status: "pending",
-      appliedDate: "2024-03-21",
-      experience: "Recent graduate with strong ML background",
-    },
-  ]);
+const statusColors = {
+  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  accepted: "bg-green-100 text-green-800 border-green-200",
+  rejected: "bg-red-100 text-red-800 border-red-200",
+  waitlisted: "bg-blue-100 text-blue-800 border-blue-200",
+};
 
-  const [project, setProject] = useState({
-    title: decodeURIComponent(params.title),
-    description: "This is a detailed description of the project.",
-    status: "In Progress" as const,
-    level: "Medium" as const,
-    mentor: "Dr. Jane Smith",
-    prerequisites: "Basic understanding of AI and Machine Learning",
-    techStack: ["React", "Node.js", "TensorFlow"],
-    duration: "3 months",
-    maxTeamSize: 5,
-    skills: "JavaScript, Python, Data Analysis",
-    progress: 60,
-    imageUrl:
-      "https://media.istockphoto.com/id/1432955867/vector/technology-abstract-lines-and-dots-connect-background-with-hexagons-hexagon-grid-hexagons.jpg?s=612x612&w=0&k=20&c=gSMTHNjpqgpDU06e3G8GhQTUcqEcWfvafMFjzT3qzzQ=",
-    team: [
-      { name: "John Doe", role: "Team Lead" },
-      { name: "Jane Smith", role: "Developer" },
-    ],
-    tasks: [
-      {
-        title: "Setup Development Environment",
-        assignedTo: "John Doe",
-        deadline: "2024-03-30",
-        status: "Completed",
-      },
-      {
-        title: "Initial Project Planning",
-        assignedTo: "Jane Smith",
-        deadline: "2024-04-15",
-        status: "Pending",
-      },
-    ],
-    resources: [
-      {
-        name: "Project Documentation",
-        type: "document",
-        url: "/docs/project-doc.pdf",
-      },
-      {
-        name: "GitHub Repository",
-        type: "link",
-        url: "https://github.com/project/repo",
-      },
-    ],
-  });
+const statusIcons = {
+  pending: <Clock className="h-4 w-4" />,
+  accepted: <CheckCircle2 className="h-4 w-4" />,
+  rejected: <XCircle className="h-4 w-4" />,
+  waitlisted: <AlertCircle className="h-4 w-4" />,
+};
 
-  useEffect(() => {
-    // Calculate progress based on completed tasks
-    const completedTasks = project.tasks.filter(
-      (task) => task.status === "Completed",
-    ).length;
-    const totalTasks = project.tasks.length;
-    const newProgress =
-      totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-    setProject((prev) => ({ ...prev, progress: newProgress }));
-  }, [project.tasks]);
+export default function ApplicantsModal({
+  projectTitle,
+  applicants,
+  onClose,
+  onUpdateStatus,
+  onAddNote,
+}: ApplicantsModalProps) {
+  const { toast } = useToast();
+  const [selectedApplicants, setSelectedApplicants] = useState<Set<string>>(
+    new Set(),
+  );
+  const [noteInput, setNoteInput] = useState<{ [key: string]: string }>({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "date">("date");
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProject((prev) => ({ ...prev, imageUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAddMember = () => {
-    if (newMember.name && newMember.role) {
-      setProject((prev) => ({
-        ...prev,
-        team: [...prev.team, newMember],
-      }));
-      setNewMember({ name: "", role: "" });
-      setShowAddMember(false);
-    }
-  };
-
-  const handleAddTask = () => {
-    if (newTask.title && newTask.assignedTo && newTask.deadline) {
-      setProject((prev) => ({
-        ...prev,
-        tasks: [...prev.tasks, newTask],
-      }));
-      setNewTask({
-        title: "",
-        assignedTo: "",
-        deadline: "",
-        status: "Pending",
-      });
-      setShowAddTask(false);
-    }
-  };
-
-  const handleAddResource = () => {
-    if (newResource.name && newResource.type && newResource.url) {
-      setProject((prev) => ({
-        ...prev,
-        resources: [...(prev.resources || []), newResource],
-      }));
-      setNewResource({ name: "", type: "", url: "" });
-      setShowAddResource(false);
-    }
-  };
-
-  const handleTaskStatusChange = (taskTitle: string) => {
-    setProject((prev) => ({
-      ...prev,
-      tasks: prev.tasks.map((task) =>
-        task.title === taskTitle
-          ? {
-              ...task,
-              status: task.status === "Pending" ? "Completed" : "Pending",
-            }
-          : task,
-      ),
-    }));
-  };
-
-  const handleUpdateApplicantStatus = (
-    applicantId: string,
-    newStatus: Applicant["status"],
-  ) => {
-    setApplicants((prev) =>
-      prev.map((app) =>
-        app.id === applicantId ? { ...app, status: newStatus } : app,
-      ),
-    );
-
-    if (newStatus === "accepted") {
-      const approvedApplicant = applicants.find(
-        (app) => app.id === applicantId,
-      );
-      if (approvedApplicant) {
-        setProject((prev) => ({
-          ...prev,
-          team: [
-            ...prev.team,
-            { name: approvedApplicant.name, role: "Team Member" },
-          ],
-        }));
+  const filteredApplicants = (applicants ?? [])
+    .filter(
+      (applicant) =>
+        applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        applicant.email.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+    .sort((a, b) => {
+      if (sortBy === "date") {
+        return (
+          new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime()
+        );
       }
+      return a.name.localeCompare(b.name);
+    });
+
+  const getApplicantsByStatus = (status: Applicant["status"]) =>
+    filteredApplicants.filter((a) => a.status === status);
+
+  const handleSelectAll = (status: Applicant["status"]) => {
+    const statusApplicants = getApplicantsByStatus(status);
+    if (statusApplicants.every((a) => selectedApplicants.has(a.id))) {
+      setSelectedApplicants(
+        (prev) =>
+          new Set(
+            [...prev].filter(
+              (id) => !statusApplicants.some((a) => a.id === id),
+            ),
+          ),
+      );
+    } else {
+      setSelectedApplicants(
+        (prev) => new Set([...prev, ...statusApplicants.map((a) => a.id)]),
+      );
     }
   };
 
-  const handleAddNote = (applicantId: string, note: string) => {
-    setApplicants((prev) =>
-      prev.map((app) =>
-        app.id === applicantId
-          ? { ...app, notes: app.notes ? `${app.notes}\n${note}` : note }
-          : app,
+  const handleBulkAction = (newStatus: Applicant["status"]) => {
+    selectedApplicants.forEach((id) => {
+      onUpdateStatus(id, newStatus);
+    });
+    setSelectedApplicants(new Set());
+    toast({
+      title: "Bulk Action Completed",
+      description: `Updated status for ${selectedApplicants.size} applicants to ${newStatus}`,
+    });
+  };
+
+  const exportToCSV = () => {
+    const headers = [
+      "Name",
+      "Email",
+      "Status",
+      "Applied Date",
+      "Experience",
+      "Notes",
+    ];
+    const csvContent = [
+      headers.join(","),
+      ...applicants.map((a) =>
+        [
+          a.name,
+          a.email,
+          a.status,
+          a.appliedDate,
+          `"${a.experience.replace(/"/g, '""')}"`,
+          `"${(a.notes || "").replace(/"/g, '""')}"`,
+        ].join(","),
       ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${projectTitle}-applicants.csv`;
+    link.click();
+    toast({
+      title: "Export Successful",
+      description: "Applicants data has been exported to CSV",
+    });
+  };
+
+  const sendBulkEmail = () => {
+    const emails = Array.from(selectedApplicants)
+      .map((id) => applicants.find((a) => a.id === id)?.email)
+      .filter(Boolean)
+      .join(",");
+    window.location.href = `mailto:?bcc=${emails}`;
+  };
+
+  const renderApplicantList = (status: Applicant["status"]) => {
+    const statusApplicants = getApplicantsByStatus(status);
+
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="space-y-4"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={
+                  statusApplicants.length > 0 &&
+                  statusApplicants.every((a) => selectedApplicants.has(a.id))
+                }
+                onChange={() => handleSelectAll(status)}
+                className="rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <span className="text-sm font-medium">Select All</span>
+            </div>
+            {selectedApplicants.size > 0 && (
+              <div className="flex space-x-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => sendBulkEmail()}
+                      >
+                        <Mail className="h-4 w-4 mr-2" />
+                        Email Selected
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Send email to selected applicants
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                {status !== "accepted" && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleBulkAction("accepted")}
+                          className="text-green-600 hover:text-green-700"
+                        >
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          Accept Selected
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Accept selected applicants
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+
+                {status !== "rejected" && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleBulkAction("rejected")}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Reject Selected
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Reject selected applicants
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+
+                {status !== "waitlisted" && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleBulkAction("waitlisted")}
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          <Clock className="h-4 w-4 mr-2" />
+                          Waitlist Selected
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Waitlist selected applicants
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+            )}
+          </div>
+
+          {statusApplicants.map((applicant) => (
+            <motion.div
+              key={applicant.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`bg-white rounded-lg shadow p-4 border ${
+                statusColors[applicant.status]
+              } hover:shadow-md transition-shadow`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedApplicants.has(applicant.id)}
+                    onChange={() =>
+                      setSelectedApplicants((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(applicant.id)) {
+                          next.delete(applicant.id);
+                        } else {
+                          next.add(applicant.id);
+                        }
+                        return next;
+                      })
+                    }
+                    className="mt-1 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <h4 className="font-semibold">{applicant.name}</h4>
+                      <Badge
+                        variant="secondary"
+                        className={`${statusColors[applicant.status]} flex items-center space-x-1`}
+                      >
+                        {statusIcons[applicant.status]}
+                        <span className="capitalize">{applicant.status}</span>
+                      </Badge>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
+                      <Mail className="h-4 w-4" />
+                      <span>{applicant.email}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        Applied:{" "}
+                        {new Date(applicant.appliedDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-700 mt-2">
+                      <Briefcase className="h-4 w-4" />
+                      <span>{applicant.experience}</span>
+                    </div>
+                    {applicant.notes && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                        <p className="font-medium text-gray-700">Notes:</p>
+                        <p className="text-gray-600 whitespace-pre-line">
+                          {applicant.notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col space-y-2">
+                  <div className="flex space-x-2">
+                    {applicant.status !== "accepted" && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                onUpdateStatus(applicant.id, "accepted")
+                              }
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Accept applicant</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    {applicant.status !== "rejected" && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                onUpdateStatus(applicant.id, "rejected")
+                              }
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Reject applicant</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    {applicant.status !== "waitlisted" && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                onUpdateStatus(applicant.id, "waitlisted")
+                              }
+                              className="text-blue-600 hover:text-blue-700"
+                            >
+                              <Clock className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Waitlist applicant</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3">
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="Add a note..."
+                    value={noteInput[applicant.id] || ""}
+                    onChange={(e) =>
+                      setNoteInput((prev) => ({
+                        ...prev,
+                        [applicant.id]: e.target.value,
+                      }))
+                    }
+                    className="text-sm"
+                  />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            if (noteInput[applicant.id]) {
+                              onAddNote(applicant.id, noteInput[applicant.id]);
+                              setNoteInput((prev) => ({
+                                ...prev,
+                                [applicant.id]: "",
+                              }));
+                            }
+                          }}
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Add note</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+
+          {statusApplicants.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-8 text-gray-500"
+            >
+              No {status} applicants found
+            </motion.div>
+          )}
+        </motion.div>
+      </AnimatePresence>
     );
   };
 
   return (
-    <>
-      <StudentNavbar />
-      <div className="container mx-auto py-10 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Link
-            href="/student/my-space"
-            className="flex items-center text-primary hover:underline mb-6"
-          >
-            <ArrowLeft className="mr-2" size={20} />
-            Back to Projects
-          </Link>
-
-          {/* Project Header with Image */}
-          <div className="mb-8">
-            <div className="relative w-full h-48 md:h-64 rounded-lg overflow-hidden mb-6">
-              <img
-                src={project.imageUrl}
-                alt={project.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute bottom-4 right-4">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  id="image-upload"
-                />
-                <label htmlFor="image-upload">
-                  <Button variant="secondary" size="sm">
-                    <Upload className="mr-2" size={16} />
-                    Change Cover
-                  </Button>
-                </label>
-              </div>
-            </div>
-
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h1 className="text-4xl font-bold text-foreground mb-2">
-                  {project.title}
-                </h1>
-                <div className="flex flex-wrap gap-2">
-                  <Badge className={statusColors[project.status]}>
-                    {project.status}
-                  </Badge>
-                  <Badge className={levelColors[project.level]}>
-                    {project.level}
-                  </Badge>
-                </div>
-              </div>
-              <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="mr-2" size={16} />
-                    Add Team Member
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Team Member</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        value={newMember.name}
-                        onChange={(e) =>
-                          setNewMember((prev) => ({
-                            ...prev,
-                            name: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="role">Role</Label>
-                      <Input
-                        id="role"
-                        value={newMember.role}
-                        onChange={(e) =>
-                          setNewMember((prev) => ({
-                            ...prev,
-                            role: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <Button onClick={handleAddMember}>Add Member</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+    <Dialog open onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-xl font-bold">
+              Project Applicants - {projectTitle}
+            </DialogTitle>
+            <div className="flex items-center space-x-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={exportToCSV}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Export CSV
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Export applicants to CSV</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
-        </motion.div>
+          <div className="mt-4 flex items-center space-x-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search applicants..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-gray-400" />
+              <select
+                className="border rounded-md px-2 py-1 text-sm"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as "name" | "date")}
+              >
+                <option value="date">Sort by Date</option>
+                <option value="name">Sort by Name</option>
+              </select>
+            </div>
+          </div>
+        </DialogHeader>
 
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-4"
-        >
-          <TabsList className="flex flex-wrap gap-2">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="team">Team</TabsTrigger>
-            <TabsTrigger value="progress">Progress</TabsTrigger>
-            <TabsTrigger value="resources">Resources</TabsTrigger>
-            <TabsTrigger value="applicants">Applicants</TabsTrigger>
+        <Tabs defaultValue="pending" className="flex-1 overflow-hidden">
+          <TabsList>
+            <TabsTrigger value="pending" className="flex items-center">
+              Pending
+              <Badge variant="secondary" className="ml-2">
+                {getApplicantsByStatus("pending").length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="accepted" className="flex items-center">
+              Accepted
+              <Badge variant="secondary" className="ml-2">
+                {getApplicantsByStatus("accepted").length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="waitlisted" className="flex items-center">
+              Waitlisted
+              <Badge variant="secondary" className="ml-2">
+                {getApplicantsByStatus("waitlisted").length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="rejected" className="flex items-center">
+              Rejected
+              <Badge variant="secondary" className="ml-2">
+                {getApplicantsByStatus("rejected").length}
+              </Badge>
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-6"
-            >
-              <div className="flex justify-between items-start">
-                <div className="space-y-4 flex-1">
-                  <div>
-                    <h2 className="text-2xl font-semibold mb-2">
-                      Project Description
-                    </h2>
-                    {isEditing ? (
-                      <Textarea
-                        value={project.description}
-                        onChange={(e) =>
-                          setProject((prev) => ({
-                            ...prev,
-                            description: e.target.value,
-                          }))
-                        }
-                        className="mb-4"
-                      />
-                    ) : (
-                      <p className="text-muted-foreground">
-                        {project.description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {isEditing ? (
-                      <>
-                        <div>
-                          <Label>Mentor</Label>
-                          <Input
-                            value={project.mentor}
-                            onChange={(e) =>
-                              setProject((prev) => ({
-                                ...prev,
-                                mentor: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Duration</Label>
-                          <Input
-                            value={project.duration}
-                            onChange={(e) =>
-                              setProject((prev) => ({
-                                ...prev,
-                                duration: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Tech Stack</Label>
-                          <Input
-                            value={project.techStack.join(", ")}
-                            onChange={(e) =>
-                              setProject((prev) => ({
-                                ...prev,
-                                techStack: e.target.value
-                                  .split(",")
-                                  .map((s) => s.trim()),
-                              }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Max Team Size</Label>
-                          <Input
-                            type="number"
-                            value={project.maxTeamSize}
-                            onChange={(e) =>
-                              setProject((prev) => ({
-                                ...prev,
-                                maxTeamSize: parseInt(e.target.value),
-                              }))
-                            }
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex items-center space-x-2">
-                          <Book className="text-muted-foreground" size={20} />
-                          <span className="text-muted-foreground">
-                            Mentor: {project.mentor}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Calendar
-                            className="text-muted-foreground"
-                            size={20}
-                          />
-                          <span className="text-muted-foreground">
-                            Duration: {project.duration}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Users className="text-muted-foreground" size={20} />
-                          <span className="text-muted-foreground">
-                            Team Size: {project.team.length} /{" "}
-                            {project.maxTeamSize}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Code className="text-muted-foreground" size={20} />
-                          <span className="text-muted-foreground">
-                            Tech Stack: {project.techStack.join(", ")}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  onClick={() => setIsEditing(!isEditing)}
-                >
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  {isEditing ? "Save" : "Edit"}
-                </Button>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="mt-6">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">Overall Progress</span>
-                  <span className="text-sm font-medium">
-                    {project.progress}%
-                  </span>
-                </div>
-                <Progress value={project.progress} className="h-2" />
-              </div>
-            </motion.div>
-          </TabsContent>
-
-          <TabsContent value="team">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-6"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {project.team.map((member, index) => (
-                  <div key={index} className="bg-card p-4 rounded-lg border">
-                    <h3 className="font-semibold">{member.name}</h3>
-                    <p className="text-muted-foreground">{member.role}</p>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </TabsContent>
-
-          <TabsContent value="progress">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-6"
-            >
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                <h2 className="text-2xl font-semibold">Tasks & Progress</h2>
-                <Dialog open={showAddTask} onOpenChange={setShowAddTask}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="mr-2" size={16} />
-                      Add Task
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add New Task</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="taskTitle">Task Title</Label>
-                        <Input
-                          id="taskTitle"
-                          value={newTask.title}
-                          onChange={(e) =>
-                            setNewTask((prev) => ({
-                              ...prev,
-                              title: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="assignedTo">Assigned To</Label>
-                        <Input
-                          id="assignedTo"
-                          value={newTask.assignedTo}
-                          onChange={(e) =>
-                            setNewTask((prev) => ({
-                              ...prev,
-                              assignedTo: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="deadline">Deadline</Label>
-                        <Input
-                          id="deadline"
-                          type="date"
-                          value={newTask.deadline}
-                          onChange={(e) =>
-                            setNewTask((prev) => ({
-                              ...prev,
-                              deadline: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <Button onClick={handleAddTask}>Add Task</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              <div className="space-y-4">
-                {project.tasks.map((task, index) => (
-                  <div
-                    key={index}
-                    className="bg-card p-4 rounded-lg border flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-                  >
-                    <div>
-                      <h3 className="font-semibold">{task.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Assigned to: {task.assignedTo}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Deadline: {task.deadline}
-                      </p>
-                    </div>
-                    <Badge
-                      className={
-                        task.status === "Completed"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }
-                      onClick={() => handleTaskStatusChange(task.title)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {task.status}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </TabsContent>
-
-          <TabsContent value="resources">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-6"
-            >
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                <h2 className="text-2xl font-semibold">Project Resources</h2>
-                <Dialog
-                  open={showAddResource}
-                  onOpenChange={setShowAddResource}
-                >
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="mr-2" size={16} />
-                      Add Resource
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add New Resource</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="resourceName">Resource Name</Label>
-                        <Input
-                          id="resourceName"
-                          value={newResource.name}
-                          onChange={(e) =>
-                            setNewResource((prev) => ({
-                              ...prev,
-                              name: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="resourceType">Resource Type</Label>
-                        <Input
-                          id="resourceType"
-                          value={newResource.type}
-                          onChange={(e) =>
-                            setNewResource((prev) => ({
-                              ...prev,
-                              type: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="resourceUrl">Resource URL</Label>
-                        <Input
-                          id="resourceUrl"
-                          value={newResource.url}
-                          onChange={(e) =>
-                            setNewResource((prev) => ({
-                              ...prev,
-                              url: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <Button onClick={handleAddResource}>Add Resource</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {project.resources?.map((resource, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    className="justify-start"
-                    onClick={() => window.open(resource.url, "_blank")}
-                  >
-                    <FileText className="mr-2" size={20} />
-                    {resource.name}
-                  </Button>
-                ))}
-              </div>
-            </motion.div>
-          </TabsContent>
-          <TabsContent value="applicants">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-6"
-            >
-              <ApplicantsModal
-                projectTitle={project.title}
-                applicants={applicants}
-                onClose={() => setActiveTab("overview")}
-                onUpdateStatus={handleUpdateApplicantStatus}
-                onAddNote={handleAddNote}
-              />
-            </motion.div>
-          </TabsContent>
+          <div className="overflow-y-auto mt-4 pr-4 h-[calc(80vh-12rem)]">
+            <TabsContent value="pending">
+              {renderApplicantList("pending")}
+            </TabsContent>
+            <TabsContent value="accepted">
+              {renderApplicantList("accepted")}
+            </TabsContent>
+            <TabsContent value="waitlisted">
+              {renderApplicantList("waitlisted")}
+            </TabsContent>
+            <TabsContent value="rejected">
+              {renderApplicantList("rejected")}
+            </TabsContent>
+          </div>
         </Tabs>
-      </div>
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }
