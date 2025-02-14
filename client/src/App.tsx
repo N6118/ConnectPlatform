@@ -9,12 +9,9 @@ import Login from "@/pages/login";
 import ForgotCredentials from "@/pages/forgot-credentials";
 import OTPVerification from "@/pages/otp-verification";
 import ResetPassword from "@/pages/reset-password";
-
+import SearchResults from "@/pages/SearchResults";
 // Admin pages
 import AdminDashboard from "@/pages/admin/dashboard";
-import { default as AdminClubs } from "@/pages/admin/clubs";
-import { default as AdminProjects } from "@/pages/admin/projects";
-import { default as AdminProfile } from "@/pages/admin/profile";
 
 // Faculty pages
 import FacultyDashboard from "@/pages/faculty/dashboard";
@@ -22,6 +19,9 @@ import { default as FacultyClubs } from "@/pages/faculty/clubs";
 import { default as FacultyProjects } from "@/pages/faculty/projects";
 import { default as FacultyProfile } from "@/pages/faculty/profile";
 import { default as FacultyMessaging } from "@/pages/faculty/messaging";
+import { default as FacultyMySpace } from "@/pages/faculty/my-space";
+import { default as FacultyProjectDetails } from "@/pages/faculty/projectdetails";
+import { default as FacultyClubDetail } from "@/pages/faculty/clubdetails";
 
 // Student pages
 import StudentDashboard from "@/pages/student/dashboard";
@@ -122,23 +122,12 @@ function Router() {
       <Route path="/forgot-credentials" component={ForgotCredentials} />
       <Route path="/otp-verification" component={OTPVerification} />
       <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/search-results" component={SearchResults} />
 
       {/* Admin Routes */}
       <Route
         path="/admin"
         component={() => <Route component={AdminDashboard} roles={["admin"]} />}
-      />
-      <Route
-        path="/admin/clubs"
-        component={() => <Route component={AdminClubs} roles={["admin"]} />}
-      />
-      <Route
-        path="/admin/projects"
-        component={() => <Route component={AdminProjects} roles={["admin"]} />}
-      />
-      <Route
-        path="/admin/profile"
-        component={() => <Route component={AdminProfile} roles={["admin"]} />}
       />
 
       {/* Faculty Routes */}
@@ -168,6 +157,24 @@ function Router() {
         path="/faculty/messaging"
         component={() => (
           <Route component={FacultyMessaging} roles={["faculty"]} />
+        )}
+      />
+      <Route
+        path="/faculty/my-space"
+        component={() => (
+          <Route component={FacultyMySpace} roles={["faculty"]} />
+        )}
+      />
+      <Route
+        path="/faculty/project/:id"
+        component={() => (
+          <Route component={FacultyProjectDetails} roles={["faculty"]} />
+        )}
+      />
+      <Route
+        path="/faculty/club/:id"
+        component={() => (
+          <Route component={FacultyClubDetail} roles={["faculty"]} />
         )}
       />
 

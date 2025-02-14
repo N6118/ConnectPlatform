@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import StudentNavbar from "@/components/navigation/StudentNavbar";
+import FacultyNavbar from "@/components/navigation/FacultyNavbar";
 
 interface TeamMember {
   name: string;
@@ -51,7 +51,7 @@ interface Resource {
   url: string;
 }
 
-export default function StudentProjectDetails({
+export default function FacultyProjectDetails({
   params,
 }: {
   params: { title: string };
@@ -199,7 +199,7 @@ export default function StudentProjectDetails({
 
   return (
     <>
-      <StudentNavbar />
+      <FacultyNavbar />
       <div className="container mx-auto py-10 px-4">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -207,7 +207,7 @@ export default function StudentProjectDetails({
           transition={{ duration: 0.5 }}
         >
           <Link
-            href="/student/my-space"
+            href="/faculty/my-space"
             className="flex items-center text-primary hover:underline mb-6"
           >
             <ArrowLeft className="mr-2" size={20} />

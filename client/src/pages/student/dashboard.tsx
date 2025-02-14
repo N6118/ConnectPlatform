@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import Carousel from "../../components/Carousel";
-import ActivityFeed from "../../components/ActivityFeed";
-import PerformanceOverview from "../../components/PerformanceOverview";
-import ProjectTracker from "../../components/ProjectTracker";
-import SkillDevelopment from "../../components/SkillDevelopment";
-import CalendarView from "../../components/CalendarView";
-import CreatePostButton from "../../components/CreatePostButton";
+import Carousel from "@/components/CommonDashboard-components/Carousel";
+import ActivityFeed from "@/components/CommonDashboard-components/ActivityFeed";
+import PerformanceOverview from "@/components/StudentDashboard-components/PerformanceOverview";
+import ProjectTracker from "@/components/CommonDashboard-components/ProjectTracker";
+import SkillDevelopment from "@/components/StudentDashboard-components/SkillDevelopment";
+import CalendarView from "@/components/CommonDashboard-components/CalendarView";
+import CreatePostButton from "@/components/CommonDashboard-components/CreatePostButton";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import StudentNavbar from "@/components/navigation/StudentNavbar";

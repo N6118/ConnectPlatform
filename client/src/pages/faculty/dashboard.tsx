@@ -1,12 +1,13 @@
 import React from "react";
-import Carousel from "../../components/Carousel";
-import ActivityFeed from "../../components/ActivityFeed";
-import ProjectTracker from "../../components/ProjectTracker";
-import CalendarView from "../../components/CalendarView";
-import ApplicantManagement from "../../components/ApplicantManagement";
-import QuickProjectStats from "../../components/QuickProjectStats";
-import VerificationRequests from "../../components/VerificationRequests";
-import CreatePostButton from "../../components/CreatePostButton";
+import Carousel from "@/components/CommonDashboard-components/Carousel";
+import ActivityFeed from "@/components/CommonDashboard-components/ActivityFeed";
+import ProjectTracker from "@/components/CommonDashboard-components/ProjectTracker";
+import CalendarView from "@/components/CommonDashboard-components/CalendarView";
+import ApplicantManagement from "@/components/FacultyDashboard-components/ApplicantManagement";
+import QuickProjectStats from "@/components/FacultyDashboard-components/QuickProjectStats";
+import VerificationRequests from "@/components/FacultyDashboard-components/VerificationRequests";
+import CreatePostButton from "@/components/CommonDashboard-components/CreatePostButton";
+import FacultyNavbar from "@/components/navigation/FacultyNavbar";
 
 const FacultyDashboard = () => {
   const ongoingProjects = 5;
@@ -29,6 +30,8 @@ const FacultyDashboard = () => {
   ];
 
   return (
+    <>
+      <FacultyNavbar />
     <div className="font-poppins text-textBlue min-h-screen p-4 flex">
       <div className="w-1/4 pr-4">
         <QuickProjectStats
@@ -56,6 +59,7 @@ const FacultyDashboard = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

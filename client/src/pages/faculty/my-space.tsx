@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import StudentNavbar from "@/components/navigation/StudentNavbar";
+import FacultyNavbar from "@/components/navigation/FacultyNavbar";
 
 interface Project {
   title: string;
@@ -49,7 +49,7 @@ interface Project {
   }[];
 }
 
-export default function StudentMySpace() {
+export default function FacultyMySpace() {
   const [projects, setProjects] = useState<Project[]>([
     {
       title: "AI Research Project",
@@ -86,7 +86,7 @@ export default function StudentMySpace() {
     },
     {
       title: "Web Development",
-      description: "Building a Student collaboration platform",
+      description: "Building a Faculty collaboration platform",
       tag: "Web",
       status: "Not Started",
       level: "Easy",
@@ -215,7 +215,7 @@ export default function StudentMySpace() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <StudentNavbar />
+      <FacultyNavbar />
       <div className="container mx-auto py-8 px-4">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -224,7 +224,7 @@ export default function StudentMySpace() {
         >
           <div className="flex flex-col md:flex-row justify-between items-center mb-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-4 md:mb-0">
-              Student Projects
+              Faculty Projects
             </h1>
             <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
               <div className="relative w-full md:w-64">
@@ -266,7 +266,7 @@ export default function StudentMySpace() {
               <ProjectCard
                 key={project.title}
                 project={project}
-                userType="student"
+                userType="faculty"
                 onEdit={() => handleEditProject(project.title)}
                 onDelete={() => handleDeleteConfirmation(project.title)}
                 onViewApplicants={() => handleViewApplicants(project.title)}

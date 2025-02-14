@@ -51,7 +51,6 @@ const navItems = [
     path: "/student/messaging",
     icon: <MessageSquare className="w-5 h-5" />,
   },
- 
 ];
 
 export default function StudentNavbar() {
@@ -63,7 +62,7 @@ export default function StudentNavbar() {
     e.preventDefault();
     if (searchQuery.trim()) {
       setLocation(
-        `/student/search?q=${encodeURIComponent(searchQuery.trim())}`,
+        `/search-results?q=${encodeURIComponent(searchQuery.trim())}`,
       );
     }
   };

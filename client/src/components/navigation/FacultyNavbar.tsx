@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Group,
   BookOpen,
+  LayoutDashboard,
 } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 import {
@@ -32,15 +33,16 @@ const navItems = [
     icon: <School className="w-5 h-5" />,
   },
   {
+    label: "My Space",
+    path: "/faculty/my-space",
+    icon: <LayoutDashboard className="w-5 h-5" />,
+  },
+  {
     label: "Projects",
     path: "/faculty/projects",
     icon: <FileText className="w-5 h-5" />,
   },
-  {
-    label: "Students",
-    path: "/faculty/students",
-    icon: <GraduationCap className="w-5 h-5" />,
-  },
+
   {
     label: "Clubs",
     path: "/faculty/clubs",
@@ -48,13 +50,8 @@ const navItems = [
   },
   {
     label: "Messages",
-    path: "/faculty/messages",
+    path: "/faculty/messaging",
     icon: <MessageSquare className="w-5 h-5" />,
-  },
-  {
-    label: "Resources",
-    path: "/faculty/resources",
-    icon: <BookOpen className="w-5 h-5" />,
   },
 ];
 
@@ -66,7 +63,9 @@ export default function FacultyNavbar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      setLocation(`/faculty/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setLocation(
+        `/search-results?q=${encodeURIComponent(searchQuery.trim())}`,
+      );
     }
   };
 
@@ -90,7 +89,7 @@ export default function FacultyNavbar() {
               className="flex-shrink-0 flex items-center"
             >
               <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">
-                CONNECT Faculty
+                CONNECT
               </span>
             </motion.div>
           </div>
@@ -135,11 +134,15 @@ export default function FacultyNavbar() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Faculty Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setLocation("/faculty/profile")}>
+                <DropdownMenuItem
+                  onClick={() => setLocation("/faculty/profile")}
+                >
                   <User className="w-4 h-4 mr-2" />
                   View Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLocation("/faculty/settings")}>
+                <DropdownMenuItem
+                  onClick={() => setLocation("/faculty/settings")}
+                >
                   <Settings className="w-4 h-4 mr-2" />
                   Settings
                 </DropdownMenuItem>
@@ -150,7 +153,10 @@ export default function FacultyNavbar() {
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-600"
+                >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
                 </DropdownMenuItem>
@@ -187,7 +193,9 @@ export default function FacultyNavbar() {
       {/* Mobile menu */}
       <motion.div
         initial={false}
-        animate={isOpen ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
+        animate={
+          isOpen ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }
+        }
         className={`md:hidden overflow-hidden ${isOpen ? "border-t border-border" : ""}`}
       >
         <div className="px-2 pt-2 pb-3 space-y-1">

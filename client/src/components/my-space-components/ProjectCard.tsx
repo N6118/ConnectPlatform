@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import { Edit2, Trash2 } from "lucide-react";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
+import { Edit2, Trash2, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 
 export const statusColors = {
@@ -24,41 +24,67 @@ interface ProjectCardProps {
     tag: string;
     status: keyof typeof statusColors;
     level: keyof typeof levelColors;
+    isOpenForApplications: boolean;
+    applicants?: {
+      id: string;
+      name: string;
+      status: "pending" | "accepted" | "rejected";
+    }[];
   };
+  userType: "faculty" | "student"; // New prop to differentiate user type
   onEdit: () => void;
   onDelete: () => void;
+  onViewApplicants: () => void;
 }
 
 export default function ProjectCard({
   project,
+  userType,
   onEdit,
   onDelete,
+  onViewApplicants,
 }: ProjectCardProps) {
+  const applicantsCount = project.applicants?.length || 0;
+
+  // Dynamically generate project link based on userType
+  const projectLink = `/${userType}/project/${encodeURIComponent(project.title)}`;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-card rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+      className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
     >
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
-          <h3 className="text-xl font-semibold text-foreground">
+          <h3 className="text-xl font-semibold text-gray-900">
             {project.title}
           </h3>
           <Badge variant="outline">{project.tag}</Badge>
         </div>
-        <p className="text-muted-foreground mb-4">{project.description}</p>
-        <div className="flex space-x-2 mb-4">
+        <p className="text-gray-600 mb-4">{project.description}</p>
+        <div className="flex flex-wrap gap-2 mb-4">
           <Badge className={statusColors[project.status]}>
             {project.status}
           </Badge>
           <Badge className={levelColors[project.level]}>{project.level}</Badge>
+          <Badge
+            variant={project.isOpenForApplications ? "default" : "secondary"}
+          >
+            {project.isOpenForApplications ? "Open for Applications" : "Closed"}
+          </Badge>
         </div>
         <div className="flex justify-between items-center">
-          <Link href={`/project/${encodeURIComponent(project.title)}`}>
-            <Button variant="outline">View Details</Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href={projectLink}>
+              <Button variant="outline">View Details</Button>
+            </Link>
+            <Button variant="outline" onClick={onViewApplicants}>
+              <Users className="h-4 w-4 mr-2" />
+              {applicantsCount} Applicant{applicantsCount !== 1 ? "s" : ""}
+            </Button>
+          </div>
           <div className="space-x-2">
             <Button variant="ghost" size="icon" onClick={onEdit}>
               <Edit2 className="h-4 w-4" />

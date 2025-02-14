@@ -34,14 +34,14 @@ export function ClubCard({ club, onJoinToggle }: ClubCardProps) {
 
   const handleClick = (e: React.MouseEvent) => {
     // Prevent navigation when clicking the join button
-    if ((e.target as HTMLElement).closest('button')) {
+    if ((e.target as HTMLElement).closest("button")) {
       return;
     }
-    setLocation(`/clubs/${club.id}`);
+    setLocation(`/student/club/${club.id}`);
   };
 
   return (
-    <Card 
+    <Card
       className="overflow-hidden transition-all hover:shadow-lg cursor-pointer h-full"
       onClick={handleClick}
     >

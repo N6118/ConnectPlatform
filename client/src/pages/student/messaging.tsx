@@ -1,12 +1,15 @@
-import React, { useState, useCallback, useEffect } from "react";
-import ChatList from "../../components/ChatList";
-import MessageBubble from "../../components/MessageBubble";
-import MessageInput from "../../components/MessageInput";
-import CreateGroup from "../../components/CreateGroup";
-import ChatSettings from "../../components/ChatSettings";
-import { Phone, Bell, MoreVertical } from "lucide-react";
+"use client";
+
+import { useState, useCallback, useEffect, useRef } from "react";
+import ChatList from "@//components/messaging-components/ChatList";
+import MessageBubble from "@/components/messaging-components/MessageBubble";
+import MessageInput from "@/components/messaging-components/MessageInput";
+import CreateGroup from "@/components/messaging-components/CreateGroup";
+import ChatSettings from "@/components/messaging-components/ChatSettings";
+import { Bell, MoreVertical, ArrowLeft } from "lucide-react";
 import type { Message, Chat } from "../types";
-import NewMessageModal from "../../components/NewMessageModal";
+import { AnimatePresence, motion } from "framer-motion";
+import WelcomeScreen from "@/components/messaging-components/WelcomeScreen";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
 
 const initialChats: Chat[] = [
@@ -14,7 +17,7 @@ const initialChats: Chat[] = [
     id: 1,
     type: "direct",
     name: "Mukesh Amdani",
-    lastMessage: "Hey! Will you buy Jio ?, ",
+    lastMessage: "Hey! Will you buy Jio ?",
     avatar:
       "https://upload.wikimedia.org/wikipedia/commons/6/69/Mukesh_Ambani.jpg",
     status: "online",
@@ -42,7 +45,7 @@ const initialChats: Chat[] = [
     name: "Project Team",
     lastMessage: "Did you see the update?",
     avatar:
-      "https://upload.wikimedia.org/wikipedia/commons/3/3b/Lana_Rhoades_cropped.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Lana_Rhoades_cropped.jpg/440px-Lana_Rhoades_cropped.jpg",
     status: "online",
     lastSeen: "now",
     unreadCount: 5,
@@ -104,18 +107,19 @@ export default function StudentMessaging() {
   const [showChatSettings, setShowChatSettings] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [socket, setSocket] = useState<WebSocket | null>(null);
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       setIsMobileView(window.innerWidth < 768);
     };
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Initialize WebSocket connection
   useEffect(() => {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -130,17 +134,20 @@ export default function StudentMessaging() {
         case "messageRead":
           handleMessageRead(data.messageId);
           break;
-        // Add more cases as needed
       }
     };
 
     setSocket(newSocket);
 
     return () => {
-      if (socket) {
-        socket.close();
+      if (newSocket) {
+        newSocket.close();
       }
     };
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   const handleTypingIndicator = (userId: string, isTyping: boolean) => {
@@ -178,7 +185,6 @@ export default function StudentMessaging() {
     setMessages((prev) => [...prev, newMessage]);
     setInput("");
 
-    // Update chat's last message
     if (selectedChat) {
       setChats((prev) =>
         prev.map((chat) =>
@@ -188,7 +194,6 @@ export default function StudentMessaging() {
         ),
       );
 
-      // Send message through WebSocket
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(
           JSON.stringify({
@@ -200,7 +205,6 @@ export default function StudentMessaging() {
       }
     }
 
-    // Simulate message status updates
     setTimeout(() => {
       setMessages((prev) =>
         prev.map((msg) =>
@@ -218,19 +222,66 @@ export default function StudentMessaging() {
     }, 2000);
   }, [input, messages.length, selectedChat, socket]);
 
-  const handleFileAttachment = (type: string, file: File) => {
-    // Handle file attachment
-    console.log(`Attaching ${type} file:`, file);
+  const handleFileAttachment = async (type: string, file: File) => {
+    if (!file) return;
+
+    try {
+      // In a real app, you would upload the file to your server
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Simulate file upload
+      const fileUrl = URL.createObjectURL(file);
+
+      // Create a new message with the file
+      const newMessage: Message = {
+        id: messages.length + 1,
+        text: type === "document" ? `📎 ${file.name}` : "",
+        sender: "user",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        status: "sent",
+        attachment: {
+          type,
+          url: fileUrl,
+          name: file.name,
+          size: file.size,
+        },
+      };
+
+      setMessages((prev) => [...prev, newMessage]);
+
+      // Simulate message status updates
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === newMessage.id ? { ...msg, status: "delivered" } : msg,
+          ),
+        );
+      }, 1000);
+
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === newMessage.id ? { ...msg, status: "read" } : msg,
+          ),
+        );
+      }, 2000);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
   };
 
   const handleVoiceMessage = (blob: Blob) => {
-    // Handle voice message
     console.log("Voice message recorded:", blob);
+    // Implement voice message sending logic here
   };
 
   const handleScheduleMessage = (date: Date) => {
-    // Handle scheduled message
     console.log("Message scheduled for:", date);
+    // Implement message scheduling logic here
   };
 
   const handleCreateGroup = useCallback(
@@ -241,7 +292,7 @@ export default function StudentMessaging() {
         name,
         lastMessage: "Group created",
         avatar:
-          "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150", // Default group avatar
+          "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150",
         status: "online",
         lastSeen: "now",
         unreadCount: 0,
@@ -249,7 +300,7 @@ export default function StudentMessaging() {
         isArchived: false,
         members: members.map((memberId) => ({
           id: memberId,
-          name: "Member", // In a real app, fetch member details
+          name: "Member",
           avatar:
             "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
           role: memberId === "current-user" ? "admin" : "member",
@@ -266,7 +317,6 @@ export default function StudentMessaging() {
     (
       users: Array<{ id: string; name: string; avatar: string; role: string }>,
     ) => {
-      // For direct messages
       if (users.length === 1) {
         const newChat: Chat = {
           id: chats.length + 1,
@@ -282,9 +332,7 @@ export default function StudentMessaging() {
         };
         setChats((prev) => [...prev, newChat]);
         setSelectedChat(newChat.id);
-      }
-      // For group messages
-      else if (users.length > 1) {
+      } else if (users.length > 1) {
         const newChat: Chat = {
           id: chats.length + 1,
           type: "group",
@@ -339,203 +387,191 @@ export default function StudentMessaging() {
   const selectedChatData = chats.find((chat) => chat.id === selectedChat);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <>
       <StudentNavbar />
-      <div className="flex h-screen bg-gray-100 py-14 px-4 sm:px-10">
-        {/* Chat List - Always visible on mobile */}
-        <div
-          className={`${selectedChat && isMobileView ? "hidden" : "flex"} w-full sm:w-80 sm:flex`}
-        >
-          <ChatList
-            chats={chats}
-            selectedChat={selectedChat}
-            onSelectChat={(chatId) => {
-              setSelectedChat(chatId);
-            }}
-            onCreateChat={handleCreateChat}
-          />
-        </div>
+      <div
+        className={`flex flex-col min-h-screen ${theme === "dark" ? "dark" : ""}`}
+      >
+        <div className="flex h-[calc(100vh-3.5rem)] bg-gray-100 dark:bg-gray-900">
+          {/* Chat List */}
+          <AnimatePresence>
+            {(!selectedChat || !isMobileView) && (
+              <motion.div
+                initial={{ x: -300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -300, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="w-full sm:w-80 sm:flex flex-col"
+              >
+                <ChatList
+                  chats={chats}
+                  selectedChat={selectedChat}
+                  onSelectChat={(chatId) => {
+                    setSelectedChat(chatId);
+                  }}
+                  onCreateChat={handleCreateChat}
+                  onCreateGroup={() => setShowCreateGroup(true)}
+                  theme={theme}
+                  setTheme={setTheme}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Chat Window */}
-        <div
-          className={`${!selectedChat && isMobileView ? "hidden" : "flex"} flex-1 flex flex-col bg-white shadow-lg`}
-        >
-          {selectedChat ? (
-            <>
-              {/* Chat Header */}
-              <div className="flex items-center justify-between p-4 border-b">
-                {isMobileView && (
-                  <button
-                    onClick={() => setSelectedChat(null)}
-                    className="mr-2 p-2 hover:bg-gray-100 rounded-full"
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+          {/* Chat Window or Welcome Screen */}
+          <AnimatePresence>
+            {selectedChat ? (
+              <motion.div
+                initial={{ x: 300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 300, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="flex-1 flex flex-col bg-white dark:bg-gray-800 shadow-lg"
+              >
+                {/* Chat Header */}
+                <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                  {isMobileView && (
+                    <button
+                      onClick={() => setSelectedChat(null)}
+                      className="mr-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
+                      <ArrowLeft
+                        size={24}
+                        className="text-gray-600 dark:text-gray-300"
                       />
-                    </svg>
-                  </button>
-                )}
-                <div className="flex items-center">
-                  <img
-                    src={selectedChatData?.avatar}
-                    alt="Chat avatar"
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                  <div className="ml-3">
-                    <h2 className="font-semibold text-gray-800">
-                      {selectedChatData?.name}
-                    </h2>
-                    <p className="text-xs text-gray-500">
-                      {selectedChatData?.status === "online"
-                        ? "Active now"
-                        : selectedChatData?.lastSeen}
-                    </p>
+                    </button>
+                  )}
+                  <div className="flex items-center">
+                    <img
+                      src={selectedChatData?.avatar || "/placeholder.svg"}
+                      alt="Chat avatar"
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div className="ml-3">
+                      <div className="flex items-center space-x-2">
+                        <h2 className="font-semibold text-gray-800 dark:text-gray-200">
+                          {selectedChatData?.name}
+                        </h2>
+                        {selectedChatData?.isMuted && (
+                          <Bell className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {selectedChatData?.status === "online"
+                          ? "Active now"
+                          : selectedChatData?.lastSeen}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => setShowChatSettings(true)}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                    >
+                      <MoreVertical
+                        size={20}
+                        className="text-gray-600 dark:text-gray-300"
+                      />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <Phone size={20} className="text-gray-600" />
-                  </button>
-                  <button
-                    className={`p-2 hover:bg-gray-100 rounded-full transition-colors ${
-                      selectedChatData?.isMuted
-                        ? "text-blue-500"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    <Bell size={20} />
-                  </button>
-                  <button
-                    onClick={() => setShowChatSettings(true)}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <MoreVertical size={20} className="text-gray-600" />
-                  </button>
-                </div>
-              </div>
 
-              {/* Messages */}
-              <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-                <div className="space-y-4">
-                  {messages.map((msg) => (
-                    <MessageBubble
-                      key={msg.id}
-                      message={msg}
-                      onReact={(messageId, emoji) => {
-                        setMessages((prev) =>
-                          prev.map((m) =>
-                            m.id === messageId
-                              ? {
-                                  ...m,
-                                  reactions: [
-                                    ...(m.reactions || []),
-                                    {
-                                      emoji,
-                                      userId: "current-user",
-                                      timestamp: new Date().toISOString(),
-                                    },
-                                  ],
-                                }
-                              : m,
-                          ),
-                        );
-                      }}
-                      onPin={(messageId) => {
-                        setMessages((prev) =>
-                          prev.map((m) =>
-                            m.id === messageId
-                              ? { ...m, isPinned: !m.isPinned }
-                              : m,
-                          ),
-                        );
-                      }}
-                      onReply={(messageId) => {
-                        const replyToMessage = messages.find(
-                          (m) => m.id === messageId,
-                        );
-                        if (replyToMessage) {
-                          setInput(`Replying to: "${replyToMessage.text}"\n`);
-                        }
-                      }}
-                      onRemoveReaction={(messageId, reactionId) => {
-                        setMessages((prev) =>
-                          prev.map((m) =>
-                            m.id === messageId
-                              ? {
-                                  ...m,
-                                  reactions: m.reactions?.filter(
-                                    (r) => r.userId !== reactionId,
-                                  ),
-                                }
-                              : m,
-                          ),
-                        );
-                      }}
-                    />
-                  ))}
+                {/* Messages */}
+                <div className="flex-1 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+                  <div className="space-y-4">
+                    {messages.map((msg) => (
+                      <MessageBubble
+                        key={msg.id}
+                        message={msg}
+                        onReact={(messageId, emoji) => {
+                          setMessages((prev) =>
+                            prev.map((m) =>
+                              m.id === messageId
+                                ? {
+                                    ...m,
+                                    reactions: [
+                                      ...(m.reactions || []),
+                                      {
+                                        emoji,
+                                        userId: "current-user",
+                                        timestamp: new Date().toISOString(),
+                                      },
+                                    ],
+                                  }
+                                : m,
+                            ),
+                          );
+                        }}
+                        onPin={(messageId) => {
+                          setMessages((prev) =>
+                            prev.map((m) =>
+                              m.id === messageId
+                                ? { ...m, isPinned: !m.isPinned }
+                                : m,
+                            ),
+                          );
+                        }}
+                        onReply={(messageId) => {
+                          const replyToMessage = messages.find(
+                            (m) => m.id === messageId,
+                          );
+                          if (replyToMessage) {
+                            setInput(`Replying to: "${replyToMessage.text}"\n`);
+                          }
+                        }}
+                        onRemoveReaction={(messageId, reactionId) => {
+                          setMessages((prev) =>
+                            prev.map((m) =>
+                              m.id === messageId
+                                ? {
+                                    ...m,
+                                    reactions: m.reactions?.filter(
+                                      (r) => r.userId !== reactionId,
+                                    ),
+                                  }
+                                : m,
+                            ),
+                          );
+                        }}
+                      />
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
                 </div>
-              </div>
 
-              {/* Message Input */}
-              <MessageInput
-                input={input}
-                setInput={setInput}
-                onSend={handleSendMessage}
-                onAttach={handleFileAttachment}
-                onSchedule={handleScheduleMessage}
-                onVoiceMessage={handleVoiceMessage}
-              />
-            </>
-          ) : (
-            !isMobileView && (
-              <div className="flex items-center justify-center flex-1 bg-gray-50">
-                <div className="text-center max-w-md p-8">
-                  <h3 className="text-2xl font-semibold text-gray-800 mb-4">
-                    Welcome to CONNECT Messages
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    Start a conversation, create a group, or select an existing
-                    chat to begin messaging.
-                  </p>
-                  <button
-                    onClick={() => setShowCreateGroup(true)}
-                    className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    Create New Group
-                  </button>
-                </div>
-              </div>
-            )
+                {/* Message Input */}
+                <MessageInput
+                  input={input}
+                  setInput={setInput}
+                  onSend={handleSendMessage}
+                  onAttach={handleFileAttachment}
+                  onVoiceMessage={handleVoiceMessage}
+                />
+              </motion.div>
+            ) : (
+              <WelcomeScreen onCreateGroup={() => setShowCreateGroup(true)} />
+            )}
+          </AnimatePresence>
+
+          {/* Modals */}
+          {showCreateGroup && (
+            <CreateGroup
+              onClose={() => setShowCreateGroup(false)}
+              onCreate={handleCreateGroup}
+            />
+          )}
+
+          {showChatSettings && selectedChatData && (
+            <ChatSettings
+              chat={selectedChatData}
+              onClose={() => setShowChatSettings(false)}
+              onMute={() => handleMuteChat(selectedChatData.id)}
+              onArchive={() => handleArchiveChat(selectedChatData.id)}
+              onDelete={() => handleDeleteChat(selectedChatData.id)}
+            />
           )}
         </div>
-
-        {/* Modals */}
-        {showCreateGroup && (
-          <CreateGroup
-            onClose={() => setShowCreateGroup(false)}
-            onCreate={handleCreateGroup}
-          />
-        )}
-
-        {showChatSettings && selectedChatData && (
-          <ChatSettings
-            chat={selectedChatData}
-            onClose={() => setShowChatSettings(false)}
-            onMute={() => handleMuteChat(selectedChatData.id)}
-            onArchive={() => handleArchiveChat(selectedChatData.id)}
-            onDelete={() => handleDeleteChat(selectedChatData.id)}
-          />
-        )}
       </div>
-    </div>
+    </>
   );
 }

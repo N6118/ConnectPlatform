@@ -3,9 +3,16 @@ import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 interface ProjectData {
   title: string;
@@ -19,6 +26,7 @@ interface ProjectData {
   status: "Not Started" | "In Progress" | "Completed";
   skills: string;
   maxTeamSize: string;
+  isOpenForApplications: boolean;
 }
 
 interface ProjectModalProps {
@@ -27,7 +35,11 @@ interface ProjectModalProps {
   onSave: (data: ProjectData) => void;
 }
 
-export default function ProjectModal({ project, onClose, onSave }: ProjectModalProps) {
+export default function ProjectModal({
+  project,
+  onClose,
+  onSave,
+}: ProjectModalProps) {
   const [formData, setFormData] = useState<ProjectData>({
     title: "",
     description: "",
@@ -40,6 +52,7 @@ export default function ProjectModal({ project, onClose, onSave }: ProjectModalP
     status: "Not Started",
     skills: "",
     maxTeamSize: "",
+    isOpenForApplications: true,
   });
 
   useEffect(() => {
@@ -48,11 +61,12 @@ export default function ProjectModal({ project, onClose, onSave }: ProjectModalP
         ...project,
         level: project.level || "Medium",
         status: project.status || "Not Started",
+        isOpenForApplications: project.isOpenForApplications ?? true,
       });
     }
   }, [project]);
 
-  const handleChange = (name: keyof ProjectData, value: string) => {
+  const handleChange = (name: keyof ProjectData, value: any) => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -69,16 +83,16 @@ export default function ProjectModal({ project, onClose, onSave }: ProjectModalP
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-background/80 backdrop-blur-sm flex justify-center items-center z-50 p-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4"
     >
       <motion.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
-        className="bg-card rounded-lg shadow-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border"
+        className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-2xl font-bold text-gray-900">
             {project ? "Edit Project" : "Add New Project"}
           </h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -122,7 +136,12 @@ export default function ProjectModal({ project, onClose, onSave }: ProjectModalP
               <Label htmlFor="level">Project Level</Label>
               <Select
                 value={formData.level}
-                onValueChange={(value) => handleChange("level", value as "Easy" | "Medium" | "Difficult")}
+                onValueChange={(value) =>
+                  handleChange(
+                    "level",
+                    value as "Easy" | "Medium" | "Difficult",
+                  )
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select level" />
@@ -139,7 +158,12 @@ export default function ProjectModal({ project, onClose, onSave }: ProjectModalP
               <Label htmlFor="status">Project Status</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value) => handleChange("status", value as "Not Started" | "In Progress" | "Completed")}
+                onValueChange={(value) =>
+                  handleChange(
+                    "status",
+                    value as "Not Started" | "In Progress" | "Completed",
+                  )
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
@@ -160,6 +184,17 @@ export default function ProjectModal({ project, onClose, onSave }: ProjectModalP
                 onChange={(e) => handleChange("duration", e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="isOpenForApplications"
+              checked={formData.isOpenForApplications}
+              onCheckedChange={(checked) =>
+                handleChange("isOpenForApplications", checked)
+              }
+            />
+            <Label htmlFor="isOpenForApplications">Open for Applications</Label>
           </div>
 
           <div className="flex justify-end space-x-4">

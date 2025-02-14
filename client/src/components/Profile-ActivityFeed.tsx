@@ -20,7 +20,7 @@ import {
   Trash2,
   Edit,
 } from "lucide-react";
-import CreatePostModal from "./CreatePostModal";
+import CreatePostModal from "@/components/CommonDashboard-components/CreatePostModal";
 import { useToast } from "../hooks/use-toast";
 import {
   AlertDialog,
