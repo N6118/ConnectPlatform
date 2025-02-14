@@ -112,11 +112,12 @@ export default function ProjectModal({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tag">Tag</Label>
+              <Label htmlFor="mentor">Project Mentor</Label>
               <Input
-                id="tag"
-                value={formData.tag}
-                onChange={(e) => handleChange("tag", e.target.value)}
+                id="mentor"
+                value={formData.mentor}
+                onChange={(e) => handleChange("mentor", e.target.value)}
+                required
               />
             </div>
           </div>
@@ -131,16 +132,32 @@ export default function ProjectModal({
             />
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="tag">Tag</Label>
+              <Input
+                id="tag"
+                value={formData.tag}
+                onChange={(e) => handleChange("tag", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="techStack">Tech Stack</Label>
+              <Input
+                id="techStack"
+                value={formData.techStack}
+                onChange={(e) => handleChange("techStack", e.target.value)}
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <Label htmlFor="level">Project Level</Label>
               <Select
                 value={formData.level}
                 onValueChange={(value) =>
-                  handleChange(
-                    "level",
-                    value as "Easy" | "Medium" | "Difficult",
-                  )
+                  handleChange("level", value as "Easy" | "Medium" | "Difficult")
                 }
               >
                 <SelectTrigger>
@@ -161,7 +178,7 @@ export default function ProjectModal({
                 onValueChange={(value) =>
                   handleChange(
                     "status",
-                    value as "Not Started" | "In Progress" | "Completed",
+                    value as "Not Started" | "In Progress" | "Completed"
                   )
                 }
               >

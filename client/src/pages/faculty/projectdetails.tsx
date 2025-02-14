@@ -6,20 +6,17 @@ import {
   Calendar,
   Code,
   Users,
-  Activity,
   FileText,
   Plus,
   Edit2,
   Upload,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
-import {
-  statusColors,
-  levelColors,
-} from "@/components/my-space-components/ProjectCard";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +48,13 @@ interface Resource {
   url: string;
 }
 
+interface Applicant {
+  id: string;
+  name: string;
+  email: string;
+  status: "Pending" | "Approved" | "Rejected";
+}
+
 export default function FacultyProjectDetails({
   params,
 }: {
@@ -76,7 +80,6 @@ export default function FacultyProjectDetails({
     type: "",
     url: "",
   });
-
   const [project, setProject] = useState({
     title: decodeURIComponent(params.title),
     description: "This is a detailed description of the project.",
@@ -122,9 +125,22 @@ export default function FacultyProjectDetails({
       },
     ],
   });
+  const [applicants, setApplicants] = useState<Applicant[]>([
+    {
+      id: "1",
+      name: "John Smith",
+      email: "john@example.com",
+      status: "Pending",
+    },
+    {
+      id: "2",
+      name: "Emma Wilson",
+      email: "emma@example.com",
+      status: "Pending",
+    },
+  ]);
 
   useEffect(() => {
-    // Calculate progress based on completed tasks
     const completedTasks = project.tasks.filter(
       (task) => task.status === "Completed",
     ).length;
@@ -197,6 +213,24 @@ export default function FacultyProjectDetails({
     }));
   };
 
+  const handleApplicantStatus = (applicantId: string, status: "Approved" | "Rejected") => {
+    setApplicants((prev) =>
+      prev.map((app) =>
+        app.id === applicantId ? { ...app, status } : app
+      )
+    );
+
+    if (status === "Approved") {
+      const approvedApplicant = applicants.find((app) => app.id === applicantId);
+      if (approvedApplicant) {
+        setProject((prev) => ({
+          ...prev,
+          team: [...prev.team, { name: approvedApplicant.name, role: "Team Member" }],
+        }));
+      }
+    }
+  };
+
   return (
     <>
       <FacultyNavbar />
@@ -214,7 +248,6 @@ export default function FacultyProjectDetails({
             Back to Projects
           </Link>
 
-          {/* Project Header with Image */}
           <div className="mb-8">
             <div className="relative w-full h-48 md:h-64 rounded-lg overflow-hidden mb-6">
               <img
@@ -309,6 +342,7 @@ export default function FacultyProjectDetails({
             <TabsTrigger value="team">Team</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="resources">Resources</TabsTrigger>
+            <TabsTrigger value="applicants">Applicants</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -439,7 +473,6 @@ export default function FacultyProjectDetails({
                 </Button>
               </div>
 
-              {/* Progress Bar */}
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Overall Progress</span>
@@ -647,6 +680,62 @@ export default function FacultyProjectDetails({
                     <FileText className="mr-2" size={20} />
                     {resource.name}
                   </Button>
+                ))}
+              </div>
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="applicants">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-6"
+            >
+              <h2 className="text-2xl font-semibold">Project Applicants</h2>
+              <div className="space-y-4">
+                {applicants.map((applicant) => (
+                  <div
+                    key={applicant.id}
+                    className="bg-card p-4 rounded-lg border flex justify-between items-center"
+                  >
+                    <div>
+                      <h3 className="font-semibold">{applicant.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {applicant.email}
+                      </p>
+                    </div>
+                    {applicant.status === "Pending" ? (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-green-500 hover:bg-green-600"
+                          onClick={() => handleApplicantStatus(applicant.id, "Approved")}
+                        >
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleApplicantStatus(applicant.id, "Rejected")}
+                        >
+                          <XCircle className="w-4 h-4 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
+                    ) : (
+                      <Badge
+                        className={
+                          applicant.status === "Approved"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }
+                      >
+                        {applicant.status}
+                      </Badge>
+                    )}
+                  </div>
                 ))}
               </div>
             </motion.div>

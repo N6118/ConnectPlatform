@@ -15,6 +15,7 @@ interface Project {
   techStack: string[];
   prerequisites: string[];
   members: string[];
+  mentor: string;  // Added mentor field
 }
 
 interface ProjectModalProps {
@@ -51,6 +52,10 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                 <div>
                   <h3 className="text-lg font-semibold mb-2">About</h3>
                   <p className="text-muted-foreground">{project.about}</p>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Mentor</h3>
+                  <p className="text-muted-foreground">{project.mentor}</p>
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Tags</h3>
