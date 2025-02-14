@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import * as React from "react";
 
@@ -20,8 +20,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 };
 
-const ThemeProviderContext =
-  React.createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -30,7 +29,7 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = React.useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
+    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   );
 
   React.useEffect(() => {
@@ -58,7 +57,7 @@ export function ThemeProvider({
         setTheme(theme);
       },
     }),
-    [theme, storageKey],
+    [theme, storageKey]
   );
 
   return (
