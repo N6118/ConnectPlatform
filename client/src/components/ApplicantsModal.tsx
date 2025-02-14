@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import {
   X,
   Download,
@@ -11,7 +10,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-
 interface Applicant {
   id: string;
   name: string;
@@ -30,7 +27,6 @@ interface Applicant {
   experience: string;
   notes?: string;
 }
-
 interface ApplicantsModalProps {
   projectTitle: string;
   applicants: Applicant[];
@@ -38,7 +34,6 @@ interface ApplicantsModalProps {
   onUpdateStatus: (applicantId: string, newStatus: Applicant["status"]) => void;
   onAddNote: (applicantId: string, note: string) => void;
 }
-
 export default function ApplicantsModal({
   projectTitle,
   applicants,
@@ -51,16 +46,13 @@ export default function ApplicantsModal({
   );
   const [noteInput, setNoteInput] = useState<{ [key: string]: string }>({});
   const [searchTerm, setSearchTerm] = useState("");
-
   const filteredApplicants = applicants.filter(
     (applicant) =>
       applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       applicant.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-
   const getApplicantsByStatus = (status: Applicant["status"]) =>
     filteredApplicants.filter((a) => a.status === status);
-
   const handleSelectAll = (status: Applicant["status"]) => {
     const statusApplicants = getApplicantsByStatus(status);
     if (statusApplicants.every((a) => selectedApplicants.has(a.id))) {
@@ -78,14 +70,12 @@ export default function ApplicantsModal({
       );
     }
   };
-
   const handleBulkAction = (newStatus: Applicant["status"]) => {
     selectedApplicants.forEach((id) => {
       onUpdateStatus(id, newStatus);
     });
     setSelectedApplicants(new Set());
   };
-
   const exportToCSV = () => {
     const headers = [
       "Name",
@@ -108,14 +98,12 @@ export default function ApplicantsModal({
         ].join(","),
       ),
     ].join("\n");
-
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = `${projectTitle}-applicants.csv`;
     link.click();
   };
-
   const sendBulkEmail = () => {
     const emails = Array.from(selectedApplicants)
       .map((id) => applicants.find((a) => a.id === id)?.email)
@@ -123,10 +111,8 @@ export default function ApplicantsModal({
       .join(",");
     window.location.href = `mailto:?bcc=${emails}`;
   };
-
   const renderApplicantList = (status: Applicant["status"]) => {
     const statusApplicants = getApplicantsByStatus(status);
-
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between mb-4">
@@ -185,7 +171,6 @@ export default function ApplicantsModal({
             </div>
           )}
         </div>
-
         {statusApplicants.map((applicant) => (
           <div
             key={applicant.id}
@@ -290,7 +275,6 @@ export default function ApplicantsModal({
             </div>
           </div>
         ))}
-
         {statusApplicants.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No {status} applicants found
@@ -299,7 +283,6 @@ export default function ApplicantsModal({
       </div>
     );
   };
-
   return (
     <Dialog open onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
@@ -324,7 +307,6 @@ export default function ApplicantsModal({
             />
           </div>
         </DialogHeader>
-
         <Tabs defaultValue="pending" className="flex-1 overflow-hidden">
           <TabsList>
             <TabsTrigger value="pending" className="flex items-center">
@@ -352,7 +334,6 @@ export default function ApplicantsModal({
               </Badge>
             </TabsTrigger>
           </TabsList>
-
           <div className="overflow-y-auto mt-4 pr-4 h-[calc(80vh-12rem)]">
             <TabsContent value="pending">
               {renderApplicantList("pending")}

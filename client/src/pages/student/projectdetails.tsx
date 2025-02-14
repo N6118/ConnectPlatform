@@ -32,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
+import ApplicantsModal from "@/components/ApplicantsModal";
 
 interface TeamMember {
   name: string;
@@ -49,6 +50,16 @@ interface Resource {
   name: string;
   type: string;
   url: string;
+}
+
+interface Applicant {
+  id: string;
+  name: string;
+  email: string;
+  status: "pending" | "accepted" | "rejected" | "waitlisted";
+  appliedDate: string;
+  experience: string;
+  notes?: string;
 }
 
 export default function StudentProjectDetails({
@@ -76,6 +87,25 @@ export default function StudentProjectDetails({
     type: "",
     url: "",
   });
+
+  const [applicants, setApplicants] = useState<Applicant[]>([
+    {
+      id: "1",
+      name: "John Smith",
+      email: "john@example.com",
+      status: "pending",
+      appliedDate: "2024-03-20",
+      experience: "3 years of web development experience",
+    },
+    {
+      id: "2",
+      name: "Emma Wilson",
+      email: "emma@example.com",
+      status: "pending",
+      appliedDate: "2024-03-21",
+      experience: "Recent graduate with strong ML background",
+    },
+  ]);
 
   const [project, setProject] = useState({
     title: decodeURIComponent(params.title),
@@ -197,6 +227,42 @@ export default function StudentProjectDetails({
     }));
   };
 
+  const handleUpdateApplicantStatus = (
+    applicantId: string,
+    newStatus: Applicant["status"],
+  ) => {
+    setApplicants((prev) =>
+      prev.map((app) =>
+        app.id === applicantId ? { ...app, status: newStatus } : app,
+      ),
+    );
+
+    if (newStatus === "accepted") {
+      const approvedApplicant = applicants.find(
+        (app) => app.id === applicantId,
+      );
+      if (approvedApplicant) {
+        setProject((prev) => ({
+          ...prev,
+          team: [
+            ...prev.team,
+            { name: approvedApplicant.name, role: "Team Member" },
+          ],
+        }));
+      }
+    }
+  };
+
+  const handleAddNote = (applicantId: string, note: string) => {
+    setApplicants((prev) =>
+      prev.map((app) =>
+        app.id === applicantId
+          ? { ...app, notes: app.notes ? `${app.notes}\n${note}` : note }
+          : app,
+      ),
+    );
+  };
+
   return (
     <>
       <StudentNavbar />
@@ -309,6 +375,7 @@ export default function StudentProjectDetails({
             <TabsTrigger value="team">Team</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="resources">Resources</TabsTrigger>
+            <TabsTrigger value="applicants">Applicants</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -649,6 +716,22 @@ export default function StudentProjectDetails({
                   </Button>
                 ))}
               </div>
+            </motion.div>
+          </TabsContent>
+          <TabsContent value="applicants">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-6"
+            >
+              <ApplicantsModal
+                projectTitle={project.title}
+                applicants={applicants}
+                onClose={() => setActiveTab("overview")}
+                onUpdateStatus={handleUpdateApplicantStatus}
+                onAddNote={handleAddNote}
+              />
             </motion.div>
           </TabsContent>
         </Tabs>

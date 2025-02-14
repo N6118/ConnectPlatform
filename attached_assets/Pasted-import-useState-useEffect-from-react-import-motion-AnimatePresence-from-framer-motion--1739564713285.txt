@@ -1,0 +1,297 @@
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ArrowLeft,
+  Book,
+  Calendar,
+  Code,
+  Users,
+  Activity,
+  FileText,
+  Plus,
+  Edit2,
+  Upload,
+  Rocket,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Link } from "wouter";
+import {
+  statusColors,
+  levelColors,
+} from "@/components/my-space-components/ProjectCard";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import StudentNavbar from "@/components/navigation/StudentNavbar";
+import ApplicantsModal from "@/components/ApplicantsModal";
+import { useToast } from "@/components/ui/use-toast";
+
+// ... keep existing interfaces
+
+export default function StudentProjectDetails({
+  params,
+}: {
+  params: { title: string };
+}) {
+  const { toast } = useToast();
+  // ... keep existing state variables and project state
+
+  const [applicants, setApplicants] = useState<Applicant[]>([
+    {
+      id: "1",
+      name: "John Smith",
+      email: "john@example.com",
+      status: "pending",
+      appliedDate: "2024-03-20",
+      experience: "3 years of web development experience",
+    },
+    {
+      id: "2",
+      name: "Emma Wilson",
+      email: "emma@example.com",
+      status: "pending",
+      appliedDate: "2024-03-21",
+      experience: "Recent graduate with strong ML background",
+    },
+  ]);
+
+  // ... keep existing useEffect
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProject((prev) => ({ ...prev, imageUrl: reader.result as string }));
+        toast({
+          title: "Image Updated",
+          description: "Project cover image has been successfully updated.",
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddMember = () => {
+    if (newMember.name && newMember.role) {
+      if (project.team.length >= project.maxTeamSize) {
+        toast({
+          title: "Team is Full",
+          description: `Maximum team size of ${project.maxTeamSize} has been reached.`,
+          variant: "destructive",
+        });
+        return;
+      }
+      setProject((prev) => ({
+        ...prev,
+        team: [...prev.team, newMember],
+      }));
+      setNewMember({ name: "", role: "" });
+      setShowAddMember(false);
+      toast({
+        title: "Team Member Added",
+        description: `${newMember.name} has been added as ${newMember.role}.`,
+      });
+    }
+  };
+
+  // ... keep existing handleAddTask and handleAddResource
+
+  const handleUpdateApplicantStatus = (
+    applicantId: string,
+    newStatus: Applicant["status"],
+  ) => {
+    setApplicants((prev) =>
+      prev.map((app) => (app.id === applicantId ? { ...app, status: newStatus } : app)),
+    );
+
+    if (newStatus === "accepted") {
+      const approvedApplicant = applicants.find((app) => app.id === applicantId);
+      if (approvedApplicant) {
+        if (project.team.length >= project.maxTeamSize) {
+          toast({
+            title: "Cannot Add Team Member",
+            description: "The team is already at maximum capacity.",
+            variant: "destructive",
+          });
+          return;
+        }
+        setProject((prev) => ({
+          ...prev,
+          team: [
+            ...prev.team,
+            { name: approvedApplicant.name, role: "Team Member" },
+          ],
+        }));
+        toast({
+          title: "Applicant Accepted",
+          description: `${approvedApplicant.name} has been added to the team.`,
+        });
+      }
+    }
+  };
+
+  const handleAddNote = (applicantId: string, note: string) => {
+    setApplicants((prev) =>
+      prev.map((app) =>
+        app.id === applicantId
+          ? { ...app, notes: app.notes ? `${app.notes}\n${note}` : note }
+          : app,
+      ),
+    );
+    toast({
+      title: "Note Added",
+      description: "The note has been added to the applicant's profile.",
+    });
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "Completed":
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case "In Progress":
+        return <Clock className="h-4 w-4 text-yellow-500" />;
+      case "Pending":
+        return <AlertCircle className="h-4 w-4 text-gray-500" />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      <StudentNavbar />
+      <div className="container mx-auto py-10 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Link
+            href="/student/my-space"
+            className="flex items-center text-primary hover:underline mb-6 transition-colors"
+          >
+            <ArrowLeft className="mr-2" size={20} />
+            Back to Projects
+          </Link>
+
+          <div className="mb-8">
+            <motion.div
+              className="relative w-full h-48 md:h-64 rounded-lg overflow-hidden mb-6"
+              whileHover={{ scale: 1.01 }}
+              transition={{ duration: 0.2 }}
+            >
+              <img
+                src={project.imageUrl}
+                alt={project.title}
+                className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+              <div className="absolute bottom-4 right-4">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="image-upload"
+                />
+                <label htmlFor="image-upload">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="hover:scale-105 transition-transform"
+                  >
+                    <Upload className="mr-2" size={16} />
+                    Change Cover
+                  </Button>
+                </label>
+              </div>
+            </motion.div>
+
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <motion.h1
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="text-4xl font-bold text-foreground mb-2"
+                >
+                  {project.title}
+                </motion.h1>
+                <div className="flex flex-wrap gap-2">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <Badge className={statusColors[project.status]}>
+                      {getStatusIcon(project.status)}
+                      <span className="ml-1">{project.status}</span>
+                    </Badge>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <Badge className={levelColors[project.level]}>
+                      <Rocket className="h-4 w-4 mr-1" />
+                      {project.level}
+                    </Badge>
+                  </motion.div>
+                </div>
+              </div>
+              
+              {/* ... keep existing Dialog for Add Team Member */}
+            </div>
+          </div>
+        </motion.div>
+
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-4"
+        >
+          <TabsList className="flex flex-wrap gap-2">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="team">Team</TabsTrigger>
+            <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="resources">Resources</TabsTrigger>
+            <TabsTrigger value="applicants">Applicants</TabsTrigger>
+          </TabsList>
+
+          {/* ... keep existing TabsContent for overview, team, progress, and resources */}
+
+          <TabsContent value="applicants">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-6"
+            >
+              <ApplicantsModal
+                projectTitle={project.title}
+                applicants={applicants}
+                onClose={() => setActiveTab("overview")}
+                onUpdateStatus={handleUpdateApplicantStatus}
+                onAddNote={handleAddNote}
+              />
+            </motion.div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </>
+  );
+}
