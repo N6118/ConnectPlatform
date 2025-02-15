@@ -6,17 +6,20 @@ import {
   Calendar,
   Code,
   Users,
+  Activity,
   FileText,
   Plus,
   Edit2,
   Upload,
-  CheckCircle,
-  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
+import {
+  statusColors,
+  levelColors,
+} from "@/components/my-space-components/ProjectCard";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
+import ApplicantsModal from "@/components/ApplicantsModal";
 
 interface TeamMember {
   name: string;
@@ -52,7 +56,10 @@ interface Applicant {
   id: string;
   name: string;
   email: string;
-  status: "Pending" | "Approved" | "Rejected";
+  status: "pending" | "accepted" | "rejected" | "waitlisted";
+  appliedDate: string;
+  experience: string;
+  notes?: string;
 }
 
 export default function FacultyProjectDetails({
@@ -80,17 +87,25 @@ export default function FacultyProjectDetails({
     type: "",
     url: "",
   });
-  const statusColors: { [key: string]: string } = {
-    "In Progress": "bg-yellow-100 text-yellow-800",
-    Completed: "bg-green-100 text-green-800",
-    Pending: "bg-gray-100 text-gray-800",
-    Canceled: "bg-red-100 text-red-800",
-  };
-  const levelColors: { [key: string]: string } = {
-    Easy: "bg-green-100 text-green-800",
-    Medium: "bg-yellow-100 text-yellow-800",
-    Hard: "bg-red-100 text-red-800",
-  };
+
+  const [applicants, setApplicants] = useState<Applicant[]>([
+    {
+      id: "1",
+      name: "John Smith",
+      email: "john@example.com",
+      status: "pending",
+      appliedDate: "2024-03-20",
+      experience: "3 years of web development experience",
+    },
+    {
+      id: "2",
+      name: "Emma Wilson",
+      email: "emma@example.com",
+      status: "pending",
+      appliedDate: "2024-03-21",
+      experience: "Recent graduate with strong ML background",
+    },
+  ]);
 
   const [project, setProject] = useState({
     title: decodeURIComponent(params.title),
@@ -137,22 +152,9 @@ export default function FacultyProjectDetails({
       },
     ],
   });
-  const [applicants, setApplicants] = useState<Applicant[]>([
-    {
-      id: "1",
-      name: "John Smith",
-      email: "john@example.com",
-      status: "Pending",
-    },
-    {
-      id: "2",
-      name: "Emma Wilson",
-      email: "emma@example.com",
-      status: "Pending",
-    },
-  ]);
 
   useEffect(() => {
+    // Calculate progress based on completed tasks
     const completedTasks = project.tasks.filter(
       (task) => task.status === "Completed",
     ).length;
@@ -225,15 +227,17 @@ export default function FacultyProjectDetails({
     }));
   };
 
-  const handleApplicantStatus = (
+  const handleUpdateApplicantStatus = (
     applicantId: string,
-    status: "Approved" | "Rejected",
+    newStatus: Applicant["status"],
   ) => {
     setApplicants((prev) =>
-      prev.map((app) => (app.id === applicantId ? { ...app, status } : app)),
+      prev.map((app) =>
+        app.id === applicantId ? { ...app, status: newStatus } : app,
+      ),
     );
 
-    if (status === "Approved") {
+    if (newStatus === "accepted") {
       const approvedApplicant = applicants.find(
         (app) => app.id === applicantId,
       );
@@ -247,6 +251,16 @@ export default function FacultyProjectDetails({
         }));
       }
     }
+  };
+
+  const handleAddNote = (applicantId: string, note: string) => {
+    setApplicants((prev) =>
+      prev.map((app) =>
+        app.id === applicantId
+          ? { ...app, notes: app.notes ? `${app.notes}\n${note}` : note }
+          : app,
+      ),
+    );
   };
 
   return (
@@ -266,6 +280,7 @@ export default function FacultyProjectDetails({
             Back to Projects
           </Link>
 
+          {/* Project Header with Image */}
           <div className="mb-8">
             <div className="relative w-full h-48 md:h-64 rounded-lg overflow-hidden mb-6">
               <img
@@ -296,20 +311,10 @@ export default function FacultyProjectDetails({
                   {project.title}
                 </h1>
                 <div className="flex flex-wrap gap-2">
-                  <Badge
-                    className={
-                      statusColors[project.status] ||
-                      "bg-gray-100 text-gray-800"
-                    }
-                  >
+                  <Badge className={statusColors[project.status]}>
                     {project.status}
                   </Badge>
-
-                  <Badge
-                    className={
-                      levelColors[project.level] || "bg-gray-100 text-gray-800"
-                    }
-                  >
+                  <Badge className={levelColors[project.level]}>
                     {project.level}
                   </Badge>
                 </div>
@@ -501,6 +506,7 @@ export default function FacultyProjectDetails({
                 </Button>
               </div>
 
+              {/* Progress Bar */}
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Overall Progress</span>
@@ -712,7 +718,6 @@ export default function FacultyProjectDetails({
               </div>
             </motion.div>
           </TabsContent>
-
           <TabsContent value="applicants">
             <motion.div
               initial={{ opacity: 0 }}
@@ -720,56 +725,13 @@ export default function FacultyProjectDetails({
               transition={{ duration: 0.5 }}
               className="space-y-6"
             >
-              <h2 className="text-2xl font-semibold">Project Applicants</h2>
-              <div className="space-y-4">
-                {applicants.map((applicant) => (
-                  <div
-                    key={applicant.id}
-                    className="bg-card p-4 rounded-lg border flex justify-between items-center"
-                  >
-                    <div>
-                      <h3 className="font-semibold">{applicant.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {applicant.email}
-                      </p>
-                    </div>
-                    {applicant.status === "Pending" ? (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className="bg-green-500 hover:bg-green-600"
-                          onClick={() =>
-                            handleApplicantStatus(applicant.id, "Approved")
-                          }
-                        >
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() =>
-                            handleApplicantStatus(applicant.id, "Rejected")
-                          }
-                        >
-                          <XCircle className="w-4 h-4 mr-1" />
-                          Reject
-                        </Button>
-                      </div>
-                    ) : (
-                      <Badge
-                        className={
-                          applicant.status === "Approved"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }
-                      >
-                        {applicant.status}
-                      </Badge>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <ApplicantsModal
+                projectTitle={project.title}
+                applicants={applicants}
+                onClose={() => setActiveTab("overview")}
+                onUpdateStatus={handleUpdateApplicantStatus}
+                onAddNote={handleAddNote}
+              />
             </motion.div>
           </TabsContent>
         </Tabs>

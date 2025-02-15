@@ -1,21 +1,29 @@
-import { X, Bell, Archive, Trash2 } from "lucide-react"
-import type { Chat } from "@/types"
+import { X, Bell, Archive, Trash2 } from "lucide-react";
+import type { Chat } from "@/types";
 
 interface ChatSettingsProps {
-  chat: Chat
-  onClose: () => void
-  onMute: () => void
-  onArchive: () => void
-  onDelete: () => void
+  chat: Chat;
+  onClose: () => void;
+  onMute: () => void;
+  onArchive: () => void;
+  onDelete: () => void;
 }
 
-export default function ChatSettings({ chat, onClose, onMute, onArchive, onDelete }: ChatSettingsProps) {
+export default function ChatSettings({
+  chat,
+  onClose,
+  onMute,
+  onArchive,
+  onDelete,
+}: ChatSettingsProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Chat Settings</h2>
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+            Chat Settings
+          </h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
@@ -34,9 +42,13 @@ export default function ChatSettings({ chat, onClose, onMute, onArchive, onDelet
                 className="w-12 h-12 rounded-full object-cover"
               />
               <div>
-                <h3 className="font-medium text-gray-800 dark:text-gray-200">{chat.name}</h3>
+                <h3 className="font-medium text-gray-800 dark:text-gray-200">
+                  {chat.name}
+                </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {chat.type === "group" ? `${chat.members?.length} members` : chat.status}
+                  {chat.type === "group"
+                    ? `${chat.members?.length} members`
+                    : chat.status}
                 </p>
               </div>
             </div>
@@ -88,6 +100,5 @@ export default function ChatSettings({ chat, onClose, onMute, onArchive, onDelet
         </div>
       </div>
     </div>
-  )
+  );
 }
-

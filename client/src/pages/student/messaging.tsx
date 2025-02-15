@@ -45,7 +45,7 @@ const initialChats: Chat[] = [
     name: "Project Team",
     lastMessage: "Did you see the update?",
     avatar:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Lana_Rhoades_cropped.jpg/440px-Lana_Rhoades_cropped.jpg",
+      "https://dragonball.guru/wp-content/uploads/2021/03/goku-profile-e1616173641804-400x400.png",
     status: "online",
     lastSeen: "now",
     unreadCount: 5,
@@ -148,7 +148,7 @@ export default function StudentMessaging() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+  }, []); // Removed 'messages' dependency
 
   const handleTypingIndicator = (userId: string, isTyping: boolean) => {
     setChats((prevChats) =>
@@ -279,11 +279,6 @@ export default function StudentMessaging() {
     // Implement voice message sending logic here
   };
 
-  const handleScheduleMessage = (date: Date) => {
-    console.log("Message scheduled for:", date);
-    // Implement message scheduling logic here
-  };
-
   const handleCreateGroup = useCallback(
     (name: string, members: string[]) => {
       const newGroup: Chat = {
@@ -392,7 +387,7 @@ export default function StudentMessaging() {
       <div
         className={`flex flex-col min-h-screen ${theme === "dark" ? "dark" : ""}`}
       >
-        <div className="flex h-[calc(100vh-3.5rem)] bg-gray-100 dark:bg-gray-900">
+        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
           {/* Chat List */}
           <AnimatePresence>
             {(!selectedChat || !isMobileView) && (
@@ -401,7 +396,7 @@ export default function StudentMessaging() {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -300, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="w-full sm:w-80 sm:flex flex-col"
+                className="w-full md:w-80 flex flex-col"
               >
                 <ChatList
                   chats={chats}
@@ -413,6 +408,7 @@ export default function StudentMessaging() {
                   onCreateGroup={() => setShowCreateGroup(true)}
                   theme={theme}
                   setTheme={setTheme}
+                  isMobileView={isMobileView}
                 />
               </motion.div>
             )}
@@ -549,7 +545,9 @@ export default function StudentMessaging() {
                 />
               </motion.div>
             ) : (
-              <WelcomeScreen onCreateGroup={() => setShowCreateGroup(true)} />
+              !isMobileView && (
+                <WelcomeScreen onCreateGroup={() => setShowCreateGroup(true)} />
+              )
             )}
           </AnimatePresence>
 

@@ -17,8 +17,9 @@ export default function WelcomeScreen({ onCreateGroup }: WelcomeScreenProps) {
           Welcome to CONNECT Messages
         </h3>
         <p className="text-gray-600 dark:text-gray-400 mb-8">
-          Start a conversation, create a group and stay connected with your
-          team.
+          Start a conversation, create a group, or select an existing chat to
+          begin messaging. Share files, react with emojis, and stay connected
+          with your team.
         </p>
         <div className="space-y-4">
           <button
@@ -27,6 +28,10 @@ export default function WelcomeScreen({ onCreateGroup }: WelcomeScreenProps) {
           >
             Create New Group
           </button>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            You can also start a direct message by clicking the plus button in
+            the sidebar.
+          </p>
         </div>
       </div>
     </div>
