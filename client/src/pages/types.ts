@@ -6,16 +6,18 @@ export interface Message {
   timestamp: string;
   status: "sent" | "delivered" | "read";
   reactions?: Reaction[];
-  replyTo?: {
-    id: number;
-    text: string;
-    sender: string;
-  };
+  replyTo?: number;  // Changed from object to number
   isPinned?: boolean;
   scheduledFor?: string;
   thread?: {
     count: number;
     lastReply: string;
+  };
+  attachment?: {
+    type: string;
+    url: string;
+    name: string;
+    size: number;
   };
 }
 
@@ -52,4 +54,15 @@ export interface ChatMember {
 export interface QuickReply {
   text: string;
   icon?: string;
+}
+
+// Applicant Types for my-space
+export interface Applicant {
+  id: string;
+  name: string;
+  email: string;
+  status: "pending" | "accepted" | "rejected" | "waitlisted";
+  appliedDate: string;
+  experience: string;
+  notes?: string;
 }

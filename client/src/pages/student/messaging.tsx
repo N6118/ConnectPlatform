@@ -7,10 +7,12 @@ import MessageInput from "@/components/messaging-components/MessageInput";
 import CreateGroup from "@/components/messaging-components/CreateGroup";
 import ChatSettings from "@/components/messaging-components/ChatSettings";
 import { Bell, MoreVertical, ArrowLeft } from "lucide-react";
-import type { Message, Chat } from "../types";
+import type { Message, Chat } from "@/types";
 import { AnimatePresence, motion } from "framer-motion";
 import WelcomeScreen from "@/components/messaging-components/WelcomeScreen";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const initialChats: Chat[] = [
   {
@@ -99,6 +101,7 @@ const initialMessages: Message[] = [
 ];
 
 export default function StudentMessaging() {
+  const isMobile = useIsMobile();
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [chats, setChats] = useState<Chat[]>(initialChats);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -148,7 +151,7 @@ export default function StudentMessaging() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []); // Removed 'messages' dependency
+  }, []);
 
   const handleTypingIndicator = (userId: string, isTyping: boolean) => {
     setChats((prevChats) =>
@@ -226,14 +229,11 @@ export default function StudentMessaging() {
     if (!file) return;
 
     try {
-      // In a real app, you would upload the file to your server
       const formData = new FormData();
       formData.append("file", file);
 
-      // Simulate file upload
       const fileUrl = URL.createObjectURL(file);
 
-      // Create a new message with the file
       const newMessage: Message = {
         id: messages.length + 1,
         text: type === "document" ? `📎 ${file.name}` : "",
@@ -253,7 +253,6 @@ export default function StudentMessaging() {
 
       setMessages((prev) => [...prev, newMessage]);
 
-      // Simulate message status updates
       setTimeout(() => {
         setMessages((prev) =>
           prev.map((msg) =>
@@ -276,7 +275,6 @@ export default function StudentMessaging() {
 
   const handleVoiceMessage = (blob: Blob) => {
     console.log("Voice message recorded:", blob);
-    // Implement voice message sending logic here
   };
 
   const handleCreateGroup = useCallback(
@@ -382,13 +380,12 @@ export default function StudentMessaging() {
   const selectedChatData = chats.find((chat) => chat.id === selectedChat);
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-50">
       <StudentNavbar />
       <div
         className={`flex flex-col min-h-screen ${theme === "dark" ? "dark" : ""}`}
       >
         <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-          {/* Chat List */}
           <AnimatePresence>
             {(!selectedChat || !isMobileView) && (
               <motion.div
@@ -414,7 +411,6 @@ export default function StudentMessaging() {
             )}
           </AnimatePresence>
 
-          {/* Chat Window or Welcome Screen */}
           <AnimatePresence>
             {selectedChat ? (
               <motion.div
@@ -424,7 +420,6 @@ export default function StudentMessaging() {
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className="flex-1 flex flex-col bg-white dark:bg-gray-800 shadow-lg"
               >
-                {/* Chat Header */}
                 <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
                   {isMobileView && (
                     <button
@@ -472,7 +467,6 @@ export default function StudentMessaging() {
                   </div>
                 </div>
 
-                {/* Messages */}
                 <div className="flex-1 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-900">
                   <div className="space-y-4">
                     {messages.map((msg) => (
@@ -535,7 +529,6 @@ export default function StudentMessaging() {
                   </div>
                 </div>
 
-                {/* Message Input */}
                 <MessageInput
                   input={input}
                   setInput={setInput}
@@ -551,7 +544,6 @@ export default function StudentMessaging() {
             )}
           </AnimatePresence>
 
-          {/* Modals */}
           {showCreateGroup && (
             <CreateGroup
               onClose={() => setShowCreateGroup(false)}
@@ -570,6 +562,7 @@ export default function StudentMessaging() {
           )}
         </div>
       </div>
-    </>
+      {isMobile && <MobileBottomNav role="student" />}
+    </div>
   );
 }

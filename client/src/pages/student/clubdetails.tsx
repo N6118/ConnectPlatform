@@ -6,6 +6,8 @@ import StudentNavbar from "@/components/navigation/StudentNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+type EventType = "Hackathon" | "Workshop" | "Meeting" | "Other";
+
 const clubData = {
   id: 1,
   name: "Tech Innovators Club",
@@ -25,7 +27,7 @@ const clubData = {
       title: "Spring Hackathon 2024",
       description: "48-hour coding challenge to build innovative solutions",
       date: "2024-04-15",
-      type: "Hackathon",
+      type: "Hackathon" as EventType,
       location: "Main Campus, Building A",
       registrationLink: "https://example.com/register",
     },
