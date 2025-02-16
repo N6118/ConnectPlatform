@@ -24,6 +24,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { Club } from "@/components/ui/club-card"; // Import the Club type
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const upcomingEvents = [
   {
@@ -172,6 +174,7 @@ export default function FacultyClubs() {
   const [showJoinedOnly, setShowJoinedOnly] = useState(false);
   const [sortBy, setSortBy] = useState("popular");
   const [clubsList, setClubsList] = useState(clubs);
+  const isMobile = useIsMobile();
 
   const handleJoinToggle = (clubId: number) => {
     setClubsList((prevClubs) =>
@@ -206,7 +209,7 @@ export default function FacultyClubs() {
     });
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen pb-16 md:pb-0">
       <FacultyNavbar />
       <div className="min-h-screen bg-background">
         <div className="container mx-auto py-8 px-4">
@@ -326,6 +329,7 @@ export default function FacultyClubs() {
           </div>
         </div>
       </div>
+      {isMobile && <MobileBottomNav role="faculty" />}
     </div>
   );
 }

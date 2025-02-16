@@ -6,6 +6,11 @@ import {
   LogOut,
   User,
   Search,
+  LayoutDashboard,
+  FileText,
+  MessageSquare,
+  Briefcase,
+  Group,
 } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 import {
@@ -18,6 +23,34 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+const navItems = [
+  {
+    label: "Dashboard",
+    path: "/faculty",
+    icon: <LayoutDashboard className="w-5 h-5" />,
+  },
+  {
+    label: "My Space",
+    path: "/faculty/my-space",
+    icon: <Briefcase className="w-5 h-5" />,
+  },
+  {
+    label: "Projects",
+    path: "/faculty/projects",
+    icon: <FileText className="w-5 h-5" />,
+  },
+  {
+    label: "Clubs",
+    path: "/faculty/clubs",
+    icon: <Group className="w-5 h-5" />,
+  },
+  {
+    label: "Messages",
+    path: "/faculty/messaging",
+    icon: <MessageSquare className="w-5 h-5" />,
+  },
+];
 
 export default function FacultyNavbar() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,6 +86,22 @@ export default function FacultyNavbar() {
                 CONNECT
               </span>
             </motion.div>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex md:items-center md:space-x-4">
+            {navItems.map((item) => (
+              <motion.button
+                key={item.path}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setLocation(item.path)}
+                className="px-3 py-2 rounded-md text-sm font-medium text-foreground hover:text-primary hover:bg-accent transition-colors duration-200 flex items-center space-x-2"
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </motion.button>
+            ))}
           </div>
 
           {/* Search Bar */}

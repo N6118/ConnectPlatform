@@ -218,7 +218,7 @@ export default function FacultyMySpace() {
   const isMobile = useIsMobile();
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
+    <div className="min-h-screen pb-16 md:pb-0">
       <FacultyNavbar />
       <div className="container mx-auto py-8 px-4">
         <motion.div

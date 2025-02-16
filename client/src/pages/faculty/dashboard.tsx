@@ -36,7 +36,6 @@ const FacultyDashboard = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      //setIsMobileView(window.innerWidth < 768); // Removed - using useIsMobile
       if (window.innerWidth >= 768) {
         setActiveComponent(null);
       }
@@ -162,7 +161,9 @@ const FacultyDashboard = () => {
   return (
     <div className="relative min-h-screen pb-16 md:pb-0">
       <FacultyNavbar />
-      {isMobile ? renderMobileView() : renderDesktopView()}
+      <div className="container mx-auto py-8 px-4">
+        {isMobile ? renderMobileView() : renderDesktopView()}
+      </div>
       {isMobile && <MobileBottomNav role="faculty" />}
     </div>
   );
