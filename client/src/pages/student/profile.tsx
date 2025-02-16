@@ -29,12 +29,6 @@ import {
   PenSquare,
   Settings,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 import ActivityFeed from "@/components/Profile-ActivityFeed";
 import { useToast } from "@/hooks/use-toast";
@@ -299,7 +293,6 @@ export default function StudentProfile() {
                 <FaEdit size={18} />
               </button>
             </div>
-
 
             {/* Follow & Message Buttons */}
             {/*<div className="absolute top-6 right-0 flex gap-2">

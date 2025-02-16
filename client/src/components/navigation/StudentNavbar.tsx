@@ -2,18 +2,14 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
-  Home,
-  FileText,
   Settings,
   LogOut,
-  Menu,
-  X,
   User,
   Search,
+  LayoutDashboard,
+  FileText,
   MessageSquare,
   Group,
-  BookOpen,
-  LayoutDashboard,
 } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 import {
@@ -24,17 +20,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const navItems = [
   {
     label: "Home",
     path: "/student",
-    icon: <Home className="w-5 h-5" />,
+    icon: <LayoutDashboard className="w-5 h-5" />,
   },
   {
     label: "My Space",
     path: "/student/my-space",
-    icon: <LayoutDashboard className="w-5 h-5" />,
+    icon: <FileText className="w-5 h-5" />,
   },
   {
     label: "Projects",
@@ -54,7 +52,6 @@ const navItems = [
 ];
 
 export default function StudentNavbar() {
-  const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [_, setLocation] = useLocation();
 
@@ -77,10 +74,10 @@ export default function StudentNavbar() {
   };
 
   return (
-    <nav className="bg-background border-b">
+    <nav className="bg-background border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          {/* Logo and Brand */}
+          {/* Logo */}
           <div className="flex items-center">
             <motion.div
               whileHover={{ scale: 1.05 }}
@@ -93,17 +90,17 @@ export default function StudentNavbar() {
           </div>
 
           {/* Search Bar */}
-          <div className="hidden md:flex items-center flex-1 max-w-lg mx-8">
+          <div className="flex items-center flex-1 max-w-lg mx-8">
             <form onSubmit={handleSearch} className="w-full">
               <div className="relative">
-                <input
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search projects, clubs, resources..."
-                  className="w-full px-4 py-2 pl-10 text-sm border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full pl-10"
                 />
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               </div>
             </form>
           </div>
@@ -116,18 +113,23 @@ export default function StudentNavbar() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setLocation(item.path)}
-                className="px-3 py-2 rounded-md text-sm font-medium text-foreground hover:text-indigo-600 hover:bg-accent transition-colors duration-200 flex items-center space-x-2"
+                className="px-3 py-2 rounded-md text-sm font-medium text-foreground hover:text-primary hover:bg-accent transition-colors duration-200 flex items-center space-x-2"
               >
                 {item.icon}
                 <span>{item.label}</span>
               </motion.button>
             ))}
+          </div>
 
-            {/* User Settings Dropdown */}
+          {/* Right Side - Theme Toggle and Profile */}
+          <div className="flex items-center space-x-4">
+            <ThemeToggle />
+
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-foreground hover:text-indigo-600 hover:bg-accent transition-colors duration-200">
-                <User className="w-5 h-5" />
-                <span>Profile</span>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <User className="h-5 w-5" />
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Student Account</DropdownMenuLabel>
@@ -145,12 +147,6 @@ export default function StudentNavbar() {
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <div className="flex items-center w-full">
-                    <ThemeToggle />
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="text-red-600"
@@ -161,96 +157,8 @@ export default function StudentNavbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
-          {/* Mobile menu button */}
-          <div className="flex items-center space-x-4 md:hidden">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setLocation("/student/search")}
-              className="p-2 rounded-md text-foreground hover:text-indigo-600 hover:bg-accent focus:outline-none"
-            >
-              <Search className="h-5 w-5" />
-            </motion.button>
-
-            <ThemeToggle />
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-foreground hover:text-indigo-600 hover:bg-accent focus:outline-none"
-            >
-              {isOpen ? (
-                <X className="block h-6 w-6" />
-              ) : (
-                <Menu className="block h-6 w-6" />
-              )}
-            </motion.button>
-          </div>
         </div>
       </div>
-
-      {/* Mobile menu */}
-      <motion.div
-        initial={false}
-        animate={
-          isOpen ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }
-        }
-        className={`md:hidden overflow-hidden ${isOpen ? "border-t border-border" : ""}`}
-      >
-        <div className="px-2 pt-2 pb-3 space-y-1">
-          {navItems.map((item) => (
-            <motion.button
-              key={item.path}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setLocation(item.path);
-                setIsOpen(false);
-              }}
-              className="w-full px-3 py-2 rounded-md text-base font-medium text-foreground hover:text-indigo-600 hover:bg-accent transition-colors duration-200 flex items-center space-x-2"
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </motion.button>
-          ))}
-
-          {/* Mobile Profile Options */}
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              setLocation("/student/profile");
-              setIsOpen(false);
-            }}
-            className="w-full px-3 py-2 rounded-md text-base font-medium text-foreground hover:text-indigo-600 hover:bg-accent transition-colors duration-200 flex items-center space-x-2"
-          >
-            <User className="w-5 h-5" />
-            <span>Profile</span>
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              setLocation("/student/settings");
-              setIsOpen(false);
-            }}
-            className="w-full px-3 py-2 rounded-md text-base font-medium text-foreground hover:text-indigo-600 hover:bg-accent transition-colors duration-200 flex items-center space-x-2"
-          >
-            <Settings className="w-5 h-5" />
-            <span>Settings</span>
-          </motion.button>
-
-          {/* Mobile Logout Button */}
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              handleLogout();
-              setIsOpen(false);
-            }}
-            className="w-full px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 flex items-center space-x-2"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Logout</span>
-          </motion.button>
-        </div>
-      </motion.div>
     </nav>
   );
 }

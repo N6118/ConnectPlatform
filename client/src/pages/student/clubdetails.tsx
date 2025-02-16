@@ -7,7 +7,6 @@ import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 type EventType = "Hackathon" | "Workshop" | "Meeting" | "Other";
-
 const clubData = {
   id: 1,
   name: "Tech Innovators Club",

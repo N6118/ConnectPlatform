@@ -3,7 +3,6 @@ import ClubDetailView from "@/components/clubs-components/club-detail-view";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
-
 const clubData = {
   id: 1,
   name: "Tech Innovators Club",

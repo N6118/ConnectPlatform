@@ -22,7 +22,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { Club } from "@/components/ui/club-card"; // Import the Club type
+import type { Club } from "@/components/ui/club-card";
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Carousel from "@/components/CommonDashboard-components/Carousel";
 import ActivityFeed from "@/components/CommonDashboard-components/ActivityFeed";
 import PerformanceOverview from "@/components/StudentDashboard-components/PerformanceOverview";
@@ -9,17 +9,17 @@ import CreatePostButton from "@/components/CommonDashboard-components/CreatePost
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav"; // Added bottom nav bar
 import { SwipeableCard } from "@/components/ui/swipeable-card";
+import { useIsMobile } from "@/hooks/use-mobile"; // Custom hook for mobile detection
 
 export default function StudentDashboard() {
   const [activeComponent, setActiveComponent] = useState<string | null>(null);
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const isMobile = useIsMobile();
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Handle window resize
-  React.useEffect(() => {
+  useEffect(() => {
     const handleResize = () => {
-      setIsMobileView(window.innerWidth < 768);
       if (window.innerWidth >= 768) {
         setActiveComponent(null);
       }
@@ -94,40 +94,46 @@ export default function StudentDashboard() {
   );
 
   const renderDesktopView = () => (
-    <>
-      <StudentNavbar />
-      <div className="min-h-screen p-4 flex flex-wrap lg:flex-nowrap gap-4">
-        {/* Left Column: Performance Overview and Skill Development */}
-        <div className="w-full lg:w-1/4 space-y-4">
-          <div className="bg-card rounded-lg p-4 shadow">
-            <PerformanceOverview />
-          </div>
-          <div className="bg-card rounded-lg p-4 shadow">
-            <SkillDevelopment />
-          </div>
+    <div className="min-h-screen p-4 flex flex-wrap lg:flex-nowrap gap-4">
+      {/* Left Column: Performance Overview and Skill Development */}
+      <div className="w-full lg:w-1/4 space-y-4">
+        <div className="bg-card rounded-lg p-4 shadow">
+          <PerformanceOverview />
         </div>
-
-        {/* Center Column: Activity Feed */}
-        <div className="w-full lg:w-2/4 space-y-4">
-          <div>
-            <Carousel />
-          </div>
-          <CreatePostButton />
-          <ActivityFeed />
-        </div>
-
-        {/* Right Column: Calendar and Project Tracker */}
-        <div className="w-full lg:w-1/4 space-y-4">
-          <div className="bg-card rounded-lg p-4 shadow">
-            <CalendarView />
-          </div>
-          <div className="bg-card rounded-lg p-4 shadow">
-            <ProjectTracker />
-          </div>
+        <div className="bg-card rounded-lg p-4 shadow">
+          <SkillDevelopment />
         </div>
       </div>
-    </>
+
+      {/* Center Column: Activity Feed */}
+      <div className="w-full lg:w-2/4 space-y-4">
+        <div>
+          <Carousel />
+        </div>
+        <CreatePostButton />
+        <ActivityFeed />
+      </div>
+
+      {/* Right Column: Calendar and Project Tracker */}
+      <div className="w-full lg:w-1/4 space-y-4">
+        <div className="bg-card rounded-lg p-4 shadow">
+          <CalendarView />
+        </div>
+        <div className="bg-card rounded-lg p-4 shadow">
+          <ProjectTracker />
+        </div>
+      </div>
+    </div>
   );
 
-  return isMobileView ? renderMobileView() : renderDesktopView();
+  return (
+    <div className="relative min-h-screen pb-16 md:pb-0">
+      <StudentNavbar />
+      <div className="mx-auto py-8 px-4">
+        {isMobile ? renderMobileView() : renderDesktopView()}
+      </div>
+      {isMobile && <MobileBottomNav role="student" />}{" "}
+      {/* Added bottom nav bar */}
+    </div>
+  );
 }

@@ -40,7 +40,6 @@ interface TeamMember {
   name: string;
   role: string;
 }
-
 interface Task {
   title: string;
   assignedTo: string;

@@ -21,7 +21,6 @@ interface Project {
   mentor: string; // Added mentor field
 }
 
-// Mock projects data
 const projects: Project[] = [
   {
     id: 1,

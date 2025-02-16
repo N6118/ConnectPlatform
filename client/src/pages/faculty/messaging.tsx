@@ -99,7 +99,6 @@ const initialMessages: Message[] = [
     isPinned: true,
   },
 ];
-
 export default function FacultyMessaging() {
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [chats, setChats] = useState<Chat[]>(initialChats);
@@ -382,7 +381,9 @@ export default function FacultyMessaging() {
   return (
     <div className="relative min-h-screen pb-16 md:pb-0">
       <FacultyNavbar />
-      <div className={`flex flex-col min-h-screen ${theme === "dark" ? "dark" : ""}`}>
+      <div
+        className={`flex flex-col min-h-screen ${theme === "dark" ? "dark" : ""}`}
+      >
         <div className="flex h-[calc(100vh-4rem)] bg-gray-100 dark:bg-gray-900">
           <AnimatePresence>
             {(!selectedChat || !isMobileView) && (

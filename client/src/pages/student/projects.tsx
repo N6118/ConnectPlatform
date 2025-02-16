@@ -18,10 +18,9 @@ interface Project {
   techStack: string[];
   prerequisites: string[];
   members: string[];
-  mentor: string; // Added mentor field
+  mentor: string;
 }
 
-// Update projects data with mentor
 const projects: Project[] = [
   {
     id: 1,
@@ -31,7 +30,8 @@ const projects: Project[] = [
     tags: ["AI/ML", "Chatbot"],
     image:
       "https://t4.ftcdn.net/jpg/05/47/89/79/240_F_547897906_xOyy9X2M0VuInOpsnMOjcirgyoU9T8aJ.jpg",
-    about: "An AI-driven platform to optimize full stack development processes.",
+    about:
+      "An AI-driven platform to optimize full stack development processes.",
     techStack: ["Python", "TensorFlow", "React"],
     prerequisites: [
       "Programming Knowledge",

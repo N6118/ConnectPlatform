@@ -10,20 +10,6 @@ import CreatePostButton from "@/components/CommonDashboard-components/CreatePost
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { Button } from "@/components/ui/button";
-import { SwipeableCard } from "@/components/ui/swipeable-card";
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const FacultyDashboard = () => {
@@ -168,5 +154,4 @@ const FacultyDashboard = () => {
     </div>
   );
 };
-
 export default FacultyDashboard;

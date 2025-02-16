@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { EventCarousel } from "@/components/ui/event-carousel";
-import { ClubCard } from "@/components/ui/club-card"; // Using the unified club-card from ui folder
+import { ClubCard } from "@/components/ui/club-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";

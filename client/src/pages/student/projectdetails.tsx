@@ -33,6 +33,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
 import ApplicantsModal from "@/components/ApplicantsModal";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TeamMember {
   name: string;
@@ -263,8 +265,10 @@ export default function StudentProjectDetails({
     );
   };
 
+  const isMobile = useIsMobile();
+
   return (
-    <>
+    <div className="min-h-screen pb-16 md:pb-0">
       <StudentNavbar />
       <div className="container mx-auto py-10 px-4">
         <motion.div
@@ -736,6 +740,7 @@ export default function StudentProjectDetails({
           </TabsContent>
         </Tabs>
       </div>
-    </>
+      {isMobile && <MobileBottomNav role="student" />}
+    </div>
   );
 }

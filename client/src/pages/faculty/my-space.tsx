@@ -26,7 +26,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
-
 interface Project {
   title: string;
   description: string;

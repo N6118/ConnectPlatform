@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+
 import {
   Heart,
   MessageCircle,
@@ -27,12 +27,6 @@ import {
   PenSquare,
   Settings,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 import ActivityFeed from "@/components/Profile-ActivityFeed";
 import { useToast } from "@/hooks/use-toast";
