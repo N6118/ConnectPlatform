@@ -11,7 +11,19 @@ import FacultyNavbar from "@/components/navigation/FacultyNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { Button } from "@/components/ui/button";
 import { SwipeableCard } from "@/components/ui/swipeable-card";
-import { ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const FacultyDashboard = () => {
@@ -38,7 +50,8 @@ const FacultyDashboard = () => {
       studentName: "Sajith Rajan",
       projectName: "Sign Language Detection",
       role: "Team Lead",
-      details: "Worked on developing machine learning models for predicting outcomes.",
+      details:
+        "Worked on developing machine learning models for predicting outcomes.",
     },
     {
       studentName: "Ramya C",
@@ -52,7 +65,12 @@ const FacultyDashboard = () => {
     {
       id: "stats",
       title: "Quick Stats",
-      component: <QuickProjectStats ongoing={ongoingProjects} completed={completedProjects} />,
+      component: (
+        <QuickProjectStats
+          ongoing={ongoingProjects}
+          completed={completedProjects}
+        />
+      ),
     },
     {
       id: "applicants",
@@ -76,89 +94,6 @@ const FacultyDashboard = () => {
     },
   ];
 
-  const handleSwipeLeft = () => {
-    if (currentIndex < components.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      setActiveComponent(components[currentIndex + 1].id);
-    }
-  };
-
-  const handleSwipeRight = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-      setActiveComponent(components[currentIndex - 1].id);
-    }
-  };
-
-  // Mobile-optimized visualization data
-  const projectData = [
-    { name: 'AI/ML', value: 35 },
-    { name: 'Web Dev', value: 25 },
-    { name: 'Mobile', value: 20 },
-    { name: 'IoT', value: 15 },
-  ];
-
-  const progressData = [
-    { month: 'Jan', projects: 4 },
-    { month: 'Feb', projects: 6 },
-    { month: 'Mar', projects: 8 },
-    { month: 'Apr', projects: 7 },
-    { month: 'May', projects: 9 },
-  ];
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
-  const renderMobileCharts = () => (
-    <div className="space-y-4">
-      <div className="bg-card p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-4">Project Distribution</h3>
-        <div className="h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={projectData}
-                cx="50%"
-                cy="50%"
-                innerRadius={30}
-                outerRadius={60}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ name, value }) => `${name}: ${value}%`}
-              >
-                {projectData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Legend layout="horizontal" verticalAlign="bottom" align="center" />
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className="bg-card p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-4">Project Progress</h3>
-        <div className="h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={progressData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="projects"
-                stroke="#8884d8"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    </div>
-  );
-
   const renderMobileView = () => (
     <div className="space-y-4 p-4 pb-20">
       <div className="flex flex-wrap gap-2">
@@ -177,18 +112,6 @@ const FacultyDashboard = () => {
         ))}
       </div>
 
-      {activeComponent && (
-        <SwipeableCard
-          onSwipeLeft={handleSwipeLeft}
-          onSwipeRight={handleSwipeRight}
-          className="bg-card rounded-lg p-4 shadow-lg"
-        >
-          {components.find((c) => c.id === activeComponent)?.component}
-        </SwipeableCard>
-      )}
-
-      {renderMobileCharts()}
-
       <div>
         <Carousel />
       </div>
@@ -202,7 +125,10 @@ const FacultyDashboard = () => {
       {/* Left Column */}
       <div className="w-full lg:w-1/4 space-y-4">
         <div className="bg-card rounded-lg p-4 shadow">
-          <QuickProjectStats ongoing={ongoingProjects} completed={completedProjects} />
+          <QuickProjectStats
+            ongoing={ongoingProjects}
+            completed={completedProjects}
+          />
         </div>
         <div className="bg-card rounded-lg p-4 shadow">
           <ApplicantManagement />
