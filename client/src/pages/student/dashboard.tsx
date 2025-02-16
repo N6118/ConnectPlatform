@@ -9,10 +9,12 @@ import CreatePostButton from "@/components/CommonDashboard-components/CreatePost
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
+import { SwipeableCard } from "@/components/ui/swipeable-card";
 
 export default function StudentDashboard() {
   const [activeComponent, setActiveComponent] = useState<string | null>(null);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   // Handle window resize
   React.useEffect(() => {
@@ -41,16 +43,31 @@ export default function StudentDashboard() {
     { id: "calendar", title: "Calendar", component: <CalendarView /> },
   ];
 
+  const handleSwipeLeft = () => {
+    if (currentIndex < components.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setActiveComponent(components[currentIndex + 1].id);
+    }
+  };
+
+  const handleSwipeRight = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setActiveComponent(components[currentIndex - 1].id);
+    }
+  };
+
   const renderMobileView = () => (
     <div className="space-y-4 p-4">
       <div className="flex flex-wrap gap-2">
-        {components.map((comp) => (
+        {components.map((comp, index) => (
           <Button
             key={comp.id}
             variant={activeComponent === comp.id ? "default" : "outline"}
-            onClick={() =>
-              setActiveComponent(activeComponent === comp.id ? null : comp.id)
-            }
+            onClick={() => {
+              setActiveComponent(activeComponent === comp.id ? null : comp.id);
+              setCurrentIndex(index);
+            }}
             className="flex-1"
           >
             {comp.title}
@@ -59,9 +76,13 @@ export default function StudentDashboard() {
       </div>
 
       {activeComponent && (
-        <div className="bg-card rounded-lg p-4 shadow-lg">
+        <SwipeableCard
+          onSwipeLeft={handleSwipeLeft}
+          onSwipeRight={handleSwipeRight}
+          className="bg-card rounded-lg p-4 shadow-lg"
+        >
           {components.find((c) => c.id === activeComponent)?.component}
-        </div>
+        </SwipeableCard>
       )}
 
       <div>
@@ -107,5 +128,6 @@ export default function StudentDashboard() {
       </div>
     </>
   );
+
   return isMobileView ? renderMobileView() : renderDesktopView();
 }
