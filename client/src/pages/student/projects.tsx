@@ -4,6 +4,8 @@ import { ProjectCard } from "@/components/ui/project-card";
 import { ProjectFilters } from "@/components/ui/project-filters";
 import { ProjectModal } from "@/components/ui/project-modal";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 interface Project {
   id: number;
   name: string;
@@ -163,6 +165,7 @@ export default function StudentProjects() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const allTags = Array.from(
     new Set(projects.flatMap((project) => project.tags)),
@@ -195,7 +198,7 @@ export default function StudentProjects() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
       <StudentNavbar />
       <div className="container mx-auto p-6 md:p-8 space-y-8">
         <motion.div
@@ -256,6 +259,8 @@ export default function StudentProjects() {
           onClose={() => setIsModalOpen(false)}
         />
       )}
+
+      {isMobile && <MobileBottomNav role="student" />}
     </div>
   );
 }

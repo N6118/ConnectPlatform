@@ -39,6 +39,8 @@ import {
 import ActivityFeed from "@/components/Profile-ActivityFeed";
 import { useToast } from "@/hooks/use-toast";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProfileFormData {
   about: string;
@@ -271,8 +273,10 @@ export default function StudentProfile() {
     setShowEditDetails(false);
   };
 
+  const isMobile = useIsMobile();
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
       <StudentNavbar />
       <div className="container mx-auto py-8 px-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
@@ -296,8 +300,9 @@ export default function StudentProfile() {
               </button>
             </div>
 
-            {/* Follow & Message Buttons 
-            <div className="absolute top-6 right-0 flex gap-2">
+
+            {/* Follow & Message Buttons */}
+            {/*<div className="absolute top-6 right-0 flex gap-2">
               <Button
                 variant="outline"
                 onClick={() => setIsFollowing(!isFollowing)}
@@ -315,7 +320,7 @@ export default function StudentProfile() {
               >
                 Message
               </Button>
-            </div>
+            </div>*/}
 
             {/* Followers & Following Section */}
             <div className="mt-4 flex gap-4 text-gray-600 text-sm sm:text-base font-medium">
@@ -625,6 +630,7 @@ export default function StudentProfile() {
       </Dialog>
 
       {/* Other modals remain unchanged */}
+      {isMobile && <MobileBottomNav role="student" />}
     </div>
   );
 }

@@ -4,6 +4,8 @@ import { Plus, Search } from "lucide-react";
 import ProjectCard from "@/components/my-space-components/ProjectCard";
 import ProjectModal from "@/components/my-space-components/ProjectModal";
 import ApplicantsModal from "@/components/ApplicantsModal";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -213,8 +215,10 @@ export default function StudentMySpace() {
     return matchesSearch && matchesStatus;
   });
 
+  const isMobile = useIsMobile();
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
       <StudentNavbar />
       <div className="container mx-auto py-8 px-4">
         <motion.div
@@ -337,6 +341,7 @@ export default function StudentMySpace() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      {isMobile && <MobileBottomNav role="student" />}
     </div>
   );
 }

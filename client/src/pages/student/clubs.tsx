@@ -3,6 +3,8 @@ import { EventCarousel } from "@/components/ui/event-carousel";
 import { ClubCard } from "@/components/ui/club-card"; // Using the unified club-card from ui folder
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Select,
   SelectContent,
@@ -172,6 +174,7 @@ export default function StudentClubs() {
   const [showJoinedOnly, setShowJoinedOnly] = useState(false);
   const [sortBy, setSortBy] = useState("popular");
   const [clubsList, setClubsList] = useState(clubs);
+  const isMobile = useIsMobile();
 
   const handleJoinToggle = (clubId: number) => {
     setClubsList((prevClubs) =>
@@ -206,10 +209,10 @@ export default function StudentClubs() {
     });
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen pb-16 md:pb-0">
       <StudentNavbar />
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto py-8 px-4">
+        <div className="container mx-auto py-8 px-4 md:px-0">
           {/* Header Section */}
           <div className="space-y-2">
             <h1 className="text-4xl md:text-5xl font-bold">
@@ -326,6 +329,7 @@ export default function StudentClubs() {
           </div>
         </div>
       </div>
+      {isMobile && <MobileBottomNav role="student" />}
     </div>
   );
 }
