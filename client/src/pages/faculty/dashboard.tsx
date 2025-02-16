@@ -8,11 +8,15 @@ import QuickProjectStats from "@/components/FacultyDashboard-components/QuickPro
 import VerificationRequests from "@/components/FacultyDashboard-components/VerificationRequests";
 import CreatePostButton from "@/components/CommonDashboard-components/CreatePostButton";
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { Button } from "@/components/ui/button";
+import { SwipeableCard } from "@/components/ui/swipeable-card";
+import { ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 const FacultyDashboard = () => {
   const [activeComponent, setActiveComponent] = useState<string | null>(null);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const ongoingProjects = 5;
   const completedProjects = 12;
@@ -71,14 +75,100 @@ const FacultyDashboard = () => {
     },
   ];
 
+  const handleSwipeLeft = () => {
+    if (currentIndex < components.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setActiveComponent(components[currentIndex + 1].id);
+    }
+  };
+
+  const handleSwipeRight = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setActiveComponent(components[currentIndex - 1].id);
+    }
+  };
+
+  // Mobile-optimized visualization data
+  const projectData = [
+    { name: 'AI/ML', value: 35 },
+    { name: 'Web Dev', value: 25 },
+    { name: 'Mobile', value: 20 },
+    { name: 'IoT', value: 15 },
+  ];
+
+  const progressData = [
+    { month: 'Jan', projects: 4 },
+    { month: 'Feb', projects: 6 },
+    { month: 'Mar', projects: 8 },
+    { month: 'Apr', projects: 7 },
+    { month: 'May', projects: 9 },
+  ];
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+  const renderMobileCharts = () => (
+    <div className="space-y-4">
+      <div className="bg-card p-4 rounded-lg">
+        <h3 className="text-lg font-semibold mb-4">Project Distribution</h3>
+        <div className="h-[200px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={projectData}
+                cx="50%"
+                cy="50%"
+                innerRadius={30}
+                outerRadius={60}
+                fill="#8884d8"
+                dataKey="value"
+                label={({ name, value }) => `${name}: ${value}%`}
+              >
+                {projectData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="bg-card p-4 rounded-lg">
+        <h3 className="text-lg font-semibold mb-4">Project Progress</h3>
+        <div className="h-[200px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={progressData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="projects"
+                stroke="#8884d8"
+                strokeWidth={2}
+                dot={{ r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderMobileView = () => (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4 p-4 pb-20">
       <div className="flex flex-wrap gap-2">
-        {components.map((comp) => (
+        {components.map((comp, index) => (
           <Button
             key={comp.id}
             variant={activeComponent === comp.id ? "default" : "outline"}
-            onClick={() => setActiveComponent(activeComponent === comp.id ? null : comp.id)}
+            onClick={() => {
+              setActiveComponent(activeComponent === comp.id ? null : comp.id);
+              setCurrentIndex(index);
+            }}
             className="flex-1"
           >
             {comp.title}
@@ -87,10 +177,16 @@ const FacultyDashboard = () => {
       </div>
 
       {activeComponent && (
-        <div className="bg-card rounded-lg p-4 shadow-lg">
+        <SwipeableCard
+          onSwipeLeft={handleSwipeLeft}
+          onSwipeRight={handleSwipeRight}
+          className="bg-card rounded-lg p-4 shadow-lg"
+        >
           {components.find((c) => c.id === activeComponent)?.component}
-        </div>
+        </SwipeableCard>
       )}
+
+      {renderMobileCharts()}
 
       <div>
         <Carousel />
@@ -140,6 +236,7 @@ const FacultyDashboard = () => {
     <>
       <FacultyNavbar />
       {isMobileView ? renderMobileView() : renderDesktopView()}
+      {isMobileView && <MobileBottomNav role="faculty" />}
     </>
   );
 };
