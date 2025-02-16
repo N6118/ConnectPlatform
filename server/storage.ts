@@ -16,7 +16,6 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
@@ -50,10 +49,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
@@ -76,35 +72,23 @@ export class DatabaseStorage implements IStorage {
 
   // Club operations
   async getClub(id: number): Promise<Club | undefined> {
-    const [club] = await db
-      .select()
-      .from(clubs)
-      .where(eq(clubs.id, id));
+    const [club] = await db.select().from(clubs).where(eq(clubs.id, id));
     return club;
   }
 
   async createClub(insertClub: InsertClub): Promise<Club> {
-    const [club] = await db
-      .insert(clubs)
-      .values(insertClub)
-      .returning();
+    const [club] = await db.insert(clubs).values(insertClub).returning();
     return club;
   }
 
   // Event operations
   async getEvent(id: number): Promise<Event | undefined> {
-    const [event] = await db
-      .select()
-      .from(events)
-      .where(eq(events.id, id));
+    const [event] = await db.select().from(events).where(eq(events.id, id));
     return event;
   }
 
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
-    const [event] = await db
-      .insert(events)
-      .values(insertEvent)
-      .returning();
+    const [event] = await db.insert(events).values(insertEvent).returning();
     return event;
   }
 }

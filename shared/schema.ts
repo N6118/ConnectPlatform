@@ -13,7 +13,6 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// Users table with role-based authentication
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -30,8 +29,12 @@ export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  status: text("status", { enum: ["active", "completed", "archived"] }).notNull(),
-  mentorId: integer("mentorId").notNull().references(() => users.id),
+  status: text("status", {
+    enum: ["active", "completed", "archived"],
+  }).notNull(),
+  mentorId: integer("mentorId")
+    .notNull()
+    .references(() => users.id),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
@@ -42,15 +45,21 @@ export const clubs = pgTable("clubs", {
   name: text("name").notNull(),
   description: text("description").notNull(),
   banner: text("banner"),
-  advisorId: integer("advisorId").notNull().references(() => users.id),
+  advisorId: integer("advisorId")
+    .notNull()
+    .references(() => users.id),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
 
 // Club memberships
 export const clubMembers = pgTable("clubMembers", {
   id: serial("id").primaryKey(),
-  clubId: integer("clubId").notNull().references(() => clubs.id),
-  userId: integer("userId").notNull().references(() => users.id),
+  clubId: integer("clubId")
+    .notNull()
+    .references(() => clubs.id),
+  userId: integer("userId")
+    .notNull()
+    .references(() => users.id),
   role: text("role", { enum: ["member", "leader", "advisor"] }).notNull(),
   joinedAt: timestamp("joinedAt").notNull().defaultNow(),
 });
@@ -63,7 +72,9 @@ export const events = pgTable("events", {
   date: timestamp("date").notNull(),
   location: text("location").notNull(),
   clubId: integer("clubId").references(() => clubs.id),
-  createdBy: integer("createdBy").notNull().references(() => users.id),
+  createdBy: integer("createdBy")
+    .notNull()
+    .references(() => users.id),
   type: text("type", { enum: ["club", "project", "academic"] }).notNull(),
 });
 
