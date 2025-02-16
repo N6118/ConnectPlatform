@@ -4,6 +4,8 @@ import { ProjectCard } from "@/components/ui/project-card";
 import { ProjectFilters } from "@/components/ui/project-filters";
 import { ProjectModal } from "@/components/ui/project-modal";
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Project {
   id: number;
@@ -16,7 +18,7 @@ interface Project {
   techStack: string[];
   prerequisites: string[];
   members: string[];
-  mentor: string;  // Added mentor field
+  mentor: string; // Added mentor field
 }
 
 // Mock projects data
@@ -29,7 +31,8 @@ const projects: Project[] = [
     tags: ["AI/ML", "Chatbot"],
     image:
       "https://t4.ftcdn.net/jpg/05/47/89/79/240_F_547897906_xOyy9X2M0VuInOpsnMOjcirgyoU9T8aJ.jpg",
-    about: "An AI-driven platform to optimize full stack development processes.",
+    about:
+      "An AI-driven platform to optimize full stack development processes.",
     techStack: ["Python", "TensorFlow", "React"],
     prerequisites: [
       "Programming Knowledge",
@@ -37,7 +40,7 @@ const projects: Project[] = [
       "Frontend Development",
     ],
     members: ["Member 1", "Member 2"],
-    mentor: "Dr. Alan Smith"
+    mentor: "Dr. Alan Smith",
   },
   {
     id: 2,
@@ -51,7 +54,7 @@ const projects: Project[] = [
     techStack: ["React", "Node.js", "PostgreSQL"],
     prerequisites: ["Web Development", "Database Design"],
     members: ["Member 3", "Member 4"],
-    mentor: "Prof. Sarah Johnson"
+    mentor: "Prof. Sarah Johnson",
   },
   {
     id: 3,
@@ -65,7 +68,7 @@ const projects: Project[] = [
     techStack: ["Ethereum", "Solidity", "React"],
     prerequisites: ["Blockchain Basics", "Smart Contracts"],
     members: ["Member 5", "Member 6"],
-    mentor: "Dr. David Lee"
+    mentor: "Dr. David Lee",
   },
   {
     id: 4,
@@ -80,7 +83,7 @@ const projects: Project[] = [
     techStack: ["React", "Node.js", "MongoDB"],
     prerequisites: ["Full Stack Development", "Payment Gateways"],
     members: ["Member 7", "Member 8"],
-    mentor: "Prof. Emily Brown"
+    mentor: "Prof. Emily Brown",
   },
   {
     id: 5,
@@ -94,7 +97,7 @@ const projects: Project[] = [
     techStack: ["Arduino", "Raspberry Pi", "Python"],
     prerequisites: ["Electronics Basics", "Embedded Systems"],
     members: ["Member 9", "Member 10"],
-    mentor: "Dr. Michael Davis"
+    mentor: "Dr. Michael Davis",
   },
   {
     id: 6,
@@ -108,7 +111,7 @@ const projects: Project[] = [
     techStack: ["Python", "NLP", "Flask"],
     prerequisites: ["Natural Language Processing", "AI Basics"],
     members: ["Member 11", "Member 12"],
-    mentor: "Prof. Jessica Wilson"
+    mentor: "Prof. Jessica Wilson",
   },
   {
     id: 7,
@@ -122,7 +125,7 @@ const projects: Project[] = [
     techStack: ["Python", "Transformers", "React"],
     prerequisites: ["Machine Learning", "Sentiment Analysis"],
     members: ["Member 13", "Member 14"],
-    mentor: "Dr. Kevin Garcia"
+    mentor: "Dr. Kevin Garcia",
   },
   {
     id: 8,
@@ -136,7 +139,7 @@ const projects: Project[] = [
     techStack: ["AWS", "Node.js", "React"],
     prerequisites: ["Cloud Services", "Cybersecurity"],
     members: ["Member 15", "Member 16"],
-    mentor: "Prof. Ashley Rodriguez"
+    mentor: "Prof. Ashley Rodriguez",
   },
   {
     id: 9,
@@ -150,7 +153,7 @@ const projects: Project[] = [
     techStack: ["Python", "NLP", "React"],
     prerequisites: ["Machine Learning", "Text Processing"],
     members: ["Member 17", "Member 18"],
-    mentor: "Dr. Brian Martinez"
+    mentor: "Dr. Brian Martinez",
   },
   {
     id: 10,
@@ -163,7 +166,7 @@ const projects: Project[] = [
     techStack: ["React Native", "Firebase", "AI"],
     prerequisites: ["Mobile App Development", "AI Basics"],
     members: ["Member 19", "Member 20"],
-    mentor: "Prof. Christina Perez"
+    mentor: "Prof. Christina Perez",
   },
 ];
 
@@ -174,9 +177,10 @@ export default function FacultyProjects() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const allTags = Array.from(
-    new Set(projects.flatMap((project) => project.tags))
+    new Set(projects.flatMap((project) => project.tags)),
   );
 
   const handleSearch = useCallback(() => {
@@ -185,7 +189,7 @@ export default function FacultyProjects() {
         project.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
         (selectedTags.length === 0 ||
           project.tags.some((tag) => selectedTags.includes(tag))) &&
-        (statusFilter === "All" || project.status === statusFilter)
+        (statusFilter === "All" || project.status === statusFilter),
     );
     setFilteredProjects(filtered);
   }, [searchTerm, selectedTags, statusFilter]);
@@ -196,7 +200,7 @@ export default function FacultyProjects() {
 
   const toggleTag = (tag: string) => {
     setSelectedTags((tags) =>
-      tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag]
+      tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag],
     );
   };
 
@@ -209,6 +213,7 @@ export default function FacultyProjects() {
     <div className="min-h-screen bg-background">
       <FacultyNavbar />
       <div className="container mx-auto p-6 md:p-8 space-y-8">
+        {isMobile && <MobileBottomNav role="faculty" />}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

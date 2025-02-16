@@ -59,7 +59,9 @@ export default function FacultyNavbar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      setLocation(`/search-results?q=${encodeURIComponent(searchQuery.trim())}`);
+      setLocation(
+        `/search-results?q=${encodeURIComponent(searchQuery.trim())}`,
+      );
     }
   };
 
@@ -88,22 +90,6 @@ export default function FacultyNavbar() {
             </motion.div>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-4">
-            {navItems.map((item) => (
-              <motion.button
-                key={item.path}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setLocation(item.path)}
-                className="px-3 py-2 rounded-md text-sm font-medium text-foreground hover:text-primary hover:bg-accent transition-colors duration-200 flex items-center space-x-2"
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </motion.button>
-            ))}
-          </div>
-
           {/* Search Bar */}
           <div className="flex items-center flex-1 max-w-lg mx-8">
             <form onSubmit={handleSearch} className="w-full">
@@ -120,6 +106,22 @@ export default function FacultyNavbar() {
             </form>
           </div>
 
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex md:items-center md:space-x-4">
+            {navItems.map((item) => (
+              <motion.button
+                key={item.path}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setLocation(item.path)}
+                className="px-3 py-2 rounded-md text-sm font-medium text-foreground hover:text-primary hover:bg-accent transition-colors duration-200 flex items-center space-x-2"
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </motion.button>
+            ))}
+          </div>
+
           {/* Right Side - Theme Toggle and Profile */}
           <div className="flex items-center space-x-4">
             <ThemeToggle />
@@ -133,16 +135,23 @@ export default function FacultyNavbar() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Faculty Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setLocation("/faculty/profile")}>
+                <DropdownMenuItem
+                  onClick={() => setLocation("/faculty/profile")}
+                >
                   <User className="w-4 h-4 mr-2" />
                   View Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLocation("/faculty/settings")}>
+                <DropdownMenuItem
+                  onClick={() => setLocation("/faculty/settings")}
+                >
                   <Settings className="w-4 h-4 mr-2" />
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-600"
+                >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
                 </DropdownMenuItem>

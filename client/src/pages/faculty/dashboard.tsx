@@ -94,7 +94,7 @@ const FacultyDashboard = () => {
   ];
 
   const renderMobileView = () => (
-    <div className="space-y-4 p-4 pb-20">
+    <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         {components.map((comp, index) => (
           <Button
@@ -161,7 +161,7 @@ const FacultyDashboard = () => {
   return (
     <div className="relative min-h-screen pb-16 md:pb-0">
       <FacultyNavbar />
-      <div className="container mx-auto py-8 px-4">
+      <div className=" mx-auto py-8 px-4">
         {isMobile ? renderMobileView() : renderDesktopView()}
       </div>
       {isMobile && <MobileBottomNav role="faculty" />}
