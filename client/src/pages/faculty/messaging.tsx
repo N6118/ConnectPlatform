@@ -11,6 +11,8 @@ import type { Message, Chat } from "../types";
 import { AnimatePresence, motion } from "framer-motion";
 import WelcomeScreen from "@/components/messaging-components/WelcomeScreen";
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 
 const initialChats: Chat[] = [
   {
@@ -110,6 +112,7 @@ export default function FacultyMessaging() {
   const [isMobileView, setIsMobileView] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleResize = () => {
@@ -148,7 +151,7 @@ export default function FacultyMessaging() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []); // Removed 'messages' dependency
+  }, []);
 
   const handleTypingIndicator = (userId: string, isTyping: boolean) => {
     setChats((prevChats) =>
@@ -226,14 +229,11 @@ export default function FacultyMessaging() {
     if (!file) return;
 
     try {
-      // In a real app, you would upload the file to your server
       const formData = new FormData();
       formData.append("file", file);
 
-      // Simulate file upload
       const fileUrl = URL.createObjectURL(file);
 
-      // Create a new message with the file
       const newMessage: Message = {
         id: messages.length + 1,
         text: type === "document" ? `📎 ${file.name}` : "",
@@ -253,7 +253,6 @@ export default function FacultyMessaging() {
 
       setMessages((prev) => [...prev, newMessage]);
 
-      // Simulate message status updates
       setTimeout(() => {
         setMessages((prev) =>
           prev.map((msg) =>
@@ -276,7 +275,6 @@ export default function FacultyMessaging() {
 
   const handleVoiceMessage = (blob: Blob) => {
     console.log("Voice message recorded:", blob);
-    // Implement voice message sending logic here
   };
 
   const handleCreateGroup = useCallback(
@@ -382,13 +380,10 @@ export default function FacultyMessaging() {
   const selectedChatData = chats.find((chat) => chat.id === selectedChat);
 
   return (
-    <>
+    <div className="relative min-h-screen pb-16 md:pb-0">
       <FacultyNavbar />
-      <div
-        className={`flex flex-col min-h-screen ${theme === "dark" ? "dark" : ""}`}
-      >
-        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-          {/* Chat List */}
+      <div className={`flex flex-col min-h-screen ${theme === "dark" ? "dark" : ""}`}>
+        <div className="flex h-[calc(100vh-4rem)] bg-gray-100 dark:bg-gray-900">
           <AnimatePresence>
             {(!selectedChat || !isMobileView) && (
               <motion.div
@@ -414,7 +409,6 @@ export default function FacultyMessaging() {
             )}
           </AnimatePresence>
 
-          {/* Chat Window or Welcome Screen */}
           <AnimatePresence>
             {selectedChat ? (
               <motion.div
@@ -424,7 +418,6 @@ export default function FacultyMessaging() {
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className="flex-1 flex flex-col bg-white dark:bg-gray-800 shadow-lg"
               >
-                {/* Chat Header */}
                 <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
                   {isMobileView && (
                     <button
@@ -472,7 +465,6 @@ export default function FacultyMessaging() {
                   </div>
                 </div>
 
-                {/* Messages */}
                 <div className="flex-1 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-900">
                   <div className="space-y-4">
                     {messages.map((msg) => (
@@ -535,7 +527,6 @@ export default function FacultyMessaging() {
                   </div>
                 </div>
 
-                {/* Message Input */}
                 <MessageInput
                   input={input}
                   setInput={setInput}
@@ -551,7 +542,6 @@ export default function FacultyMessaging() {
             )}
           </AnimatePresence>
 
-          {/* Modals */}
           {showCreateGroup && (
             <CreateGroup
               onClose={() => setShowCreateGroup(false)}
@@ -570,6 +560,7 @@ export default function FacultyMessaging() {
           )}
         </div>
       </div>
-    </>
+      {isMobile && <MobileBottomNav role="faculty" />}
+    </div>
   );
 }

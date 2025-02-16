@@ -12,10 +12,11 @@ import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { Button } from "@/components/ui/button";
 import { SwipeableCard } from "@/components/ui/swipeable-card";
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const FacultyDashboard = () => {
   const [activeComponent, setActiveComponent] = useState<string | null>(null);
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const isMobile = useIsMobile();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const ongoingProjects = 5;
@@ -23,7 +24,7 @@ const FacultyDashboard = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobileView(window.innerWidth < 768);
+      //setIsMobileView(window.innerWidth < 768); // Removed - using useIsMobile
       if (window.innerWidth >= 768) {
         setActiveComponent(null);
       }
@@ -233,11 +234,11 @@ const FacultyDashboard = () => {
   );
 
   return (
-    <>
+    <div className="relative min-h-screen pb-16 md:pb-0">
       <FacultyNavbar />
-      {isMobileView ? renderMobileView() : renderDesktopView()}
-      {isMobileView && <MobileBottomNav role="faculty" />}
-    </>
+      {isMobile ? renderMobileView() : renderDesktopView()}
+      {isMobile && <MobileBottomNav role="faculty" />}
+    </div>
   );
 };
 

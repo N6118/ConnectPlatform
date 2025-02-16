@@ -3,6 +3,8 @@ import ClubDetailView from "@/components/clubs-components/club-detail-view.tsx";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const clubData = {
   id: 1,
@@ -70,9 +72,10 @@ const clubData = {
 
 export default function StudentClubDetail() {
   const { id } = useParams();
+  const isMobile = useIsMobile();
 
   return (
-    <div className="relative">
+    <div className="relative min-h-screen pb-16 md:pb-0">
       <StudentNavbar />
       <div className="container mx-auto p-4">
         <Button variant="ghost" className="mb-4" asChild>
@@ -83,6 +86,7 @@ export default function StudentClubDetail() {
         </Button>
       </div>
       <ClubDetailView club={clubData} currentUserId="1" />
+      {isMobile && <MobileBottomNav role="student" />}
     </div>
   );
 }
