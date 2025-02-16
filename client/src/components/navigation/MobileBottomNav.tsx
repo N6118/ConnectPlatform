@@ -1,13 +1,11 @@
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
-  Home,
-  BookOpen,
+  LayoutDashboard,
+  FileText,
   MessageSquare,
   User,
-  Menu,
-  School,
-  FileText,
+  Briefcase,
   Group,
 } from "lucide-react";
 
@@ -25,25 +23,25 @@ export default function MobileBottomNav({ role }: BottomNavProps) {
   const [location] = useLocation();
 
   const facultyNavItems: NavItem[] = [
-    { icon: <School className="h-5 w-5" />, label: 'Dashboard', path: '/faculty' },
+    { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard', path: '/faculty' },
+    { icon: <Briefcase className="h-5 w-5" />, label: 'My Space', path: '/faculty/my-space' },
     { icon: <FileText className="h-5 w-5" />, label: 'Projects', path: '/faculty/projects' },
     { icon: <Group className="h-5 w-5" />, label: 'Clubs', path: '/faculty/clubs' },
     { icon: <MessageSquare className="h-5 w-5" />, label: 'Messages', path: '/faculty/messaging' },
-    { icon: <User className="h-5 w-5" />, label: 'Profile', path: '/faculty/profile' },
   ];
 
   const studentNavItems: NavItem[] = [
-    { icon: <Home className="h-5 w-5" />, label: 'Dashboard', path: '/student' },
-    { icon: <BookOpen className="h-5 w-5" />, label: 'Projects', path: '/student/projects' },
+    { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard', path: '/student' },
+    { icon: <Briefcase className="h-5 w-5" />, label: 'My Space', path: '/student/my-space' },
+    { icon: <FileText className="h-5 w-5" />, label: 'Projects', path: '/student/projects' },
     { icon: <Group className="h-5 w-5" />, label: 'Clubs', path: '/student/clubs' },
     { icon: <MessageSquare className="h-5 w-5" />, label: 'Messages', path: '/student/messaging' },
-    { icon: <User className="h-5 w-5" />, label: 'Profile', path: '/student/profile' },
   ];
 
   const navItems = role === 'faculty' ? facultyNavItems : studentNavItems;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-background border-t md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 bg-background border-t md:hidden z-50">
       <div className="flex justify-around items-center h-16">
         {navItems.map((item) => (
           <Link key={item.path} href={item.path}>
