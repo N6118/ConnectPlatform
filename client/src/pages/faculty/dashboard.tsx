@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Carousel from "@/components/CommonDashboard-components/Carousel";
 import ActivityFeed from "@/components/CommonDashboard-components/ActivityFeed";
 import ProjectTracker from "@/components/CommonDashboard-components/ProjectTracker";
@@ -8,18 +8,32 @@ import QuickProjectStats from "@/components/FacultyDashboard-components/QuickPro
 import VerificationRequests from "@/components/FacultyDashboard-components/VerificationRequests";
 import CreatePostButton from "@/components/CommonDashboard-components/CreatePostButton";
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
+import { Button } from "@/components/ui/button";
 
 const FacultyDashboard = () => {
+  const [activeComponent, setActiveComponent] = useState<string | null>(null);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+
   const ongoingProjects = 5;
   const completedProjects = 12;
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setActiveComponent(null);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const verificationRequestsData = [
     {
       studentName: "Sajith Rajan",
       projectName: "Sign Language Detection",
       role: "Team Lead",
-      details:
-        "Worked on developing machine learning models for predicting outcomes.",
+      details: "Worked on developing machine learning models for predicting outcomes.",
     },
     {
       studentName: "Ramya C",
@@ -29,20 +43,80 @@ const FacultyDashboard = () => {
     },
   ];
 
-  return (
-    <>
-      <FacultyNavbar />
-    <div className="font-poppins text-textBlue min-h-screen p-4 flex">
-      <div className="w-1/4 pr-4">
-        <QuickProjectStats
-          ongoing={ongoingProjects}
-          completed={completedProjects}
-        />
-        <ApplicantManagement />
-        <VerificationRequests requests={verificationRequestsData} />
+  const components = [
+    {
+      id: "stats",
+      title: "Quick Stats",
+      component: <QuickProjectStats ongoing={ongoingProjects} completed={completedProjects} />,
+    },
+    {
+      id: "applicants",
+      title: "Applicant Management",
+      component: <ApplicantManagement />,
+    },
+    {
+      id: "verification",
+      title: "Verification Requests",
+      component: <VerificationRequests requests={verificationRequestsData} />,
+    },
+    {
+      id: "projects",
+      title: "Project Tracker",
+      component: <ProjectTracker />,
+    },
+    {
+      id: "calendar",
+      title: "Calendar",
+      component: <CalendarView />,
+    },
+  ];
+
+  const renderMobileView = () => (
+    <div className="space-y-4 p-4">
+      <div className="flex flex-wrap gap-2">
+        {components.map((comp) => (
+          <Button
+            key={comp.id}
+            variant={activeComponent === comp.id ? "default" : "outline"}
+            onClick={() => setActiveComponent(activeComponent === comp.id ? null : comp.id)}
+            className="flex-1"
+          >
+            {comp.title}
+          </Button>
+        ))}
       </div>
 
-      <div className="w-2/4 space-y-4">
+      {activeComponent && (
+        <div className="bg-card rounded-lg p-4 shadow-lg">
+          {components.find((c) => c.id === activeComponent)?.component}
+        </div>
+      )}
+
+      <div>
+        <Carousel />
+      </div>
+      <CreatePostButton />
+      <ActivityFeed />
+    </div>
+  );
+
+  const renderDesktopView = () => (
+    <div className="min-h-screen p-4 flex flex-wrap lg:flex-nowrap gap-4">
+      {/* Left Column */}
+      <div className="w-full lg:w-1/4 space-y-4">
+        <div className="bg-card rounded-lg p-4 shadow">
+          <QuickProjectStats ongoing={ongoingProjects} completed={completedProjects} />
+        </div>
+        <div className="bg-card rounded-lg p-4 shadow">
+          <ApplicantManagement />
+        </div>
+        <div className="bg-card rounded-lg p-4 shadow">
+          <VerificationRequests requests={verificationRequestsData} />
+        </div>
+      </div>
+
+      {/* Center Column */}
+      <div className="w-full lg:w-2/4 space-y-4">
         <div>
           <Carousel />
         </div>
@@ -50,15 +124,22 @@ const FacultyDashboard = () => {
         <ActivityFeed />
       </div>
 
-      <div className="w-1/4 pl-4">
-        <div className="mb-6">
+      {/* Right Column */}
+      <div className="w-full lg:w-1/4 space-y-4">
+        <div className="bg-card rounded-lg p-4 shadow">
           <ProjectTracker />
         </div>
-        <div className="mb-6">
+        <div className="bg-card rounded-lg p-4 shadow">
           <CalendarView />
         </div>
       </div>
     </div>
+  );
+
+  return (
+    <>
+      <FacultyNavbar />
+      {isMobileView ? renderMobileView() : renderDesktopView()}
     </>
   );
 };
