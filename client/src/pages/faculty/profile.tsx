@@ -58,6 +58,50 @@ interface Post {
   reposts: number;
 }
 
+interface Project {
+  id: number;
+  name: string;
+  description: string;
+  status: string;
+  fundingAmount: string;
+  teamSize: string;
+  collaborators: string[];
+}
+
+interface Paper {
+  id: number;
+  title: string;
+  journal: string;
+  year: string;
+  citations: number;
+  impact: number;
+}
+
+interface Course {
+  id: number;
+  name: string;
+  code: string;
+  semester: string;
+  students: number;
+  rating: number;
+}
+
+interface Supervision {
+  id: number;
+  type: string;
+  studentName: string;
+  topic: string;
+  status: string;
+  year: string;
+}
+
+interface WorkData {
+  PROJECTS: Project[];
+  PAPERS: Paper[];
+  COURSES: Course[];
+  SUPERVISION: Supervision[];
+}
+
 export default function FacultyProfile() {
   const [selectedTab, setSelectedTab] = useState("PROJECTS");
   const [showModal, setShowModal] = useState(false);
@@ -67,23 +111,31 @@ export default function FacultyProfile() {
   const [isFollowing, setIsFollowing] = useState(false);
 
   const [userData, setUserData] = useState({
-    name: "Sajith Rajan",
-    rollNo: "CB.EN.U4CSE21052",
-    branch: "Computer Science",
-    course: "B Tech",
+    name: "Dr. Manish Reddy",
+    employeeId: "FAC2024CS103",
+    department: "Computer Science and Engineering",
+    designation: "Associate Professor",
     college: "Amrita Vishwa Vidhyapeetham",
-    semester: "7",
-    graduationYear: "2025",
-    careerPath: "Software Engineer",
+    experience: "15 years",
+    specialization: "Machine Learning and Data Science",
     followers: 128,
     following: 89,
-    about:
-      "Passionate software engineer with a focus on web development and machine learning.",
-    achievements: ["Star Contributor", "Best Researcher", "Innovation Award"],
-    interests: ["Web Development", "Machine Learning", "Cloud Computing"],
+    about: "Experienced professor with expertise in Machine Learning and Data Science. Leading research in AI applications for healthcare. Published over 20 papers in international journals.",
+    achievements: [
+      "Best Faculty Award 2023",
+      "IEEE Senior Member",
+      "Research Excellence Award",
+      "5 Patents Filed"
+    ],
+    interests: [
+      "Machine Learning",
+      "Healthcare AI",
+      "Big Data Analytics",
+      "Computer Vision"
+    ],
     socialLinks: {
-      github: "https://github.com/sajithrajan",
-      linkedin: "https://linkedin.com/in/sajithrajan",
+      github: "https://github.com/drsajithrajan",
+      linkedin: "https://linkedin.com/in/drsajithrajan",
       portfolio: "https://sajithrajan.dev",
     },
   });
@@ -92,7 +144,7 @@ export default function FacultyProfile() {
     {
       id: "1",
       author: {
-        name: "Sajith Rajan",
+        name: "Dr. Manish Reddy",
         role: "SDE Intern @ SAPI Full Stack | Android | ML",
         avatar: "./defaultProfile.jpg",
       },
@@ -110,7 +162,7 @@ export default function FacultyProfile() {
     {
       id: "2",
       author: {
-        name: "Sajith Rajan",
+        name: "Dr. Manish Reddy",
         role: "SDE Intern @ SAPI Full Stack | Android | ML",
         avatar: "./defaultProfile.jpg",
       },
@@ -126,7 +178,7 @@ export default function FacultyProfile() {
   ]);
 
   const userData1 = {
-    name: "Sajith Rajan",
+    name: "Dr. Manish Reddy",
     role: "SDE Intern @ SAPI Full Stack | Android | ML",
     avatar: "./defaultProfile.jpg",
     followers: 1234,
@@ -160,52 +212,71 @@ export default function FacultyProfile() {
     });
   };
 
-  const [workData, setWorkData] = useState({
+  const [workData, setWorkData] = useState<WorkData>({
     PROJECTS: [
       {
         id: 1,
-        name: "Sony Project",
-        description: "A web app built using React and Node.js",
-        status: "Completed",
-        level: "Medium",
-        verified: "Verified",
-        faculty: "Dr. Ritwik M",
+        name: "AI-Driven Healthcare Diagnostics",
+        description: "Research project funded by DST on early disease detection",
+        status: "Ongoing",
+        fundingAmount: "₹45 Lakhs",
+        teamSize: "6 researchers",
+        collaborators: ["AIMS Hospital"],
       },
       {
         id: 2,
-        name: "PiSave",
-        description: "An Android app for task management",
-        status: "Ongoing",
-        level: "Easy",
-        verified: "Unverified",
-        faculty: "",
+        name: "Smart Campus Initiative",
+        description: "IoT-based campus monitoring system",
+        status: "Completed",
+        fundingAmount: "₹20 Lakhs",
+        teamSize: "4 researchers",
+        collaborators: ["University IT Department"],
       },
     ],
     PAPERS: [
       {
         id: 1,
-        title: "Research Paper A",
-        status: "Published",
-        verified: "Verified",
-        faculty: "Prof. Anisha",
+        title: "Deep Learning in Medical Imaging: A Comprehensive Survey",
+        journal: "IEEE Transactions on Medical Imaging",
+        year: "2023",
+        citations: 45,
+        impact: 7.8,
       },
     ],
-    INTERNSHIPS: [
+    COURSES: [
       {
         id: 1,
-        name: "Software Developer Intern",
-        company: "Tech Corp",
+        name: "Advanced Machine Learning",
+        code: "CSE4002",
+        semester: "Fall 2024",
+        students: 60,
+        rating: 4.8,
+      },
+      {
+        id: 2,
+        name: "Deep Learning",
+        code: "CSE4003",
+        semester: "Spring 2024",
+        students: 45,
+        rating: 4.9,
+      },
+    ],
+    SUPERVISION: [
+      {
+        id: 1,
+        type: "PhD",
+        studentName: "John Doe",
+        topic: "Federated Learning in Healthcare",
+        status: "Ongoing",
+        year: "2022-present",
+      },
+      {
+        id: 2,
+        type: "Masters",
+        studentName: "Jane Smith",
+        topic: "Computer Vision for Medical Diagnosis",
         status: "Completed",
-        duration: "3 months",
-        verified: "Verified",
-        faculty: "Dr. Smith",
-      },
-    ],
-    EXTRACURRICULAR: [
-      {
-        id: 1,
-        activity: "Hackathon",
-        description: "Participated in XYZ Hackathon",
+        year: "2023",
       },
     ],
   });
@@ -222,25 +293,23 @@ export default function FacultyProfile() {
 
   const handleDeleteItem = (id: number) => {
     const newData = { ...workData };
-    Object.keys(newData).forEach((key) => {
-      newData[key as keyof typeof workData] = newData[
-        key as keyof typeof workData
-      ].filter((item) => item.id !== id);
+    (Object.keys(newData) as Array<keyof WorkData>).forEach((key) => {
+      newData[key] = (newData[key] as any[]).filter((item) => item.id !== id);
     });
     setWorkData(newData);
   };
 
   const handleSaveItem = (formData: any) => {
     const newData = { ...workData };
-    const type = (formData.type.toUpperCase() + "S") as keyof typeof workData;
+    const type = (formData.type.toUpperCase() + "S") as keyof WorkData;
 
     if (editItem) {
       newData[type] = newData[type].map((item) =>
-        item.id === editItem.id ? { ...item, ...formData } : item,
+        item.id === editItem.id ? { ...item, ...formData } : item
       );
     } else {
       const newId = Math.max(...newData[type].map((item) => item.id), 0) + 1;
-      newData[type].push({ id: newId, ...formData });
+      newData[type] = [...newData[type], { id: newId, ...formData }];
     }
 
     setWorkData(newData);
@@ -271,9 +340,9 @@ export default function FacultyProfile() {
           <div className="relative group mx-auto lg:mx-0 flex flex-col items-center mt-14">
             {/* Avatar Section */}
             <div className="relative">
-              <Avatar className="h-[200px] w-[200px] sm:h-[250px] sm:w-[250px] lg:h-[300px] lg:w-[300px] rounded-full border-4 border-blue-300 shadow-xl overflow-hidden">
+              <Avatar className="h-[200px] w-[200px] sm:h-[250px] sm:w-[250px] lg:h-[300px] lg:w-[300px] rounded-full border-4 border-green-300 shadow-xl overflow-hidden">
                 <img
-                  src="https://gratisography.com/wp-content/uploads/2024/11/gratisography-augmented-reality-800x525.jpg"
+                  src="https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDI0LTEyL3Jhd3BpeGVsX29mZmljZV8zMF9waG90b19vZl9hbl9pbmRpYW5fbWFuX3NtaWxpbmdfaXNvbGF0ZWRfb25fd182YWYzNjI5ZS1hMjNmLTRjZjgtOWUzYS1jNGQ4NWQ2MmI4NzdfMS5qcGc.jpg"
                   alt="Profile"
                   className="object-cover w-full h-full"
                 />
@@ -333,7 +402,8 @@ export default function FacultyProfile() {
                   <h1 className="text-2xl sm:text-3xl font-bold text-blue-800">
                     {userData.name}
                   </h1>
-                  <p className="text-gray-600">{userData.rollNo}</p>
+                  <p className="text-gray-600">{userData.designation}</p>
+                  <p className="text-gray-600">{userData.employeeId}</p>
                 </div>
 
                 {/* About Section moved up */}
@@ -344,18 +414,10 @@ export default function FacultyProfile() {
 
                 {/* Profile Info Section */}
                 <div className="space-y-2 mt-4">
-                  <ProfileInfo label="Branch" value={userData.branch} />
-                  <ProfileInfo label="Course" value={userData.course} />
+                  <ProfileInfo label="Department" value={userData.department} />
                   <ProfileInfo label="College" value={userData.college} />
-                  <ProfileInfo label="Semester" value={userData.semester} />
-                  <ProfileInfo
-                    label="Graduation Year"
-                    value={userData.graduationYear}
-                  />
-                  <ProfileInfo
-                    label="Career Path"
-                    value={userData.careerPath}
-                  />
+                  <ProfileInfo label="Experience" value={userData.experience} />
+                  <ProfileInfo label="Specialization" value={userData.specialization} />
                 </div>
 
                 {/* Achievements and Interests */}
@@ -429,7 +491,7 @@ export default function FacultyProfile() {
       <div className="container mx-auto py-8 px-4">
         <div className="border-b border-gray-200 mb-6">
           <nav className="flex space-x-8" aria-label="Work Categories">
-            {["Projects", "Papers", "Internships", "Extracurricular"].map(
+            {["Projects", "Papers", "Courses", "Supervision"].map(
               (tab) => (
                 <TabOption
                   key={tab}
