@@ -1,89 +1,117 @@
 import React, { useState } from "react";
-import { FaCheck, FaTimes, FaExclamationCircle } from "react-icons/fa";
-
-interface Applicant {
-  name: string;
-  role: string;
-  tps: number;
-  commitmentScore: number;
-  capacity: number;
-  projectLevel: "Easy" | "Medium" | "Hard";
-}
-
-interface Project {
-  name: string;
-  applicants: Applicant[];
-}
+import { Project } from "@/types/project";
+import ApplicantsModal from "@/components/ApplicantsModal";
 
 const ApplicantManagement: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [sortBy, setSortBy] = useState<"name" | "tps" | "commitmentScore">(
-    "name",
-  );
+  const [showApplicantsModal, setShowApplicantsModal] = useState(false);
 
+  // Using the same project data as my-space
   const projects: Project[] = [
     {
-      name: "Lam Project",
+      title: "AI Research Project",
+      description: "Exploring applications of AI in education",
+      tag: "AI",
+      status: "In Progress",
+      level: "Medium",
+      duration: "3 months",
+      mentor: "Dr. Smith",
+      prerequisites: "Basic ML knowledge",
+      techStack: "Python, TensorFlow",
+      skills: "Machine Learning, Data Analysis",
+      maxTeamSize: "4",
+      isOpenForApplications: true,
+      imageUrl: "https://media.istockphoto.com/id/1432955867/vector/technology-abstract-lines-and-dots-connect-background-with-hexagons-hexagon-grid-hexagons.jpg?s=612x612&w=0&k=20&c=gSMTHNjpqgpDU06e3G8GhQTUcqEcWfvafMFjzT3qzzQ=",
       applicants: [
         {
-          name: "Sai Manikanta",
-          role: "Developer",
-          tps: 0.75,
-          commitmentScore: 0.85,
-          capacity: 8,
-          projectLevel: "Medium",
+          id: "1",
+          name: "John Doe",
+          email: "john@example.com",
+          status: "pending",
+          appliedDate: "2024-03-15",
+          experience: "2 years of ML experience, worked on NLP projects",
         },
         {
-          name: "Hasanthi",
-          role: "Analyst",
-          tps: 0.45,
-          commitmentScore: 0.55,
-          capacity: 7,
-          projectLevel: "Easy",
+          id: "2",
+          name: "Jane Smith",
+          email: "jane@example.com",
+          status: "accepted",
+          appliedDate: "2024-03-14",
+          experience: "ML researcher, published papers in computer vision",
+          notes: "Strong candidate with relevant research experience",
         },
       ],
     },
     {
-      name: "Sony Project",
-      applicants: [
-        {
-          name: "Alice Johnson",
-          role: "Researcher",
-          tps: 0.65,
-          commitmentScore: 0.7,
-          capacity: 6,
-          projectLevel: "Medium",
-        },
-      ],
+      title: "Web Development",
+      description: "Building a Faculty collaboration platform",
+      tag: "Web",
+      status: "Not Started",
+      level: "Easy",
+      duration: "2 months",
+      mentor: "Prof. Johnson",
+      prerequisites: "HTML, CSS, JS",
+      techStack: "React, Node.js",
+      skills: "Frontend Development, API Integration",
+      maxTeamSize: "3",
+      isOpenForApplications: true,
+      applicants: [],
     },
   ];
 
-  const handleProjectClick = (project: Project) => {
-    setSelectedProject(project);
-    setIsModalOpen(true);
+  const handleUpdateApplicantStatus = (
+    applicantId: string,
+    newStatus: "pending" | "accepted" | "rejected" | "waitlisted"
+  ) => {
+    if (!selectedProject) return;
+    
+    setSelectedProject(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        applicants: prev.applicants.map(applicant =>
+          applicant.id === applicantId
+            ? { ...applicant, status: newStatus }
+            : applicant
+        ),
+      };
+    });
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedProject(null);
+  const handleAddApplicantNote = (applicantId: string, note: string) => {
+    if (!selectedProject) return;
+    
+    setSelectedProject(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        applicants: prev.applicants.map(applicant =>
+          applicant.id === applicantId
+            ? { ...applicant, notes: note }
+            : applicant
+        ),
+      };
+    });
   };
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <h2 className="text-2xl font-bold text-gray-700 mb-4">
-        Project Applicant Management
+        Applicant Management
       </h2>
 
       <div className="space-y-4">
-        {projects.map((project, index) => (
+        {projects.map((project) => (
           <div
-            key={index}
+            key={project.title}
             className="p-4 border rounded-lg shadow-md flex justify-between items-center bg-white hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => handleProjectClick(project)}
+            onClick={() => {
+              setSelectedProject(project);
+              setShowApplicantsModal(true);
+            }}
           >
             <div>
-              <p className="text-lg font-bold text-gray-800">{project.name}</p>
+              <p className="text-lg font-bold text-gray-800">{project.title}</p>
               <p className="text-gray-600">
                 {project.applicants.length} Applicants
               </p>
@@ -92,77 +120,17 @@ const ApplicantManagement: React.FC = () => {
         ))}
       </div>
 
-      {isModalOpen && selectedProject && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-2/3">
-            <h3 className="text-xl font-bold text-gray-700 mb-4">
-              Applicants for {selectedProject.name}
-            </h3>
-            <div className="mb-4">
-              <label className="mr-2 text-gray-700">Sort by:</label>
-              <select
-                value={sortBy}
-                onChange={(e) =>
-                  setSortBy(
-                    e.target.value as "name" | "tps" | "commitmentScore",
-                  )
-                }
-                className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="name">Name</option>
-                <option value="tps">TPS</option>
-                <option value="commitmentScore">Commitment Score</option>
-              </select>
-            </div>
-            <div className="space-y-4">
-              {selectedProject.applicants.map((applicant, index) => (
-                <div
-                  key={index}
-                  className="p-4 border rounded-lg shadow-md flex justify-between items-center bg-gray-100 hover:shadow-lg transition-shadow"
-                >
-                  <div>
-                    <p className="text-lg font-bold text-gray-800">
-                      {applicant.name}
-                    </p>
-                    <p className="text-gray-600">
-                      {selectedProject.name} - {applicant.role}
-                    </p>
-                    <div className="flex space-x-4 mt-2">
-                      <button className="text-green-500 hover:text-green-700 transition-colors">
-                        <FaCheck size={24} />
-                      </button>
-                      <button className="text-red-500 hover:text-red-700 transition-colors">
-                        <FaTimes size={24} />
-                      </button>
-                      <button className="text-yellow-500 hover:text-yellow-700 transition-colors">
-                        <FaExclamationCircle size={24} />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-green-600">
-                      {applicant.tps.toFixed(2)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Capacity: {applicant.capacity}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      CC: {applicant.commitmentScore.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={closeModal}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+      {showApplicantsModal && selectedProject && (
+        <ApplicantsModal
+          projectTitle={selectedProject.title}
+          applicants={selectedProject.applicants}
+          onClose={() => {
+            setShowApplicantsModal(false);
+            setSelectedProject(null);
+          }}
+          onUpdateStatus={handleUpdateApplicantStatus}
+          onAddNote={handleAddApplicantNote}
+        />
       )}
     </div>
   );

@@ -26,29 +26,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
-interface Project {
-  title: string;
-  description: string;
-  tag: string;
-  status: "Not Started" | "In Progress" | "Completed";
-  level: "Easy" | "Medium" | "Difficult";
-  duration: string;
-  mentor: string;
-  prerequisites: string;
-  techStack: string;
-  skills: string;
-  maxTeamSize: string;
-  isOpenForApplications: boolean;
-  applicants: {
-    id: string;
-    name: string;
-    email: string;
-    status: "pending" | "accepted" | "rejected" | "waitlisted";
-    appliedDate: string;
-    experience: string;
-    notes?: string;
-  }[];
-}
+import { Link } from "wouter";
+import { Project } from "@/types/project";
 
 export default function FacultyMySpace() {
   const [projects, setProjects] = useState<Project[]>([
@@ -65,6 +44,7 @@ export default function FacultyMySpace() {
       skills: "Machine Learning, Data Analysis",
       maxTeamSize: "4",
       isOpenForApplications: true,
+      imageUrl: "https://media.istockphoto.com/id/1432955867/vector/technology-abstract-lines-and-dots-connect-background-with-hexagons-hexagon-grid-hexagons.jpg?s=612x612&w=0&k=20&c=gSMTHNjpqgpDU06e3G8GhQTUcqEcWfvafMFjzT3qzzQ=",
       applicants: [
         {
           id: "1",
@@ -205,6 +185,22 @@ export default function FacultyMySpace() {
     setEditingProject(null);
   };
 
+  const handleProjectClick = (project: Project) => {
+    const projectData = {
+      ...project,
+      techStack: Array.isArray(project.techStack) 
+        ? project.techStack 
+        : project.techStack.split(", "),
+      maxTeamSize: Number(project.maxTeamSize),
+      team: project.team || [],
+      tasks: project.tasks || [],
+      resources: project.resources || [],
+      progress: project.progress || 0
+    };
+
+    window.history.replaceState({ project: projectData }, '');
+  };
+
   const filteredProjects = projects.filter((project) => {
     const matchesSearch = project.title
       .toLowerCase()
@@ -266,14 +262,31 @@ export default function FacultyMySpace() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProjects.map((project) => (
-              <ProjectCard
-                key={project.title}
-                project={project}
-                userType="faculty"
-                onEdit={() => handleEditProject(project.title)}
-                onDelete={() => handleDeleteConfirmation(project.title)}
-                onViewApplicants={() => handleViewApplicants(project.title)}
-              />
+              <Link 
+                key={project.title} 
+                href={`/faculty/project/${encodeURIComponent(project.title)}`}
+                onClick={() => handleProjectClick(project)}
+              >
+                <ProjectCard
+                  project={project}
+                  userType="faculty"
+                  onEdit={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleEditProject(project.title);
+                  }}
+                  onDelete={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDeleteConfirmation(project.title);
+                  }}
+                  onViewApplicants={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleViewApplicants(project.title);
+                  }}
+                />
+              </Link>
             ))}
           </div>
 

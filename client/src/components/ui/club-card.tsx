@@ -30,14 +30,19 @@ interface ClubCardProps {
 
 export function ClubCard({ club, onJoinToggle }: ClubCardProps) {
   const Icon = club.icon;
-  const [_, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   const handleClick = (e: React.MouseEvent) => {
     // Prevent navigation when clicking the join button
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
-    setLocation(`/student/club/${club.id}`);
+
+    // Determine if the user is faculty or student based on current path
+    const isFaculty = location.startsWith("/faculty");
+    const role = isFaculty ? "faculty" : "student";
+    
+    setLocation(`/${role}/club/${club.id}`);
   };
 
   return (

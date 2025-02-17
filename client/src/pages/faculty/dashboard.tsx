@@ -17,8 +17,13 @@ const FacultyDashboard = () => {
   const isMobile = useIsMobile();
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const ongoingProjects = 5;
-  const completedProjects = 12;
+  // Sample data for activity stats
+  const activityStats = {
+    ongoingProjects: 5,
+    completedProjects: 12,
+    inworkPapers: 3,
+    publishedPapers: 8
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -52,8 +57,10 @@ const FacultyDashboard = () => {
       title: "Quick Stats",
       component: (
         <QuickProjectStats
-          ongoing={ongoingProjects}
-          completed={completedProjects}
+          ongoingProjects={activityStats.ongoingProjects}
+          completedProjects={activityStats.completedProjects}
+          inworkPapers={activityStats.inworkPapers}
+          publishedPapers={activityStats.publishedPapers}
         />
       ),
     },
@@ -111,16 +118,17 @@ const FacultyDashboard = () => {
       <div className="w-full lg:w-1/4 space-y-4">
         <div className="bg-card rounded-lg p-4 shadow">
           <QuickProjectStats
-            ongoing={ongoingProjects}
-            completed={completedProjects}
+            ongoingProjects={activityStats.ongoingProjects}
+            completedProjects={activityStats.completedProjects}
+            inworkPapers={activityStats.inworkPapers}
+            publishedPapers={activityStats.publishedPapers}
           />
         </div>
         <div className="bg-card rounded-lg p-4 shadow">
-          <ApplicantManagement />
+          
+          <ProjectTracker />
         </div>
-        <div className="bg-card rounded-lg p-4 shadow">
-          <VerificationRequests requests={verificationRequestsData} />
-        </div>
+       
       </div>
 
       {/* Center Column */}
@@ -135,7 +143,10 @@ const FacultyDashboard = () => {
       {/* Right Column */}
       <div className="w-full lg:w-1/4 space-y-4">
         <div className="bg-card rounded-lg p-4 shadow">
-          <ProjectTracker />
+        <ApplicantManagement />
+        </div>
+        <div className="bg-card rounded-lg p-4 shadow">
+          <VerificationRequests requests={verificationRequestsData} />
         </div>
         <div className="bg-card rounded-lg p-4 shadow">
           <CalendarView />
@@ -145,7 +156,7 @@ const FacultyDashboard = () => {
   );
 
   return (
-    <div className="relative min-h-screen pb-16 md:pb-0">
+    <div className="relative min-h-screen pb-12 md:pb-0">
       <FacultyNavbar />
       <div className=" mx-auto py-8 px-4">
         {isMobile ? renderMobileView() : renderDesktopView()}

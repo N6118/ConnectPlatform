@@ -379,12 +379,10 @@ export default function FacultyMessaging() {
   const selectedChatData = chats.find((chat) => chat.id === selectedChat);
 
   return (
-    <div className="relative min-h-screen pb-16 md:pb-0">
+    <div className="h-screen flex flex-col">
       <FacultyNavbar />
-      <div
-        className={`flex flex-col min-h-screen ${theme === "dark" ? "dark" : ""}`}
-      >
-        <div className="flex h-[calc(100vh-4rem)] bg-gray-100 dark:bg-gray-900">
+      <div className={`flex-1 flex overflow-hidden ${theme === "dark" ? "dark" : ""}`}>
+        <div className="flex w-full">
           <AnimatePresence>
             {(!selectedChat || !isMobileView) && (
               <motion.div
@@ -392,7 +390,7 @@ export default function FacultyMessaging() {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -300, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="w-full md:w-80 flex flex-col"
+                className="w-full md:w-80 flex flex-col h-full"
               >
                 <ChatList
                   chats={chats}
@@ -417,7 +415,7 @@ export default function FacultyMessaging() {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 300, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="flex-1 flex flex-col bg-white dark:bg-gray-800 shadow-lg"
+                className="flex-1 flex flex-col h-full bg-white dark:bg-gray-800 shadow-lg"
               >
                 <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
                   {isMobileView && (
@@ -466,8 +464,8 @@ export default function FacultyMessaging() {
                   </div>
                 </div>
 
-                <div className="flex-1 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-900">
-                  <div className="space-y-4">
+                <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+                  <div className="p-4 space-y-4">
                     {messages.map((msg) => (
                       <MessageBubble
                         key={msg.id}
@@ -528,13 +526,15 @@ export default function FacultyMessaging() {
                   </div>
                 </div>
 
-                <MessageInput
-                  input={input}
-                  setInput={setInput}
-                  onSend={handleSendMessage}
-                  onAttach={handleFileAttachment}
-                  onVoiceMessage={handleVoiceMessage}
-                />
+                <div className="mt-auto">
+                  <MessageInput
+                    input={input}
+                    setInput={setInput}
+                    onSend={handleSendMessage}
+                    onAttach={handleFileAttachment}
+                    onVoiceMessage={handleVoiceMessage}
+                  />
+                </div>
               </motion.div>
             ) : (
               !isMobileView && (
