@@ -111,7 +111,6 @@ export default function StudentMessaging() {
   const [isTyping, setIsTyping] = useState(false);
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -224,7 +223,10 @@ export default function StudentMessaging() {
     }, 2000);
   }, [input, messages.length, selectedChat, socket]);
 
-  const handleFileAttachment = async (type: string, file: File) => {
+  const handleFileAttachment = async (
+    type: "document" | "image" | "video",
+    file: File
+  ) => {
     if (!file) return;
 
     try {
@@ -382,9 +384,11 @@ export default function StudentMessaging() {
     <div className="min-h-screen bg-gray-50">
       <StudentNavbar />
       <div
-        className={`flex flex-col min-h-screen ${theme === "dark" ? "dark" : ""}`}
+        className={`flex flex-col ${
+          isMobile ? 'h-[calc(100vh-8rem)]' : 'h-[calc(100vh-4rem)]'
+        }`}
       >
-        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+        <div className="flex flex-1 bg-gray-100">
           <AnimatePresence>
             {(!selectedChat || !isMobileView) && (
               <motion.div
@@ -402,8 +406,6 @@ export default function StudentMessaging() {
                   }}
                   onCreateChat={handleCreateChat}
                   onCreateGroup={() => setShowCreateGroup(true)}
-                  theme={theme}
-                  setTheme={setTheme}
                   isMobileView={isMobileView}
                 />
               </motion.div>
@@ -417,17 +419,17 @@ export default function StudentMessaging() {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 300, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="flex-1 flex flex-col bg-white dark:bg-gray-800 shadow-lg"
+                className="flex-1 flex flex-col bg-white shadow-lg"
               >
-                <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                <div className="flex items-center justify-between p-4 border-b">
                   {isMobileView && (
                     <button
                       onClick={() => setSelectedChat(null)}
-                      className="mr-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                      className="mr-2 p-2 hover:bg-gray-100 rounded-full transition-colors"
                     >
                       <ArrowLeft
                         size={24}
-                        className="text-gray-600 dark:text-gray-300"
+                        className="text-gray-600"
                       />
                     </button>
                   )}
@@ -439,14 +441,14 @@ export default function StudentMessaging() {
                     />
                     <div className="ml-3">
                       <div className="flex items-center space-x-2">
-                        <h2 className="font-semibold text-gray-800 dark:text-gray-200">
+                        <h2 className="font-semibold text-gray-800">
                           {selectedChatData?.name}
                         </h2>
                         {selectedChatData?.isMuted && (
                           <Bell className="w-4 h-4 text-gray-400" />
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-gray-500">
                         {selectedChatData?.status === "online"
                           ? "Active now"
                           : selectedChatData?.lastSeen}
@@ -456,17 +458,17 @@ export default function StudentMessaging() {
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={() => setShowChatSettings(true)}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                     >
                       <MoreVertical
                         size={20}
-                        className="text-gray-600 dark:text-gray-300"
+                        className="text-gray-600"
                       />
                     </button>
                   </div>
                 </div>
 
-                <div className="flex-1 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+                <div className="flex-1 p-4 overflow-y-auto">
                   <div className="space-y-4">
                     {messages.map((msg) => (
                       <MessageBubble
@@ -528,13 +530,15 @@ export default function StudentMessaging() {
                   </div>
                 </div>
 
-                <MessageInput
-                  input={input}
-                  setInput={setInput}
-                  onSend={handleSendMessage}
-                  onAttach={handleFileAttachment}
-                  onVoiceMessage={handleVoiceMessage}
-                />
+                <div className="mt-auto">
+                  <MessageInput
+                    input={input}
+                    setInput={setInput}
+                    onSend={handleSendMessage}
+                    onAttach={handleFileAttachment}
+                    onVoiceMessage={handleVoiceMessage}
+                  />
+                </div>
               </motion.div>
             ) : (
               !isMobileView && (

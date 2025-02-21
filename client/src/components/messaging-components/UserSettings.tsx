@@ -1,19 +1,15 @@
 import React from "react";
-import { X, Moon, Sun, Monitor, Bell } from "lucide-react";
+import { X, Bell } from "lucide-react";
 
 interface UserSettingsProps {
   onClose: () => void;
-  onThemeChange: (theme: "light" | "dark" | "system") => void;
   onNotificationChange: (enabled: boolean) => void;
-  currentTheme: "light" | "dark" | "system";
   notificationsEnabled: boolean;
 }
 
 export default function UserSettings({
   onClose,
-  onThemeChange,
   onNotificationChange,
-  currentTheme,
   notificationsEnabled,
 }: UserSettingsProps) {
   return (
@@ -32,46 +28,6 @@ export default function UserSettings({
 
         {/* Settings Content */}
         <div className="p-4 space-y-6">
-          {/* Theme Settings */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-800 mb-3">Theme</h3>
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                onClick={() => onThemeChange("light")}
-                className={`flex flex-col items-center p-3 rounded-lg border transition-colors ${
-                  currentTheme === "light"
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                <Sun size={24} className="text-gray-600 mb-2" />
-                <span className="text-sm">Light</span>
-              </button>
-              <button
-                onClick={() => onThemeChange("dark")}
-                className={`flex flex-col items-center p-3 rounded-lg border transition-colors ${
-                  currentTheme === "dark"
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                <Moon size={24} className="text-gray-600 mb-2" />
-                <span className="text-sm">Dark</span>
-              </button>
-              <button
-                onClick={() => onThemeChange("system")}
-                className={`flex flex-col items-center p-3 rounded-lg border transition-colors ${
-                  currentTheme === "system"
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                <Monitor size={24} className="text-gray-600 mb-2" />
-                <span className="text-sm">System</span>
-              </button>
-            </div>
-          </div>
-
           {/* Notification Settings */}
           <div>
             <h3 className="text-lg font-medium text-gray-800 mb-3">

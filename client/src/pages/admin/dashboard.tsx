@@ -44,6 +44,9 @@ import {
 } from "@/components/ui/dialog";
 import html2canvas from 'html2canvas';
 import { ChartContainer } from './ChartContainer';
+import AdminNavbar from "@/components/navigation/AdminNavbar";
+import AdminMobileBottomNav from "@/components/navigation/AdminMobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ProjectsChart = () => {
   const projectData = [
@@ -375,11 +378,13 @@ const PublicationsChart = () => {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 function dashboard() {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
+      <AdminNavbar />
+      
       <div className="container mx-auto px-4 py-8">
-        <DashboardHeader />
-        
         <TabNavigation>
           <TabsContent value="overview">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
@@ -516,6 +521,8 @@ function dashboard() {
 
         </TabNavigation>
       </div>
+
+      {isMobile && <AdminMobileBottomNav />}
     </div>
   );
 }
