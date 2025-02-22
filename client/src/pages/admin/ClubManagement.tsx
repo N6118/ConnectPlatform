@@ -11,8 +11,12 @@ import { ChartContainer } from './ChartContainer';
 import { Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis } from 'recharts';
+import AdminNavbar from "@/components/navigation/AdminNavbar";
+import AdminMobileBottomNav from "@/components/navigation/AdminMobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const ClubManagement = () => {
+    const isMobile = useIsMobile();
     const clubData = [
         {
             name: 'Tech Club',
@@ -27,7 +31,9 @@ export const ClubManagement = () => {
     ];
 
     return (
-        <div className="space-y-6">
+          <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
+            <AdminNavbar />
+        <div className="space-y-6 p-10">
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-center">
@@ -90,6 +96,8 @@ export const ClubManagement = () => {
                 </div>
             </ChartContainer>
         </div>
+        {isMobile && <AdminMobileBottomNav />}
+    </div>
     );
 };
 

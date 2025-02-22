@@ -1,11 +1,21 @@
 import { UserApproval } from './UserApproval';
 import { PaperReview } from './PaperReview';
+import AdminNavbar from "@/components/navigation/AdminNavbar";
+import AdminMobileBottomNav from "@/components/navigation/AdminMobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
+const ApprovalsTab = () => {
+  const isMobile = useIsMobile();
+  return (
+    <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
+      <AdminNavbar />
+      <div className="space-y-6 p-10">
+        <UserApproval />
+        <PaperReview />
+      </div>
+      {isMobile && <AdminMobileBottomNav />}
 
-const ApprovalsTab = () => (
-  <div className="space-y-6">
-    <UserApproval />
-    <PaperReview />
-  </div>
-);
+    </div>
+  );
+};
 
 export default ApprovalsTab;

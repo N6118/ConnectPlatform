@@ -16,40 +16,7 @@ const Dashboard = () => {
   const isMobile = useIsMobile();
   return (
     <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
-      <AdminNavbar />
-      
-      <div className="container mx-auto px-4 py-8">
-        <TabNavigation>
-          <TabsContent value="overview">
-            <OverviewTab />
-          </TabsContent>
-          
-          <TabsContent value="users">
-            <UsersTab />
-          </TabsContent>
-
-          <TabsContent value="clubs">
-            <ClubManagement />
-          </TabsContent>
-
-          <TabsContent value="projects">
-            <ProjectsTab />
-          </TabsContent>
-
-          <TabsContent value="publications">
-            <PublicationsTab />
-          </TabsContent>
-
-          <TabsContent value="approvals">
-            <ApprovalsTab />
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <SettingsTab />
-          </TabsContent>
-        </TabNavigation>
-      </div>
-
+      <OverviewTab />
       {isMobile && <AdminMobileBottomNav />}
     </div>
   );

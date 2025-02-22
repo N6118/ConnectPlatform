@@ -12,13 +12,13 @@ import ResetPassword from "@/pages/reset-password";
 import SearchResults from "@/pages/SearchResults";
 // Admin pages
 import Dashboard from "@/pages/admin/Dashboard";
-// import ApprovalsTab from "@/pages/admin/ApprovalsTab";
-// import ClubManagement from "@/pages/admin/ClubManagement";
-// import OverviewTab from "@/pages/admin/OverviewTab";
-// import ProjectsTab from "@/pages/admin/ProjectsTab";
-// import PublicationsTab from "@/pages/admin/PublicationsTab";
-// import SettingsTab from "@/pages/admin/SettingsTab";
-// import UsersTab from "@/pages/admin/UsersTab";
+import ApprovalsTab from "@/pages/admin/ApprovalsTab";
+import ClubManagement from "@/pages/admin/ClubManagement";
+import OverviewTab from "@/pages/admin/OverviewTab";
+import ProjectsTab from "@/pages/admin/ProjectsTab";
+import PublicationsTab from "@/pages/admin/PublicationsTab";
+import SettingsTab from "@/pages/admin/SettingsTab";
+import UsersTab from "@/pages/admin/UsersTab";
 
 // Faculty pages
 import FacultyDashboard from "@/pages/faculty/dashboard";
@@ -136,34 +136,34 @@ function Router() {
         path="/admin"
         component={() => <Route component={Dashboard} roles={["admin"]} />}
       />
-      {/* <Route
+      <Route
         path="/admin/overview"
-        component={() => <PrivateRoute component={OverviewTab} roles={["admin"]} />}
+        component={() => <Route component={OverviewTab} roles={["admin"]} />}
       />
       <Route
         path="/admin/users"
-        component={() => <PrivateRoute component={UsersTab} roles={["admin"]} />}
+        component={() => <Route component={UsersTab} roles={["admin"]} />}
       />
       <Route
         path="/admin/clubs"
-        component={() => <PrivateRoute component={ClubManagement} roles={["admin"]} />}
+        component={() => <Route component={ClubManagement} roles={["admin"]} />}
       />
       <Route
         path="/admin/projects"
-        component={() => <PrivateRoute component={ProjectsTab} roles={["admin"]} />}
+        component={() => <Route component={ProjectsTab} roles={["admin"]} />}
       />
       <Route
         path="/admin/publications"
-        component={() => <PrivateRoute component={PublicationsTab} roles={["admin"]} />}
+        component={() => <Route component={PublicationsTab} roles={["admin"]} />}
       />
       <Route
         path="/admin/approvals"
-        component={() => <PrivateRoute component={ApprovalsTab} roles={["admin"]} />}
+        component={() => <Route component={ApprovalsTab} roles={["admin"]} />}
       />
       <Route
         path="/admin/settings"
-        component={() => <PrivateRoute component={SettingsTab} roles={["admin"]} />}
-      /> */}
+        component={() => <Route component={SettingsTab} roles={["admin"]} />}
+      />
       {/* Faculty Routes */}
       <Route
         path="/faculty"
