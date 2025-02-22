@@ -19,7 +19,7 @@ interface MessageInputProps {
   input: string;
   setInput: (value: string) => void;
   onSend: () => void;
-  onAttach: (type: string, file: File) => void;
+  onAttach: (type: "document" | "image" | "video", file: File) => void;
   onVoiceMessage: (blob: Blob) => void;
 }
 

@@ -15,6 +15,7 @@ import {
   ClipboardList,
   MessageSquare,
   Group,
+  BookOpen,
 } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 import {
@@ -25,10 +26,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const navItems = [
   {
-    label: "Dashboard",
+    label: "Overview",
     path: "/admin",
     icon: <Gauge className="w-5 h-5" />,
   },
@@ -38,19 +41,24 @@ const navItems = [
     icon: <Users className="w-5 h-5" />,
   },
   {
-    label: "Projects",
-    path: "/admin/projects",
-    icon: <FileText className="w-5 h-5" />,
-  },
-  {
     label: "Clubs",
     path: "/admin/clubs",
     icon: <Group className="w-5 h-5" />,
   },
   {
-    label: "Messages",
-    path: "/admin/messages",
-    icon: <MessageSquare className="w-5 h-5" />,
+    label: "Projects",
+    path: "/admin/projects",
+    icon: <FileText className="w-5 h-5" />,
+  },
+  {
+    label: "Publications",
+    path: "/admin/publications",
+    icon: <BookOpen className="w-5 h-5" />,
+  },
+  {
+    label: "Approvals",
+    path: "/admin/approvals",
+    icon: <ClipboardList className="w-5 h-5" />,
   },
 ];
 
@@ -76,7 +84,7 @@ export default function AdminNavbar() {
   };
 
   return (
-    <nav className="bg-background border-b">
+    <nav className="bg-background border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and Brand */}
@@ -92,17 +100,17 @@ export default function AdminNavbar() {
           </div>
 
           {/* Search Bar */}
-          <div className="hidden md:flex items-center flex-1 max-w-lg mx-8">
+          <div className="flex items-center flex-1 max-w-lg mx-8">
             <form onSubmit={handleSearch} className="w-full">
               <div className="relative">
-                <input
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search users, projects, clubs..."
-                  className="w-full px-4 py-2 pl-10 text-sm border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full pl-10"
                 />
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               </div>
             </form>
           </div>
@@ -115,18 +123,23 @@ export default function AdminNavbar() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setLocation(item.path)}
-                className="px-3 py-2 rounded-md text-sm font-medium text-foreground hover:text-indigo-600 hover:bg-accent transition-colors duration-200 flex items-center space-x-2"
+                className="px-3 py-2 rounded-md text-sm font-medium text-foreground hover:text-primary hover:bg-accent transition-colors duration-200 flex items-center space-x-2"
               >
                 {item.icon}
                 <span>{item.label}</span>
               </motion.button>
             ))}
+          </div>
 
-            {/* User Settings Dropdown */}
+          {/* Right Side - Theme Toggle and Profile */}
+          <div className="flex items-center space-x-4">
+            <ThemeToggle />
+
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-foreground hover:text-indigo-600 hover:bg-accent transition-colors duration-200">
-                <User className="w-5 h-5" />
-                <span>Profile</span>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <User className="h-5 w-5" />
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
@@ -140,42 +153,12 @@ export default function AdminNavbar() {
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <div className="flex items-center w-full">
-                    <ThemeToggle />
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="flex items-center space-x-4 md:hidden">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setLocation("/admin/search")}
-              className="p-2 rounded-md text-foreground hover:text-indigo-600 hover:bg-accent focus:outline-none"
-            >
-              <Search className="h-5 w-5" />
-            </motion.button>
-
-            <ThemeToggle />
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-foreground hover:text-indigo-600 hover:bg-accent focus:outline-none"
-            >
-              {isOpen ? (
-                <X className="block h-6 w-6" />
-              ) : (
-                <Menu className="block h-6 w-6" />
-              )}
-            </motion.button>
           </div>
         </div>
       </div>

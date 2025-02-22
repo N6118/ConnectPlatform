@@ -5,8 +5,29 @@ import { ArrowLeft } from "lucide-react";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import ActivityFeed from "@/components/Profile-ActivityFeed";
 
 type EventType = "Hackathon" | "Workshop" | "Meeting" | "Other";
+
+interface Post {
+  id: string;
+  author: {
+    name: string;
+    role: string;
+    avatar: string;
+  };
+  content: string;
+  image?: string;
+  tags: string[];
+  visibility: string;
+  createdAt: Date;
+  likes: number;
+  comments: number;
+  reposts: number;
+}
+
 const clubData = {
   id: 1,
   name: "Tech Innovators Club",
@@ -35,19 +56,17 @@ const clubData = {
     {
       id: "1",
       author: {
-        id: "1",
         name: "John Doe",
         role: "Club President",
-        avatar:
-          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
+        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
       },
       content: "Excited to announce our upcoming AI Workshop!",
-      type: "announcement" as const,
-      timestamp: new Date().toISOString(),
+      tags: ["AI", "Workshop"],
+      visibility: "public",
+      createdAt: new Date(),
       likes: 24,
       comments: 5,
-      shares: 3,
-      isEditable: true,
+      reposts: 3,
     },
   ],
   achievements: [
@@ -74,6 +93,44 @@ const clubData = {
 export default function StudentClubDetail() {
   const { id } = useParams();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
+  
+  // Add state for posts
+  const [posts, setPosts] = useState<Post[]>(clubData.activityFeed);
+
+  // Add handlers for posts
+  const handleCreatePost = (newPost: Post) => {
+    setPosts([newPost, ...posts]);
+    toast({
+      title: "Post created",
+      description: "Your post has been successfully created.",
+    });
+  };
+
+  const handleEditPost = (updatedPost: Post) => {
+    setPosts(posts.map((post) => 
+      post.id === updatedPost.id ? updatedPost : post
+    ));
+    toast({
+      title: "Post updated", 
+      description: "Your post has been successfully updated."
+    });
+  };
+
+  const handleDeletePost = (postId: string) => {
+    setPosts(posts.filter((post) => post.id !== postId));
+    toast({
+      title: "Post deleted",
+      description: "Your post has been successfully deleted."
+    });
+  };
+
+  const userData = {
+    name: "John Doe",
+    role: "Club President",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
+    followers: 128,
+  };
 
   return (
     <div className="relative min-h-screen pb-16 md:pb-0">
@@ -87,6 +144,18 @@ export default function StudentClubDetail() {
         </Button>
       </div>
       <ClubDetailView club={clubData} currentUserId="1" />
+      
+      {/* Activity Feed */}
+      <div className="mt-8">
+        <ActivityFeed
+          userData={userData}
+          posts={posts}
+          onCreatePost={handleCreatePost}
+          onEditPost={handleEditPost}
+          onDeletePost={handleDeletePost}
+        />
+      </div>
+
       {isMobile && <MobileBottomNav role="student" />}
     </div>
   );

@@ -62,6 +62,47 @@ interface Post {
   reposts: number;
 }
 
+interface Project {
+  id: number;
+  name: string;
+  description: string;
+  status: string;
+  level: string;
+  verified: string;
+  faculty: string;
+}
+
+interface Paper {
+  id: number;
+  title: string;
+  status: string;
+  verified: string;
+  faculty: string;
+}
+
+interface Internship {
+  id: number;
+  name: string;
+  company: string;
+  status: string;
+  duration: string;
+  verified: string;
+  faculty: string;
+}
+
+interface Extracurricular {
+  id: number;
+  activity: string;
+  description: string;
+}
+
+interface WorkData {
+  PROJECTS: Project[];
+  PAPERS: Paper[];
+  INTERNSHIPS: Internship[];
+  EXTRACURRICULAR: Extracurricular[];
+}
+
 export default function StudentProfile() {
   const [selectedTab, setSelectedTab] = useState("PROJECTS");
   const [showModal, setShowModal] = useState(false);
@@ -71,7 +112,7 @@ export default function StudentProfile() {
   const [isFollowing, setIsFollowing] = useState(false);
 
   const [userData, setUserData] = useState({
-    name: "Sajith Rajan",
+    name: "Aishwarya Patyala",
     rollNo: "CB.EN.U4CSE21052",
     branch: "Computer Science",
     course: "B Tech",
@@ -96,7 +137,7 @@ export default function StudentProfile() {
     {
       id: "1",
       author: {
-        name: "Sajith Rajan",
+        name: "Aishwarya Patyala",
         role: "SDE Intern @ SAPI Full Stack | Android | ML",
         avatar: "./defaultProfile.jpg",
       },
@@ -114,7 +155,7 @@ export default function StudentProfile() {
     {
       id: "2",
       author: {
-        name: "Sajith Rajan",
+        name: "Aishwarya Patyala",
         role: "SDE Intern @ SAPI Full Stack | Android | ML",
         avatar: "./defaultProfile.jpg",
       },
@@ -130,7 +171,7 @@ export default function StudentProfile() {
   ]);
 
   const userData1 = {
-    name: "Sajith Rajan",
+    name: "Aishwarya Patyala",
     role: "SDE Intern @ SAPI Full Stack | Android | ML",
     avatar: "./defaultProfile.jpg",
     followers: 1234,
@@ -164,7 +205,7 @@ export default function StudentProfile() {
     });
   };
 
-  const [workData, setWorkData] = useState({
+  const [workData, setWorkData] = useState<WorkData>({
     PROJECTS: [
       {
         id: 1,
@@ -226,25 +267,23 @@ export default function StudentProfile() {
 
   const handleDeleteItem = (id: number) => {
     const newData = { ...workData };
-    Object.keys(newData).forEach((key) => {
-      newData[key as keyof typeof workData] = newData[
-        key as keyof typeof workData
-      ].filter((item) => item.id !== id);
+    (Object.keys(newData) as Array<keyof WorkData>).forEach((key) => {
+      newData[key] = (newData[key] as any[]).filter((item) => item.id !== id);
     });
     setWorkData(newData);
   };
 
   const handleSaveItem = (formData: any) => {
     const newData = { ...workData };
-    const type = (formData.type.toUpperCase() + "S") as keyof typeof workData;
+    const type = (formData.type.toUpperCase() + "S") as keyof WorkData;
 
     if (editItem) {
       newData[type] = newData[type].map((item) =>
-        item.id === editItem.id ? { ...item, ...formData } : item,
+        item.id === editItem.id ? { ...item, ...formData } : item
       );
     } else {
       const newId = Math.max(...newData[type].map((item) => item.id), 0) + 1;
-      newData[type].push({ id: newId, ...formData });
+      newData[type] = [...newData[type], { id: newId, ...formData }];
     }
 
     setWorkData(newData);
@@ -279,7 +318,7 @@ export default function StudentProfile() {
             <div className="relative">
               <Avatar className="h-[200px] w-[200px] sm:h-[250px] sm:w-[250px] lg:h-[300px] lg:w-[300px] rounded-full border-4 border-blue-300 shadow-xl overflow-hidden">
                 <img
-                  src="https://gratisography.com/wp-content/uploads/2024/11/gratisography-augmented-reality-800x525.jpg"
+                  src="https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDI0LTAxL3Jhd3BpeGVsb2ZmaWNlMTJfcGhvdG9fb2ZfeW91bmdfaW5kaWFuX2dpcmxfaG9sZGluZ19zdHVkZW50X2JhY19hNDdmMzk1OS0zZDAyLTRiZWEtYTEzOS1lYzI0ZjdhNjEwZGFfMS5qcGc.jpg"
                   alt="Profile"
                   className="object-cover w-full h-full"
                 />

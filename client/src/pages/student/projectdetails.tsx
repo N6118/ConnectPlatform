@@ -74,6 +74,7 @@ export default function StudentProjectDetails({
   const [showAddMember, setShowAddMember] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddResource, setShowAddResource] = useState(false);
+  const [showApplicants, setShowApplicants] = useState(false);
   const [newMember, setNewMember] = useState<TeamMember>({
     name: "",
     role: "",
@@ -323,48 +324,70 @@ export default function StudentProjectDetails({
                   </Badge>
                 </div>
               </div>
-              <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="mr-2" size={16} />
-                    Add Team Member
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Team Member</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        value={newMember.name}
-                        onChange={(e) =>
-                          setNewMember((prev) => ({
-                            ...prev,
-                            name: e.target.value,
-                          }))
-                        }
-                      />
+              <div className="flex gap-2">
+                <Dialog open={showApplicants} onOpenChange={setShowApplicants}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Users className="mr-2" size={16} />
+                      View Applicants
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                      <DialogTitle>Project Applicants</DialogTitle>
+                    </DialogHeader>
+                    <ApplicantsModal
+                      projectTitle={project.title}
+                      applicants={applicants}
+                      onClose={() => setShowApplicants(false)}
+                      onUpdateStatus={handleUpdateApplicantStatus}
+                      onAddNote={handleAddNote}
+                    />
+                  </DialogContent>
+                </Dialog>
+                <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="mr-2" size={16} />
+                      Add Team Member
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add Team Member</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="name">Name</Label>
+                        <Input
+                          id="name"
+                          value={newMember.name}
+                          onChange={(e) =>
+                            setNewMember((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="role">Role</Label>
+                        <Input
+                          id="role"
+                          value={newMember.role}
+                          onChange={(e) =>
+                            setNewMember((prev) => ({
+                              ...prev,
+                              role: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <Button onClick={handleAddMember}>Add Member</Button>
                     </div>
-                    <div>
-                      <Label htmlFor="role">Role</Label>
-                      <Input
-                        id="role"
-                        value={newMember.role}
-                        onChange={(e) =>
-                          setNewMember((prev) => ({
-                            ...prev,
-                            role: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <Button onClick={handleAddMember}>Add Member</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -379,7 +402,6 @@ export default function StudentProjectDetails({
             <TabsTrigger value="team">Team</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="resources">Resources</TabsTrigger>
-            <TabsTrigger value="applicants">Applicants</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -720,22 +742,6 @@ export default function StudentProjectDetails({
                   </Button>
                 ))}
               </div>
-            </motion.div>
-          </TabsContent>
-          <TabsContent value="applicants">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-6"
-            >
-              <ApplicantsModal
-                projectTitle={project.title}
-                applicants={applicants}
-                onClose={() => setActiveTab("overview")}
-                onUpdateStatus={handleUpdateApplicantStatus}
-                onAddNote={handleAddNote}
-              />
             </motion.div>
           </TabsContent>
         </Tabs>

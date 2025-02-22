@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   statusColors,
   levelColors,
@@ -35,6 +35,8 @@ import FacultyNavbar from "@/components/navigation/FacultyNavbar";
 import ApplicantsModal from "@/components/ApplicantsModal";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLocationState } from "@/hooks/use-location-state";
+import { Project } from "@/types/project";
 
 interface TeamMember {
   name: string;
@@ -63,16 +65,23 @@ interface Applicant {
   notes?: string;
 }
 
-export default function FacultyProjectDetails({
-  params,
-}: {
+interface ProjectDetailsProps {
   params: { title: string };
-}) {
+}
+
+interface LocationState {
+  project: Project;
+}
+
+export default function FacultyProjectDetails({ params }: ProjectDetailsProps) {
+  const locationState = useLocationState<LocationState>();
+  const [location] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddResource, setShowAddResource] = useState(false);
+  const [showApplicants, setShowApplicants] = useState(false);
   const [newMember, setNewMember] = useState<TeamMember>({
     name: "",
     role: "",
@@ -108,60 +117,52 @@ export default function FacultyProjectDetails({
     },
   ]);
 
-  const [project, setProject] = useState({
-    title: decodeURIComponent(params.title),
-    description: "This is a detailed description of the project.",
-    status: "In Progress" as const,
-    level: "Medium" as const,
-    mentor: "Dr. Jane Smith",
-    prerequisites: "Basic understanding of AI and Machine Learning",
-    techStack: ["React", "Node.js", "TensorFlow"],
-    duration: "3 months",
-    maxTeamSize: 5,
-    skills: "JavaScript, Python, Data Analysis",
-    progress: 60,
-    imageUrl:
-      "https://media.istockphoto.com/id/1432955867/vector/technology-abstract-lines-and-dots-connect-background-with-hexagons-hexagon-grid-hexagons.jpg?s=612x612&w=0&k=20&c=gSMTHNjpqgpDU06e3G8GhQTUcqEcWfvafMFjzT3qzzQ=",
-    team: [
-      { name: "John Doe", role: "Team Lead" },
-      { name: "Jane Smith", role: "Developer" },
-    ],
-    tasks: [
-      {
-        title: "Setup Development Environment",
-        assignedTo: "John Doe",
-        deadline: "2024-03-30",
-        status: "Completed",
-      },
-      {
-        title: "Initial Project Planning",
-        assignedTo: "Jane Smith",
-        deadline: "2024-04-15",
-        status: "Pending",
-      },
-    ],
-    resources: [
-      {
-        name: "Project Documentation",
-        type: "document",
-        url: "/docs/project-doc.pdf",
-      },
-      {
-        name: "GitHub Repository",
-        type: "link",
-        url: "https://github.com/project/repo",
-      },
-    ],
+  const [project, setProject] = useState<Project>(() => {
+    if (locationState?.project) {
+      return {
+        ...locationState.project,
+        imageUrl: locationState.project.imageUrl || "https://media.istockphoto.com/id/1432955867/vector/technology-abstract-lines-and-dots-connect-background-with-hexagons-hexagon-grid-hexagons.jpg?s=612x612&w=0&k=20&c=gSMTHNjpqgpDU06e3G8GhQTUcqEcWfvafMFjzT3qzzQ="
+      };
+    }
+    
+    // Default project state if no data is passed
+    return {
+      title: decodeURIComponent(params.title),
+      description: "Loading project details...",
+      status: "In Progress",
+      level: "Medium",
+      mentor: "",
+      prerequisites: "",
+      techStack: [],
+      duration: "",
+      maxTeamSize: 5,
+      skills: "",
+      progress: 0,
+      imageUrl: "/default-project-image.jpg",
+      team: [],
+      tasks: [],
+      resources: [],
+      tag: "",
+      isOpenForApplications: false,
+      applicants: []
+    };
   });
 
   useEffect(() => {
+    // If no project data was passed via state, fetch it here
+    if (!locationState?.project) {
+      // You would typically fetch the project data from your API here
+      console.log("Would fetch project data for:", params.title);
+    }
+  }, [params.title, locationState]);
+
+  useEffect(() => {
     // Calculate progress based on completed tasks
-    const completedTasks = project.tasks.filter(
-      (task) => task.status === "Completed",
-    ).length;
-    const totalTasks = project.tasks.length;
-    const newProgress =
-      totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    const completedTasks = project.tasks?.filter(
+      (task) => task.status === "Completed"
+    ).length || 0;
+    const totalTasks = project.tasks?.length || 0;
+    const newProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
     setProject((prev) => ({ ...prev, progress: newProgress }));
   }, [project.tasks]);
 
@@ -180,7 +181,7 @@ export default function FacultyProjectDetails({
     if (newMember.name && newMember.role) {
       setProject((prev) => ({
         ...prev,
-        team: [...prev.team, newMember],
+        team: [...(prev.team || []), newMember],
       }));
       setNewMember({ name: "", role: "" });
       setShowAddMember(false);
@@ -191,7 +192,7 @@ export default function FacultyProjectDetails({
     if (newTask.title && newTask.assignedTo && newTask.deadline) {
       setProject((prev) => ({
         ...prev,
-        tasks: [...prev.tasks, newTask],
+        tasks: [...(prev.tasks || []), newTask],
       }));
       setNewTask({
         title: "",
@@ -217,14 +218,14 @@ export default function FacultyProjectDetails({
   const handleTaskStatusChange = (taskTitle: string) => {
     setProject((prev) => ({
       ...prev,
-      tasks: prev.tasks.map((task) =>
+      tasks: prev.tasks?.map((task) =>
         task.title === taskTitle
           ? {
               ...task,
               status: task.status === "Pending" ? "Completed" : "Pending",
             }
-          : task,
-      ),
+          : task
+      ) || [],
     }));
   };
 
@@ -322,48 +323,70 @@ export default function FacultyProjectDetails({
                   </Badge>
                 </div>
               </div>
-              <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="mr-2" size={16} />
-                    Add Team Member
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Team Member</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        value={newMember.name}
-                        onChange={(e) =>
-                          setNewMember((prev) => ({
-                            ...prev,
-                            name: e.target.value,
-                          }))
-                        }
-                      />
+              <div className="flex gap-2">
+                <Dialog open={showApplicants} onOpenChange={setShowApplicants}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Users className="mr-2" size={16} />
+                      View Applicants
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                      <DialogTitle>Project Applicants</DialogTitle>
+                    </DialogHeader>
+                    <ApplicantsModal
+                      projectTitle={project.title}
+                      applicants={applicants}
+                      onClose={() => setShowApplicants(false)}
+                      onUpdateStatus={handleUpdateApplicantStatus}
+                      onAddNote={handleAddNote}
+                    />
+                  </DialogContent>
+                </Dialog>
+                <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="mr-2" size={16} />
+                      Add Team Member
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add Team Member</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="name">Name</Label>
+                        <Input
+                          id="name"
+                          value={newMember.name}
+                          onChange={(e) =>
+                            setNewMember((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="role">Role</Label>
+                        <Input
+                          id="role"
+                          value={newMember.role}
+                          onChange={(e) =>
+                            setNewMember((prev) => ({
+                              ...prev,
+                              role: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <Button onClick={handleAddMember}>Add Member</Button>
                     </div>
-                    <div>
-                      <Label htmlFor="role">Role</Label>
-                      <Input
-                        id="role"
-                        value={newMember.role}
-                        onChange={(e) =>
-                          setNewMember((prev) => ({
-                            ...prev,
-                            role: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <Button onClick={handleAddMember}>Add Member</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -378,7 +401,6 @@ export default function FacultyProjectDetails({
             <TabsTrigger value="team">Team</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="resources">Resources</TabsTrigger>
-            <TabsTrigger value="applicants">Applicants</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -441,13 +463,13 @@ export default function FacultyProjectDetails({
                         <div>
                           <Label>Tech Stack</Label>
                           <Input
-                            value={project.techStack.join(", ")}
+                            value={Array.isArray(project.techStack) 
+                              ? project.techStack.join(", ") 
+                              : project.techStack}
                             onChange={(e) =>
                               setProject((prev) => ({
                                 ...prev,
-                                techStack: e.target.value
-                                  .split(",")
-                                  .map((s) => s.trim()),
+                                techStack: e.target.value.split(",").map((s) => s.trim()),
                               }))
                             }
                           />
@@ -486,14 +508,15 @@ export default function FacultyProjectDetails({
                         <div className="flex items-center space-x-2">
                           <Users className="text-muted-foreground" size={20} />
                           <span className="text-muted-foreground">
-                            Team Size: {project.team.length} /{" "}
-                            {project.maxTeamSize}
+                            Team Size: {project.team?.length || 0} / {project.maxTeamSize}
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Code className="text-muted-foreground" size={20} />
                           <span className="text-muted-foreground">
-                            Tech Stack: {project.techStack.join(", ")}
+                            Tech Stack: {Array.isArray(project.techStack) 
+                              ? project.techStack.join(", ") 
+                              : project.techStack}
                           </span>
                         </div>
                       </>
@@ -530,7 +553,7 @@ export default function FacultyProjectDetails({
               className="space-y-6"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {project.team.map((member, index) => (
+                {project.team?.map((member, index) => (
                   <div key={index} className="bg-card p-4 rounded-lg border">
                     <h3 className="font-semibold">{member.name}</h3>
                     <p className="text-muted-foreground">{member.role}</p>
@@ -607,7 +630,7 @@ export default function FacultyProjectDetails({
                 </Dialog>
               </div>
               <div className="space-y-4">
-                {project.tasks.map((task, index) => (
+                {project.tasks?.map((task, index) => (
                   <div
                     key={index}
                     className="bg-card p-4 rounded-lg border flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
@@ -719,22 +742,6 @@ export default function FacultyProjectDetails({
                   </Button>
                 ))}
               </div>
-            </motion.div>
-          </TabsContent>
-          <TabsContent value="applicants">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-6"
-            >
-              <ApplicantsModal
-                projectTitle={project.title}
-                applicants={applicants}
-                onClose={() => setActiveTab("overview")}
-                onUpdateStatus={handleUpdateApplicantStatus}
-                onAddNote={handleAddNote}
-              />
             </motion.div>
           </TabsContent>
         </Tabs>

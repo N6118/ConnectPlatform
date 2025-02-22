@@ -11,14 +11,20 @@ import FacultyNavbar from "@/components/navigation/FacultyNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SwipeableCard } from "@/components/ui/swipeable-card";
 
 const FacultyDashboard = () => {
   const [activeComponent, setActiveComponent] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const ongoingProjects = 5;
-  const completedProjects = 12;
+  // Sample data for activity stats
+  const activityStats = {
+    ongoingProjects: 5,
+    completedProjects: 12,
+    inworkPapers: 3,
+    publishedPapers: 8
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -52,8 +58,10 @@ const FacultyDashboard = () => {
       title: "Quick Stats",
       component: (
         <QuickProjectStats
-          ongoing={ongoingProjects}
-          completed={completedProjects}
+          ongoingProjects={activityStats.ongoingProjects}
+          completedProjects={activityStats.completedProjects}
+          inworkPapers={activityStats.inworkPapers}
+          publishedPapers={activityStats.publishedPapers}
         />
       ),
     },
@@ -97,6 +105,16 @@ const FacultyDashboard = () => {
         ))}
       </div>
 
+      {activeComponent && (
+        <SwipeableCard
+          onSwipeLeft={handleSwipeLeft}
+          onSwipeRight={handleSwipeRight}
+          className="bg-card rounded-lg p-4 shadow-lg"
+        >
+          {components.find((c) => c.id === activeComponent)?.component}
+        </SwipeableCard>
+      )}
+
       <div>
         <Carousel />
       </div>
@@ -105,22 +123,37 @@ const FacultyDashboard = () => {
     </div>
   );
 
+  const handleSwipeLeft = () => {
+    if (currentIndex < components.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setActiveComponent(components[currentIndex + 1].id);
+    }
+  };
+
+  const handleSwipeRight = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setActiveComponent(components[currentIndex - 1].id);
+    }
+  };
+
   const renderDesktopView = () => (
-    <div className="min-h-screen p-4 flex flex-wrap lg:flex-nowrap gap-4">
+    <div className="min-h-full p-3 flex flex-wrap lg:flex-nowrap gap-4">
       {/* Left Column */}
       <div className="w-full lg:w-1/4 space-y-4">
         <div className="bg-card rounded-lg p-4 shadow">
           <QuickProjectStats
-            ongoing={ongoingProjects}
-            completed={completedProjects}
+            ongoingProjects={activityStats.ongoingProjects}
+            completedProjects={activityStats.completedProjects}
+            inworkPapers={activityStats.inworkPapers}
+            publishedPapers={activityStats.publishedPapers}
           />
         </div>
         <div className="bg-card rounded-lg p-4 shadow">
-          <ApplicantManagement />
+          
+          <ProjectTracker />
         </div>
-        <div className="bg-card rounded-lg p-4 shadow">
-          <VerificationRequests requests={verificationRequestsData} />
-        </div>
+       
       </div>
 
       {/* Center Column */}
@@ -135,7 +168,10 @@ const FacultyDashboard = () => {
       {/* Right Column */}
       <div className="w-full lg:w-1/4 space-y-4">
         <div className="bg-card rounded-lg p-4 shadow">
-          <ProjectTracker />
+        <ApplicantManagement />
+        </div>
+        <div className="bg-card rounded-lg p-4 shadow">
+          <VerificationRequests requests={verificationRequestsData} />
         </div>
         <div className="bg-card rounded-lg p-4 shadow">
           <CalendarView />
@@ -145,9 +181,9 @@ const FacultyDashboard = () => {
   );
 
   return (
-    <div className="relative min-h-screen pb-16 md:pb-0">
+    <div className="relative min-h-screen pb-12 md:pb-0">
       <FacultyNavbar />
-      <div className=" mx-auto py-8 px-4">
+      <div className=" mx-auto py-4 px-4">
         {isMobile ? renderMobileView() : renderDesktopView()}
       </div>
       {isMobile && <MobileBottomNav role="faculty" />}

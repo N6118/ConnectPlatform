@@ -129,7 +129,7 @@ export default function StudentDashboard() {
   return (
     <div className="relative min-h-screen pb-16 md:pb-0">
       <StudentNavbar />
-      <div className="mx-auto py-8 px-4">
+      <div className="mx-auto ">
         {isMobile ? renderMobileView() : renderDesktopView()}
       </div>
       {isMobile && <MobileBottomNav role="student" />}{" "}

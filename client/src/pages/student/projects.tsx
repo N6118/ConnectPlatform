@@ -1,25 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ProjectCard } from "@/components/ui/project-card";
+import { ProjectCard } from "@/components/ui/project-card1";
 import { ProjectFilters } from "@/components/ui/project-filters";
 import { ProjectModal } from "@/components/ui/project-modal";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface Project {
-  id: number;
-  name: string;
-  description: string;
-  status: "Ongoing" | "Completed";
-  tags: string[];
-  image: string;
-  about: string;
-  techStack: string[];
-  prerequisites: string[];
-  members: string[];
-  mentor: string;
-}
+import { Project } from "@/components/ui/project-card1";
 
 const projects: Project[] = [
   {

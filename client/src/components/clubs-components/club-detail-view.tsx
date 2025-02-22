@@ -67,12 +67,8 @@ interface Club {
     leaders: number;
     members: number;
   };
-  roles: {
-    name: string;
-    member: string;
-  }[];
   upcomingEvents: Event[];
-  activityFeed: ActivityPost[];
+  activityFeed: Post[];
   achievements: Achievement[];
   members: Member[];
 }
@@ -85,24 +81,6 @@ interface Event {
   type: "Hackathon" | "Workshop" | "Meeting" | "Other";
   location: string;
   registrationLink?: string;
-}
-
-interface ActivityPost {
-  id: string;
-  author: {
-    id: string;
-    name: string;
-    role: string;
-    avatar: string;
-  };
-  content: string;
-  images?: string[];
-  type: "event" | "announcement" | "achievement" | "project-update";
-  timestamp: string;
-  likes: number;
-  comments: number;
-  shares: number;
-  isEditable?: boolean;
 }
 
 interface Achievement {
@@ -121,6 +99,24 @@ interface Member {
   joinDate: string;
 }
 
+interface Post {
+  id: string;
+  author: {
+    id: string;
+    name: string;
+    role: string;
+    avatar: string;
+  };
+  content: string;
+  type: string;
+  timestamp: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  isEditable: boolean;
+  images?: string[];
+}
+
 const initialClub: Club = {
   id: 1,
   name: "Tech Innovators Club",
@@ -133,7 +129,6 @@ const initialClub: Club = {
     leaders: 4,
     members: 124,
   },
-  roles: [{ name: "President", member: "John Doe" }],
   upcomingEvents: [
     {
       id: "1",
@@ -243,16 +238,14 @@ const initialClub: Club = {
       id: "1",
       name: "John Doe",
       role: "President",
-      avatar:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
       joinDate: "2023-01-01",
     },
     {
       id: "2",
       name: "Jane Smith",
       role: "Tech Lead",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80",
+      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80",
       joinDate: "2023-03-15",
     },
   ],
@@ -268,114 +261,15 @@ export default function ClubDetailView({
   const [club, setClub] = useState<Club>(initialClubData || initialClub);
   const [activeSection, setActiveSection] = useState("Activities");
   const [showEventModal, setShowEventModal] = useState(false);
-  const [showPostModal, setShowPostModal] = useState(false);
   const [showAchievementModal, setShowAchievementModal] = useState(false);
   const [showMemberModal, setShowMemberModal] = useState(false);
-  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-  const [postToDelete, setPostToDelete] = useState<string | null>(null);
-  const [editingPost, setEditingPost] = useState<ActivityPost | null>(null);
-  const [newPostContent, setNewPostContent] = useState("");
-  const [newPostImage, setNewPostImage] = useState<File | null>(null);
   const { toast } = useToast();
-
-  const getMembershipStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-500/10 text-green-500";
-      case "pending":
-        return "bg-yellow-500/10 text-yellow-500";
-      case "inactive":
-        return "bg-gray-500/10 text-gray-500";
-      default:
-        return "bg-gray-500/10 text-gray-500";
-    }
-  };
 
   const sections = [
     { name: "Activities", icon: CalendarDays },
     { name: "Achievements", icon: Trophy },
     { name: "Members", icon: Users },
   ];
-
-  const handleDeletePost = (postId: string) => {
-    setPostToDelete(postId);
-    setShowDeleteAlert(true);
-  };
-
-  const confirmDelete = () => {
-    if (postToDelete) {
-      setClub((prev) => ({
-        ...prev,
-        activityFeed: prev.activityFeed.filter((post) => post.id !== postToDelete),
-      }));
-      toast({
-        title: "Post deleted",
-        description: "The post has been removed successfully.",
-      });
-      setShowDeleteAlert(false);
-      setPostToDelete(null);
-    }
-  };
-
-  const handleEditPost = (post: ActivityPost) => {
-    setEditingPost(post);
-    setNewPostContent(post.content);
-    setShowPostModal(true);
-  };
-
-  const handleSavePost = () => {
-    if (!newPostContent.trim()) return;
-
-    if (editingPost) {
-      setClub((prev) => ({
-        ...prev,
-        activityFeed: prev.activityFeed.map((post) =>
-          post.id === editingPost.id
-            ? {
-                ...post,
-                content: newPostContent,
-                timestamp: new Date().toISOString(),
-                images: newPostImage ? [URL.createObjectURL(newPostImage)] : post.images,
-              }
-            : post
-        ),
-      }));
-      toast({
-        title: "Post updated",
-        description: "Your post has been updated successfully.",
-      });
-    } else {
-      const newPost: ActivityPost = {
-        id: Math.random().toString(36).substr(2, 9),
-        author: {
-          id: currentUserId,
-          name: "Current User",
-          role: "Member",
-          avatar: "https://ui-avatars.com/api/?name=Current+User",
-        },
-        content: newPostContent,
-        type: "announcement",
-        timestamp: new Date().toISOString(),
-        likes: 0,
-        comments: 0,
-        shares: 0,
-        isEditable: true,
-        images: newPostImage ? [URL.createObjectURL(newPostImage)] : undefined,
-      };
-      setClub((prev) => ({
-        ...prev,
-        activityFeed: [newPost, ...prev.activityFeed],
-      }));
-      toast({
-        title: "Post created",
-        description: "Your post has been published successfully.",
-      });
-    }
-    setShowPostModal(false);
-    setEditingPost(null);
-    setNewPostContent("");
-    setNewPostImage(null);
-  };
 
   const handleAddAchievement = (name: string, description: string) => {
     const newAchievement: Achievement = {
@@ -491,104 +385,6 @@ export default function ClubDetailView({
     </div>
   );
 
-  const renderActivityFeed = () => (
-    <div className="space-y-6 mt-8">
-      <div className="flex justify-between items-center">
-        <h3 className="text-2xl font-semibold">Activity Feed</h3>
-        <Button onClick={() => {
-          setEditingPost(null);
-          setNewPostContent("");
-          setNewPostImage(null);
-          setShowPostModal(true);
-        }} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Post
-        </Button>
-      </div>
-      <div className="space-y-6">
-        {club.activityFeed?.map((post) => (
-          <Card key={post.id} className="hover:shadow-lg transition-all">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarImage src={post.author.avatar} alt={post.author.name} />
-                    <AvatarFallback>{post.author.name.slice(0, 2)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">{post.author.name}</CardTitle>
-                    <CardDescription>{post.author.role}</CardDescription>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {new Date(post.timestamp).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-                {(post.isEditable || post.author.id === currentUserId) && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditPost(post)}>
-                        <Edit2 className="h-4 w-4 mr-2" />
-                        Edit post
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDeletePost(post.id)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete post
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p>{post.content}</p>
-              {post.images && post.images.length > 0 && (
-                <div className="grid gap-4 grid-cols-1">
-                  {post.images.map((image, index) => (
-                    <img
-                      key={index}
-                      src={image}
-                      alt="Post attachment"
-                      className="rounded-lg w-full object-cover max-h-96"
-                    />
-                  ))}
-                </div>
-              )}
-              {post.type && (
-                <Badge variant="secondary" className="capitalize">
-                  {post.type.replace('-', ' ')}
-                </Badge>
-              )}
-            </CardContent>
-            <CardFooter className="flex justify-between text-sm text-muted-foreground pt-2">
-              <div className="flex gap-6">
-                <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                  <Heart className={`h-4 w-4 ${post.likes > 0 ? 'fill-current' : ''}`} />
-                  {post.likes}
-                </button>
-                <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                  <MessageCircle className="h-4 w-4" />
-                  {post.comments}
-                </button>
-                <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                  <Repeat2 className="h-4 w-4" />
-                  {post.shares}
-                </button>
-              </div>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-
   const renderAchievements = () => (
     <>
       <div className="flex justify-between items-center mb-6">
@@ -649,27 +445,6 @@ export default function ClubDetailView({
       </div>
 
       <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {club.roles.map((role, index) => (
-          <Card key={index} className="bg-muted/50">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarImage
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      role.member,
-                    )}`}
-                  />
-                  <AvatarFallback>{role.member.slice(0, 2)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">{role.member}</p>
-                  <p className="text-sm text-muted-foreground">{role.name}</p>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-        ))}
-
         <AnimatePresence>
           {club.members.map((member) => (
             <motion.div
@@ -713,7 +488,7 @@ export default function ClubDetailView({
           <>
             {renderUpcomingEvents()}
             <Separator className="my-8" />
-            {renderActivityFeed()}
+            
           </>
         );
       case "Achievements":
@@ -821,71 +596,6 @@ export default function ClubDetailView({
           </div>
         </DialogContent>
       </Dialog>
-
-      <Dialog open={showPostModal} onOpenChange={setShowPostModal}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>
-              {editingPost ? "Edit Post" : "Create New Post"}
-            </DialogTitle>
-            <DialogDescription>
-              Share updates, announcements, or achievements with your club members
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <Textarea
-              placeholder="What's on your mind?"
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              className="min-h-[100px]"
-            />
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Add Image (optional)</label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setNewPostImage(e.target.files?.[0] || null)}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowPostModal(false);
-                  setEditingPost(null);
-                  setNewPostContent("");
-                  setNewPostImage(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSavePost} 
-                disabled={!newPostContent.trim()}
-              >
-                {editingPost ? "Save Changes" : "Post"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your post.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <Dialog open={showAchievementModal} onOpenChange={setShowAchievementModal}>
         <DialogContent className="sm:max-w-[425px]">

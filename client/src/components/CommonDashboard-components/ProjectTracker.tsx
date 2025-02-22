@@ -1,88 +1,94 @@
 import React, { useState } from "react";
 import { CheckCircle2, AlertCircle, Clock, Calendar } from "lucide-react";
+import { Link } from "wouter";
 
 interface Project {
-  id: number;
   title: string;
   description: string;
-  deadline: string;
-  status: "ongoing" | "completed" | "dropped";
-  progress: number;
+  tag: string;
+  status: "Not Started" | "In Progress" | "Completed";
+  level: "Easy" | "Medium" | "Difficult";
+  duration: string;
+  mentor: string;
+  prerequisites: string;
+  techStack: string;
+  skills: string;
+  maxTeamSize: string;
+  isOpenForApplications: boolean;
+  applicants: {
+    id: string;
+    name: string;
+    email: string;
+    status: "pending" | "accepted" | "rejected" | "waitlisted";
+    appliedDate: string;
+    experience: string;
+    notes?: string;
+  }[];
 }
 
 const projects: Project[] = [
   {
-    id: 1,
-    title: "E-commerce Platform",
-    description: "Building a modern e-commerce platform with React and Node.js",
-    deadline: "2024-04-15",
-    status: "ongoing",
-    progress: 65,
+    title: "AI Research Project",
+    description: "Exploring applications of AI in education",
+    tag: "AI",
+    status: "In Progress",
+    level: "Medium",
+    duration: "3 months",
+    mentor: "Dr. Smith",
+    prerequisites: "Basic ML knowledge",
+    techStack: "Python, TensorFlow",
+    skills: "Machine Learning, Data Analysis",
+    maxTeamSize: "4",
+    isOpenForApplications: true,
+    applicants: [
+      {
+        id: "1",
+        name: "John Doe",
+        email: "john@example.com",
+        status: "pending",
+        appliedDate: "2024-03-15",
+        experience: "2 years of ML experience, worked on NLP projects",
+      },
+      {
+        id: "2",
+        name: "Jane Smith",
+        email: "jane@example.com",
+        status: "accepted",
+        appliedDate: "2024-03-14",
+        experience: "ML researcher, published papers in computer vision",
+        notes: "Strong candidate with relevant research experience",
+      },
+    ],
   },
   {
-    id: 2,
-    title: "Mobile App Development",
-    description: "Cross-platform mobile app for fitness tracking",
-    deadline: "2024-03-30",
-    status: "completed",
-    progress: 100,
-  },
-  {
-    id: 3,
-    title: "AI Integration",
-    description: "Machine learning integration for data analysis",
-    deadline: "2024-05-01",
-    status: "dropped",
-    progress: 30,
-  },
-  {
-    id: 4,
-    title: "Dashboard Redesign",
-    description: "Modernizing the analytics dashboard UI",
-    deadline: "2024-04-20",
-    status: "ongoing",
-    progress: 45,
-  },
-  {
-    id: 5,
-    title: "New AI Model",
-    description: "Developing an AI model for predictive analysis",
-    deadline: "2024-06-10",
-    status: "ongoing",
-    progress: 25,
-  },
-  {
-    id: 4,
-    title: "Dashboard Redesign",
-    description: "Modernizing the analytics dashboard UI",
-    deadline: "2024-04-20",
-    status: "ongoing",
-    progress: 45,
-  },
-  {
-    id: 5,
-    title: "New AI Model",
-    description: "Developing an AI model for predictive analysis",
-    deadline: "2024-06-10",
-    status: "ongoing",
-    progress: 25,
+    title: "Web Development",
+    description: "Building a Faculty collaboration platform",
+    tag: "Web",
+    status: "Not Started",
+    level: "Easy",
+    duration: "2 months",
+    mentor: "Prof. Johnson",
+    prerequisites: "HTML, CSS, JS",
+    techStack: "React, Node.js",
+    skills: "Frontend Development, API Integration",
+    maxTeamSize: "3",
+    isOpenForApplications: true,
+    applicants: [],
   },
 ];
 
 const ProjectOverview: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<
-    "ongoing" | "completed" | "dropped"
-  >("ongoing");
+  const [activeTab, setActiveTab] = useState<"Not Started" | "In Progress" | "Completed">("In Progress");
   const [showAll, setShowAll] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "ongoing":
+      case "Not Started":
+        return "bg-yellow-50 border-yellow-200";
+      case "In Progress":
         return "bg-blue-50 border-blue-200";
-      case "completed":
+      case "Completed":
         return "bg-green-50 border-green-200";
-      case "dropped":
-        return "bg-red-50 border-red-200";
       default:
         return "bg-gray-50 border-gray-200";
     }
@@ -90,54 +96,34 @@ const ProjectOverview: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "ongoing":
+      case "Not Started":
+        return <Clock className="w-5 h-5 text-yellow-500" />;
+      case "In Progress":
         return <Clock className="w-5 h-5 text-blue-500" />;
-      case "completed":
+      case "Completed":
         return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-      case "dropped":
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
       default:
         return null;
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const getDaysRemaining = (deadline: string) => {
-    const today = new Date();
-    const deadlineDate = new Date(deadline);
-    const diffTime = deadlineDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays >= 0 ? `${diffDays} days left` : "Deadline passed";
-  };
-
   const filteredProjects = projects.filter(
-    (project) => project.status === activeTab,
+    (project) => project.status === activeTab
   );
-  const visibleProjects = showAll
-    ? filteredProjects
-    : filteredProjects.slice(0, 3);
+  const visibleProjects = showAll ? filteredProjects : filteredProjects.slice(0, 3);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">
-        Project Overview
-      </h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Project Overview</h1>
 
       {/* Tabs Section */}
       <div className="flex space-x-6 border-b mb-6">
-        {["ongoing", "completed", "dropped"].map((tab) => (
+        {["Not Started", "In Progress", "Completed"].map((tab) => (
           <button
             key={tab}
             onClick={() => {
-              setActiveTab(tab as "ongoing" | "completed" | "dropped");
-              setShowAll(false); // Reset view when switching tabs
+              setActiveTab(tab as "Not Started" | "In Progress" | "Completed");
+              setShowAll(false);
             }}
             className={`py-2 px-4 font-medium border-b-2 transition-colors duration-200 ${
               activeTab === tab
@@ -145,8 +131,7 @@ const ProjectOverview: React.FC = () => {
                 : "border-transparent text-gray-600 hover:text-gray-800"
             }`}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)} (
-            {projects.filter((p) => p.status === tab).length})
+            {tab} ({projects.filter((p) => p.status === tab).length})
           </button>
         ))}
       </div>
@@ -154,64 +139,50 @@ const ProjectOverview: React.FC = () => {
       {/* Project Cards */}
       <div className="flex flex-col space-y-4">
         {visibleProjects.map((project) => (
-          <div
-            key={project.id}
-            className={`rounded-lg border p-6 transition-all duration-300 hover:shadow-lg ${getStatusColor(project.status)}`}
+          <Link
+            key={project.title}
+            href={`/faculty/projectdetails?title=${encodeURIComponent(project.title)}`}
           >
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {project.title}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {project.description}
-                </p>
-              </div>
-              {getStatusIcon(project.status)}
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-600">
-                  Deadline: {formatDate(project.deadline)}
-                </span>
+            <div
+              className={`rounded-lg border p-6 transition-all duration-300 hover:shadow-lg cursor-pointer ${getStatusColor(
+                project.status
+              )}`}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {project.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {project.description}
+                  </p>
+                </div>
+                {getStatusIcon(project.status)}
               </div>
 
-              {project.status === "ongoing" && (
-                <>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-500 rounded-full h-2 transition-all duration-300"
-                      style={{ width: `${project.progress}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">
-                      {project.progress}% Complete
-                    </span>
-                    <span className="text-blue-600 font-medium">
-                      {getDaysRemaining(project.deadline)}
-                    </span>
-                  </div>
-                </>
-              )}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">
+                    Duration: {project.duration}
+                  </span>
+                </div>
 
-              {project.status === "completed" && (
-                <span className="inline-flex items-center text-sm text-green-600">
-                  <CheckCircle2 className="w-4 h-4 mr-1" />
-                  Completed
-                </span>
-              )}
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-sm bg-gray-100 px-2 py-1 rounded">
+                    {project.tag}
+                  </span>
+                  <span className="text-sm bg-gray-100 px-2 py-1 rounded">
+                    {project.level}
+                  </span>
+                </div>
 
-              {project.status === "dropped" && (
-                <span className="inline-flex items-center text-sm text-red-600">
-                  <AlertCircle className="w-4 h-4 mr-1" />
-                  Dropped
-                </span>
-              )}
+                <div className="text-sm text-gray-600">
+                  Team Size: {project.applicants.filter(a => a.status === "accepted").length} / {project.maxTeamSize}
+                </div>
+              </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

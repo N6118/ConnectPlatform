@@ -7,7 +7,7 @@ import MessageInput from "@/components/messaging-components/MessageInput";
 import CreateGroup from "@/components/messaging-components/CreateGroup";
 import ChatSettings from "@/components/messaging-components/ChatSettings";
 import { Bell, MoreVertical, ArrowLeft } from "lucide-react";
-import type { Message, Chat } from "../types";
+import type { Message, Chat } from "@/types";
 import { AnimatePresence, motion } from "framer-motion";
 import WelcomeScreen from "@/components/messaging-components/WelcomeScreen";
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
@@ -379,12 +379,14 @@ export default function FacultyMessaging() {
   const selectedChatData = chats.find((chat) => chat.id === selectedChat);
 
   return (
-    <div className="relative min-h-screen pb-16 md:pb-0">
+    <div className="min-h-screen bg-gray-50">
       <FacultyNavbar />
       <div
-        className={`flex flex-col min-h-screen ${theme === "dark" ? "dark" : ""}`}
+        className={`flex flex-col ${
+          isMobile ? 'h-[calc(100vh-8rem)]' : 'h-[calc(100vh-4rem)]'
+        }`}
       >
-        <div className="flex h-[calc(100vh-4rem)] bg-gray-100 dark:bg-gray-900">
+        <div className="flex flex-1 bg-gray-100">
           <AnimatePresence>
             {(!selectedChat || !isMobileView) && (
               <motion.div
@@ -402,8 +404,6 @@ export default function FacultyMessaging() {
                   }}
                   onCreateChat={handleCreateChat}
                   onCreateGroup={() => setShowCreateGroup(true)}
-                  theme={theme}
-                  setTheme={setTheme}
                   isMobileView={isMobileView}
                 />
               </motion.div>
@@ -417,17 +417,17 @@ export default function FacultyMessaging() {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 300, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="flex-1 flex flex-col bg-white dark:bg-gray-800 shadow-lg"
+                className="flex-1 flex flex-col bg-white shadow-lg"
               >
-                <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                <div className="flex items-center justify-between p-4 border-b">
                   {isMobileView && (
                     <button
                       onClick={() => setSelectedChat(null)}
-                      className="mr-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                      className="mr-2 p-2 hover:bg-gray-100 rounded-full transition-colors"
                     >
                       <ArrowLeft
                         size={24}
-                        className="text-gray-600 dark:text-gray-300"
+                        className="text-gray-600"
                       />
                     </button>
                   )}
@@ -439,14 +439,14 @@ export default function FacultyMessaging() {
                     />
                     <div className="ml-3">
                       <div className="flex items-center space-x-2">
-                        <h2 className="font-semibold text-gray-800 dark:text-gray-200">
+                        <h2 className="font-semibold text-gray-800">
                           {selectedChatData?.name}
                         </h2>
                         {selectedChatData?.isMuted && (
                           <Bell className="w-4 h-4 text-gray-400" />
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-gray-500">
                         {selectedChatData?.status === "online"
                           ? "Active now"
                           : selectedChatData?.lastSeen}
@@ -456,17 +456,17 @@ export default function FacultyMessaging() {
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={() => setShowChatSettings(true)}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                     >
                       <MoreVertical
                         size={20}
-                        className="text-gray-600 dark:text-gray-300"
+                        className="text-gray-600"
                       />
                     </button>
                   </div>
                 </div>
 
-                <div className="flex-1 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+                <div className="flex-1 p-4 overflow-y-auto">
                   <div className="space-y-4">
                     {messages.map((msg) => (
                       <MessageBubble
@@ -528,13 +528,15 @@ export default function FacultyMessaging() {
                   </div>
                 </div>
 
-                <MessageInput
-                  input={input}
-                  setInput={setInput}
-                  onSend={handleSendMessage}
-                  onAttach={handleFileAttachment}
-                  onVoiceMessage={handleVoiceMessage}
-                />
+                <div className="mt-auto">
+                  <MessageInput
+                    input={input}
+                    setInput={setInput}
+                    onSend={handleSendMessage}
+                    onAttach={handleFileAttachment}
+                    onVoiceMessage={handleVoiceMessage}
+                  />
+                </div>
               </motion.div>
             ) : (
               !isMobileView && (

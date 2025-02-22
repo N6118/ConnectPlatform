@@ -8,13 +8,17 @@ import { ProjectsTab } from './ProjectsTab';
 import { PublicationsTab } from './PublicationsTab';
 import ApprovalsTab from './ApprovalsTab';
 import { SettingsTab } from './SettingsTab';
+import AdminNavbar from "@/components/navigation/AdminNavbar";
+import AdminMobileBottomNav from "@/components/navigation/AdminMobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Dashboard = () => {
+  const isMobile = useIsMobile();
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
+      <AdminNavbar />
+      
       <div className="container mx-auto px-4 py-8">
-        <DashboardHeader />
-        
         <TabNavigation>
           <TabsContent value="overview">
             <OverviewTab />
@@ -45,6 +49,8 @@ const Dashboard = () => {
           </TabsContent>
         </TabNavigation>
       </div>
+
+      {isMobile && <AdminMobileBottomNav />}
     </div>
   );
 };

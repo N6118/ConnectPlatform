@@ -1,8 +1,14 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import cors from 'cors';
+import dotenv from 'dotenv';
+import profileRoutes from './routes/profileRoutes';
+
+dotenv.config();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -36,6 +42,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Routes
+app.use('/api', profileRoutes);
+
 (async () => {
   const server = registerRoutes(app);
 
@@ -56,10 +65,38 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client
-  const PORT = 5000;
-  server.listen(PORT, "0.0.0.0", () => {
-    log(`serving on port ${PORT}`);
-  });
+  // Modified server startup logic
+  const findAvailablePort = async (startPort: number, maxAttempts: number = 10): Promise<number> => {
+    const { Server } = await import('net');
+    
+    for (let port = startPort; port < startPort + maxAttempts; port++) {
+      try {
+        await new Promise((resolve, reject) => {
+          const testServer = new Server();
+          testServer.listen(port, () => {
+            testServer.close();
+            resolve(port);
+          });
+          testServer.on('error', reject);
+        });
+        return port;
+      } catch (err: any) {
+        if (err.code !== 'EADDRINUSE') throw err;
+      }
+    }
+    throw new Error(`No available ports found between ${startPort} and ${startPort + maxAttempts - 1}`);
+  };
+
+  const startServer = async (desiredPort: number) => {
+    try {
+      const port = await findAvailablePort(desiredPort);
+      server.listen(port);
+      console.log(`Server running on port ${port}`);
+    } catch (error: any) {
+      console.error('Failed to start server:', error.message);
+      process.exit(1);
+    }
+  };
+
+  startServer(5000);
 })();
