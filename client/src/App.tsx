@@ -11,7 +11,14 @@ import OTPVerification from "@/pages/otp-verification";
 import ResetPassword from "@/pages/reset-password";
 import SearchResults from "@/pages/SearchResults";
 // Admin pages
-import AdminDashboard from "@/pages/admin/dashboard";
+import Dashboard from "@/pages/admin/Dashboard";
+// import ApprovalsTab from "@/pages/admin/ApprovalsTab";
+// import ClubManagement from "@/pages/admin/ClubManagement";
+// import OverviewTab from "@/pages/admin/OverviewTab";
+// import ProjectsTab from "@/pages/admin/ProjectsTab";
+// import PublicationsTab from "@/pages/admin/PublicationsTab";
+// import SettingsTab from "@/pages/admin/SettingsTab";
+// import UsersTab from "@/pages/admin/UsersTab";
 
 // Faculty pages
 import FacultyDashboard from "@/pages/faculty/dashboard";
@@ -127,9 +134,36 @@ function Router() {
       {/* Admin Routes */}
       <Route
         path="/admin"
-        component={() => <Route component={AdminDashboard} roles={["admin"]} />}
+        component={() => <Route component={Dashboard} roles={["admin"]} />}
       />
-
+      {/* <Route
+        path="/admin/overview"
+        component={() => <PrivateRoute component={OverviewTab} roles={["admin"]} />}
+      />
+      <Route
+        path="/admin/users"
+        component={() => <PrivateRoute component={UsersTab} roles={["admin"]} />}
+      />
+      <Route
+        path="/admin/clubs"
+        component={() => <PrivateRoute component={ClubManagement} roles={["admin"]} />}
+      />
+      <Route
+        path="/admin/projects"
+        component={() => <PrivateRoute component={ProjectsTab} roles={["admin"]} />}
+      />
+      <Route
+        path="/admin/publications"
+        component={() => <PrivateRoute component={PublicationsTab} roles={["admin"]} />}
+      />
+      <Route
+        path="/admin/approvals"
+        component={() => <PrivateRoute component={ApprovalsTab} roles={["admin"]} />}
+      />
+      <Route
+        path="/admin/settings"
+        component={() => <PrivateRoute component={SettingsTab} roles={["admin"]} />}
+      /> */}
       {/* Faculty Routes */}
       <Route
         path="/faculty"
