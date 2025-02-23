@@ -1,5 +1,5 @@
-import { UserApproval } from './UserApproval';
-import { PaperReview } from './PaperReview';
+import { UserApproval } from '@/components/UserApproval';
+import { PaperReview } from '@/components/PaperReview';
 import AdminNavbar from "@/components/navigation/AdminNavbar";
 import AdminMobileBottomNav from "@/components/navigation/AdminMobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";

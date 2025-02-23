@@ -1,5 +1,5 @@
-import { PublicationsChart } from './PublicationsChart';
-import { PaperReview } from './PaperReview';
+import { PublicationsChart } from '../../components/PublicationsChart';
+import { PaperReview } from '../../components/PaperReview';
 import AdminNavbar from "@/components/navigation/AdminNavbar";
 import AdminMobileBottomNav from "@/components/navigation/AdminMobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";

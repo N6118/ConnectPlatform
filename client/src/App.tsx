@@ -11,10 +11,9 @@ import OTPVerification from "@/pages/otp-verification";
 import ResetPassword from "@/pages/reset-password";
 import SearchResults from "@/pages/SearchResults";
 // Admin pages
-import Dashboard from "@/pages/admin/Dashboard";
+import Dashboard from "@/pages/admin/dashboard";
 import ApprovalsTab from "@/pages/admin/ApprovalsTab";
 import ClubManagement from "@/pages/admin/ClubManagement";
-import OverviewTab from "@/pages/admin/OverviewTab";
 import ProjectsTab from "@/pages/admin/ProjectsTab";
 import PublicationsTab from "@/pages/admin/PublicationsTab";
 import SettingsTab from "@/pages/admin/SettingsTab";
@@ -124,10 +123,10 @@ function Router() {
   return (
     <Switch>
       {/* Public routes */}
-      <Route path="/" component={Landing} />
-      <Route path="/login" component={Login} />
-      <Route path="/forgot-credentials" component={ForgotCredentials} />
-      <Route path="/otp-verification" component={OTPVerification} />
+      <Route path="/" component={() => <Landing />} />
+      <Route path="/login" component={() => <Login />} />
+      <Route path="/forgot-credentials" component={() => <ForgotCredentials />} />
+      <Route path="/otp-verification" component={() => <OTPVerification />} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/search-results" component={SearchResults} />
 
@@ -135,10 +134,6 @@ function Router() {
       <Route
         path="/admin"
         component={() => <Route component={Dashboard} roles={["admin"]} />}
-      />
-      <Route
-        path="/admin/overview"
-        component={() => <Route component={OverviewTab} roles={["admin"]} />}
       />
       <Route
         path="/admin/users"

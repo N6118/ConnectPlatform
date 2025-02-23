@@ -7,7 +7,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { ChartContainer } from './ChartContainer';
+import { ChartContainer } from '../../components/ChartContainer';
 import { Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis } from 'recharts';

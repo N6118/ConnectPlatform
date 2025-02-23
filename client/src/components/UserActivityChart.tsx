@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChartContainer } from './ChartContainer';
+import { ChartContainer } from '@/components/ChartContainer';
 
 const activityData = [
   { month: 'Jan', faculty: 45, students: 320, admins: 12, totalLogins: 2450 },
