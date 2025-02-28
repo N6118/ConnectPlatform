@@ -1,54 +1,25 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import { ChartContainer } from '../../components/ChartContainer';
-import { Plus, Filter, ChevronDown, ChevronUp } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { 
-    ResponsiveContainer, 
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    Tooltip,
-    Legend,
-    LineChart,
-    Line,
-    CartesianGrid
-} from 'recharts';
+import { useState } from 'react';
 import AdminNavbar from "@/components/navigation/AdminNavbar";
 import AdminMobileBottomNav from "@/components/navigation/AdminMobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { ClubControl } from "../../components/ClubControl";
+import { ClubCharts } from "../../components/ClubCharts";
+import { Club, ClubEventData, MembershipData } from "../../types/clubs";
+import { Filter } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
 
 export const ClubManagement = () => {
     const isMobile = useIsMobile();
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState("members");
-    const [displayedClubs, setDisplayedClubs] = useState(5);
-    const [showMore, setShowMore] = useState(false);
-    const [filterModalOpen, setFilterModalOpen] = useState(false);
-    const [statusFilter, setStatusFilter] = useState("all");
+    const [activeTab, setActiveTab] = useState<"members" | "events">("members");
+    const [filterModalOpen, setFilterModalOpen] = useState<boolean>(false);
     const [selectedClubsFilter, setSelectedClubsFilter] = useState<string[]>([]);
-    const [eventTypeFilter, setEventTypeFilter] = useState(["workshops", "competitions", "socialEvents"]);
+    const [eventTypeFilter, setEventTypeFilter] = useState<string[]>(["workshops", "competitions", "socialEvents"]);
 
-    // Simplified club data without budget and engagement score
-    const clubData = [
+    // Club data
+    const clubData: Club[] = [
         {
             id: 1,
             name: 'Tech Club',
@@ -152,7 +123,7 @@ export const ClubManagement = () => {
     ];
 
     // Data for membership growth chart
-    const membershipGrowthData = [
+    const membershipGrowthData: MembershipData[] = [
         { month: 'Jan', 'Tech Club': 100, 'Debate Society': 65, 'Robotics Club': 70, 'Environmental Club': 80, 'Music Society': 95, 'Culinary Club': 55 },
         { month: 'Feb', 'Tech Club': 105, 'Debate Society': 68, 'Robotics Club': 75, 'Environmental Club': 85, 'Music Society': 100, 'Culinary Club': 58 },
         { month: 'Mar', 'Tech Club': 110, 'Debate Society': 70, 'Robotics Club': 78, 'Environmental Club': 90, 'Music Society': 104, 'Culinary Club': 60 },
@@ -161,7 +132,7 @@ export const ClubManagement = () => {
     ];
 
     // Data for events chart
-    const eventsData = [
+    const eventsData: ClubEventData[] = [
         { name: 'Tech Club', workshops: 15, competitions: 10, socialEvents: 20 },
         { name: 'Debate Society', workshops: 8, competitions: 18, socialEvents: 4 },
         { name: 'Film Club', workshops: 12, competitions: 5, socialEvents: 8 },
@@ -202,19 +173,6 @@ export const ClubManagement = () => {
         { id: 10, name: 'Ms. Jasmine Kwan', department: 'Dance' }
     ];
 
-    useEffect(() => {
-        // Initialize selected clubs for filter from club data
-        setSelectedClubsFilter(clubData.slice(0, 4).map(club => club.name));
-    }, []);
-
-    // Filter clubs based on status
-    const filteredClubs = clubData.filter(club => 
-        statusFilter === "all" || club.status === statusFilter
-    );
-
-    // Get displayed club data with "show more" feature
-    const visibleClubs = showMore ? filteredClubs : filteredClubs.slice(0, displayedClubs);
-
     // Filter club data for charts
     const filteredMembershipData = membershipGrowthData.map(monthData => {
         const filteredData: { month: string; [key: string]: number | string } = { month: monthData.month };
@@ -231,108 +189,22 @@ export const ClubManagement = () => {
         .map(club => {
             const filteredClub: { name: string; workshops?: number; competitions?: number; socialEvents?: number } = { name: club.name };
             eventTypeFilter.forEach(type => {
-                filteredClub[type as 'workshops' | 'competitions' | 'socialEvents'] = club[type as 'workshops' | 'competitions' | 'socialEvents'];
+                if (type === 'workshops' || type === 'competitions' || type === 'socialEvents') {
+                    filteredClub[type] = club[type];
+                }
             });
             return filteredClub;
         });
-
-    // Toggle show more/less clubs
-    const toggleShowMore = () => setShowMore(!showMore);
 
     return (
         <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
             <AdminNavbar />
             <div className="space-y-6 p-4 md:p-10">
-                <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-center flex-wrap gap-4">
-                            <CardTitle>Club Management</CardTitle>
-                            <div className="flex gap-2">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" size="sm">
-                                            <Filter className="w-4 h-4 mr-2" /> Status
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuCheckboxItem
-                                            checked={statusFilter === "all"}
-                                            onCheckedChange={() => setStatusFilter("all")}
-                                        >
-                                            All Clubs
-                                        </DropdownMenuCheckboxItem>
-                                        <DropdownMenuCheckboxItem
-                                            checked={statusFilter === "active"}
-                                            onCheckedChange={() => setStatusFilter("active")}
-                                        >
-                                            Active Only
-                                        </DropdownMenuCheckboxItem>
-                                        <DropdownMenuCheckboxItem
-                                            checked={statusFilter === "inactive"}
-                                            onCheckedChange={() => setStatusFilter("inactive")}
-                                        >
-                                            Inactive Only
-                                        </DropdownMenuCheckboxItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                                <Button onClick={() => setIsModalOpen(true)}>
-                                    <Plus className="w-4 h-4 mr-2" /> New Club
-                                </Button>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Club Name</TableHead>
-                                        <TableHead className="hidden md:table-cell">Members</TableHead>
-                                        <TableHead className="hidden md:table-cell">Events</TableHead>
-                                        <TableHead className="hidden md:table-cell">Club Head</TableHead>
-                                        <TableHead className="hidden lg:table-cell">Advisor</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {visibleClubs.map((club) => (
-                                        <TableRow key={club.id}>
-                                            <TableCell className="font-medium">{club.name}</TableCell>
-                                            <TableCell className="hidden md:table-cell">{club.members}</TableCell>
-                                            <TableCell className="hidden md:table-cell">{club.events}</TableCell>
-                                            <TableCell className="hidden md:table-cell">{club.clubHead}</TableCell>
-                                            <TableCell className="hidden lg:table-cell">{club.advisor}</TableCell>
-                                            <TableCell>
-                                                <span className={`px-2 py-1 rounded-full text-xs ${club.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                                    {club.status}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Button variant="ghost" size="sm">Edit</Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    </CardContent>
-                    {filteredClubs.length > displayedClubs && (
-                        <CardFooter className="flex justify-center pt-2 pb-4">
-                            <Button 
-                                variant="ghost" 
-                                onClick={toggleShowMore}
-                                className="flex items-center gap-1"
-                            >
-                                {showMore ? (
-                                    <>Show Less <ChevronUp className="h-4 w-4" /></>
-                                ) : (
-                                    <>Show More <ChevronDown className="h-4 w-4" /></>
-                                )}
-                            </Button>
-                        </CardFooter>
-                    )}
-                </Card>
+                <ClubControl 
+                    clubData={clubData} 
+                    availableUsers={availableUsers}
+                    facultyMentors={facultyMentors}
+                />
 
                 <div className="flex justify-between items-center">
                     <h2 className="text-lg font-semibold">Analytics</h2>
@@ -341,72 +213,15 @@ export const ClubManagement = () => {
                     </Button>
                 </div>
 
-                <Tabs defaultValue="members" className="w-full" onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full md:w-auto grid-cols-2 md:flex">
-                        <TabsTrigger value="members">Membership Growth</TabsTrigger>
-                        <TabsTrigger value="events">Club Events</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="members" className="mt-6">
-                        <ChartContainer
-                            title="Club Membership Growth"
-                            description="Track membership growth trends over time"
-                            filename="membership-trends"
-                        >
-                            <div className="h-[300px] md:h-[400px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={filteredMembershipData}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="month" />
-                                        <YAxis />
-                                        <Tooltip />
-                                        <Legend />
-                                        {Object.keys(membershipGrowthData[0])
-                                            .filter(key => key !== 'month' && selectedClubsFilter.includes(key))
-                                            .map((club, index) => {
-                                                const colors = ['#8884d8', '#82ca9d', '#ff7300', '#0088fe', '#9932CC', '#FF6347'];
-                                                return (
-                                                    <Line 
-                                                        key={club} 
-                                                        type="monotone" 
-                                                        dataKey={club} 
-                                                        stroke={colors[index % colors.length]} 
-                                                    />
-                                                );
-                                            })}
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </ChartContainer>
-                    </TabsContent>
-                    <TabsContent value="events" className="mt-6">
-                        <ChartContainer
-                            title="Club Events Breakdown"
-                            description="Types of events organized by each club"
-                            filename="club-events"
-                        >
-                            <div className="h-[300px] md:h-[400px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={filteredEventsData}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="name" />
-                                        <YAxis />
-                                        <Tooltip />
-                                        <Legend />
-                                        {eventTypeFilter.includes('workshops') && (
-                                            <Bar dataKey="workshops" fill="#8884d8" name="Workshops" />
-                                        )}
-                                        {eventTypeFilter.includes('competitions') && (
-                                            <Bar dataKey="competitions" fill="#82ca9d" name="Competitions" />
-                                        )}
-                                        {eventTypeFilter.includes('socialEvents') && (
-                                            <Bar dataKey="socialEvents" fill="#ffc658" name="Social Events" />
-                                        )}
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </ChartContainer>
-                    </TabsContent>
-                </Tabs>
+                <ClubCharts 
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    filteredMembershipData={filteredMembershipData}
+                    filteredEventsData={filteredEventsData}
+                    membershipGrowthData={membershipGrowthData}
+                    eventTypeFilter={eventTypeFilter}
+                    selectedClubsFilter={selectedClubsFilter}
+                />
             </div>
 
             {/* Filter Modal */}
@@ -465,85 +280,6 @@ export const ClubManagement = () => {
                     </div>
                     <DialogFooter>
                         <Button onClick={() => setFilterModalOpen(false)}>Apply Filters</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* New Club Modal */}
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogContent className="sm:max-w-[550px]">
-                    <DialogHeader>
-                        <DialogTitle>Create New Club</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="club-name">Club Name</Label>
-                            <Input id="club-name" placeholder="e.g. Astronomy Club" />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="club-description">Description</Label>
-                            <Textarea
-                                id="club-description"
-                                placeholder="Describe the club's purpose and activities"
-                                rows={3}
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="club-status">Status</Label>
-                                <Select defaultValue="active">
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="active">Active</SelectItem>
-                                        <SelectItem value="inactive">Inactive</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="club-members">Initial Members</Label>
-                                <Input id="club-members" type="number" placeholder="e.g. 20" />
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="club-head">Club Head</Label>
-                            <Select>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a club head" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <ScrollArea className="h-[200px]">
-                                        {availableUsers.map(user => (
-                                            <SelectItem key={user.id} value={user.id.toString()}>
-                                                {user.name}
-                                            </SelectItem>
-                                        ))}
-                                    </ScrollArea>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="club-advisor">Faculty Advisor</Label>
-                            <Select>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a faculty advisor" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <ScrollArea className="h-[200px]">
-                                        {facultyMentors.map(mentor => (
-                                            <SelectItem key={mentor.id} value={mentor.id.toString()}>
-                                                {mentor.name} ({mentor.department})
-                                            </SelectItem>
-                                        ))}
-                                    </ScrollArea>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button onClick={() => setIsModalOpen(false)}>Create Club</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
