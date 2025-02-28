@@ -4,6 +4,7 @@ import { StatCard } from './StatCard';
 import { FeaturedStatCard } from './FeaturedStatCard';
 import { CircularProgressCard } from './CircularProgressCard';
 import { Users, Target, BookMarked, UserCheck, Building, Briefcase, GraduationCap, School } from "lucide-react";
+import { useLocation } from "wouter";
 
 // Generate some sample chart data
 const generateChartData = (points: number, min: number, max: number, trend: number) => {
@@ -33,6 +34,7 @@ const containerVariants = {
 
 export const StatsGrid = () => {
   const [showFacultyOnly, setShowFacultyOnly] = useState(false);
+  const [_, setLocation] = useLocation();
   
   // User breakdown data
   const userStats = {
@@ -91,9 +93,12 @@ export const StatsGrid = () => {
     chartData: generateChartData(12, 20, 35, 10)
   };
 
+  const handleCardClick = (path: string) => {
+    setLocation(path);
+  };
+
   return (
-    <div className="p-6 bg-gray-50 rounded-xl">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Admin Dashboard</h2>
+    <div className=" bg-gray-50 rounded-xl">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -104,7 +109,10 @@ export const StatsGrid = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="col-span-1 md:col-span-2"
+          className="col-span-1 md:col-span-2 cursor-pointer"
+          onClick={() => handleCardClick("/admin/users")}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
         >
           <div className="bg-white rounded-xl shadow-lg border border-gray-100">
             <div className="p-6">
@@ -165,6 +173,10 @@ export const StatsGrid = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
+          className="cursor-pointer"
+          onClick={() => handleCardClick("/admin/publications")}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
         >
           <div className="bg-white rounded-xl shadow-lg border border-purple-100 hover:border-purple-200 transition-all p-6">
             <div className="flex items-center justify-between">
@@ -211,7 +223,10 @@ export const StatsGrid = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="md:col-span-2"
+          className="md:col-span-2 cursor-pointer"
+          onClick={() => handleCardClick("/admin/projects")}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
         >
           <div className="bg-white rounded-xl shadow-lg border border-green-100 hover:border-green-200 transition-all p-6">
             <div className="flex items-center justify-between">
@@ -298,6 +313,10 @@ export const StatsGrid = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
+          className="cursor-pointer"
+          onClick={() => handleCardClick("/admin/clubs")}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
         >
           <div className="bg-white rounded-xl shadow-lg border border-yellow-100 hover:border-yellow-200 transition-all p-6">
             <div className="flex items-center justify-between mb-4">
