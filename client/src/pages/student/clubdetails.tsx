@@ -8,25 +8,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import ActivityFeed from "@/components/Profile-ActivityFeed";
+import { Post } from "../types";
 
 type EventType = "Hackathon" | "Workshop" | "Meeting" | "Other";
-
-interface Post {
-  id: string;
-  author: {
-    name: string;
-    role: string;
-    avatar: string;
-  };
-  content: string;
-  image?: string;
-  tags: string[];
-  visibility: string;
-  createdAt: Date;
-  likes: number;
-  comments: number;
-  reposts: number;
-}
 
 const clubData = {
   id: 1,
@@ -56,6 +40,7 @@ const clubData = {
     {
       id: "1",
       author: {
+        id: "1",
         name: "John Doe",
         role: "Club President",
         avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
@@ -67,6 +52,10 @@ const clubData = {
       likes: 24,
       comments: 5,
       reposts: 3,
+      type: "announcement",
+      timestamp: new Date().toISOString(),
+      shares: 3,
+      isEditable: true
     },
   ],
   achievements: [
@@ -92,15 +81,35 @@ const clubData = {
 
 export default function StudentClubDetail() {
   const { id } = useParams();
+  const clubId = parseInt(id || "0");
   const isMobile = useIsMobile();
   const { toast } = useToast();
   
   // Add state for posts
-  const [posts, setPosts] = useState<Post[]>(clubData.activityFeed);
+  const [posts, setPosts] = useState<Post[]>(
+    clubData.activityFeed.map(post => ({
+      ...post,
+      timestamp: new Date(post.timestamp),
+      createdAt: new Date(post.createdAt)
+    }))
+  );
+
+  // Add error handling for invalid club ID
+  if (!clubId) {
+    return <div>Invalid club ID</div>;
+  }
 
   // Add handlers for posts
   const handleCreatePost = (newPost: Post) => {
-    setPosts([newPost, ...posts]);
+    const completePost: Post = {
+      ...newPost,
+      type: newPost.type || 'post',
+      timestamp: new Date(),
+      createdAt: new Date(),
+      shares: newPost.shares || 0,
+      isEditable: newPost.isEditable ?? true
+    };
+    setPosts([completePost, ...posts]);
     toast({
       title: "Post created",
       description: "Your post has been successfully created.",
@@ -109,7 +118,10 @@ export default function StudentClubDetail() {
 
   const handleEditPost = (updatedPost: Post) => {
     setPosts(posts.map((post) => 
-      post.id === updatedPost.id ? updatedPost : post
+      post.id === updatedPost.id ? { 
+        ...post, // Preserve existing properties
+        ...updatedPost // Merge with updates
+      } : post
     ));
     toast({
       title: "Post updated", 
@@ -126,6 +138,7 @@ export default function StudentClubDetail() {
   };
 
   const userData = {
+    id: "1",
     name: "John Doe",
     role: "Club President",
     avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80",
@@ -143,11 +156,12 @@ export default function StudentClubDetail() {
           </Link>
         </Button>
       </div>
-      <ClubDetailView club={clubData} currentUserId="1" />
+      <ClubDetailView clubId={clubId} currentUserId="1" />
       
       {/* Activity Feed */}
       <div className="mt-8">
         <ActivityFeed
+          clubId={clubId}
           userData={userData}
           posts={posts}
           onCreatePost={handleCreatePost}

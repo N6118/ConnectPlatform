@@ -24,8 +24,18 @@ import {
   Trophy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { Club } from "@/components/ui/club-card"; // Import the Club type
+import type { Club as BaseClub } from "@/components/ui/club-card";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
+
+// Extend the base Club type to include roles
+type Club = BaseClub & {
+  roles: {
+    name: string;
+    member: string;
+    permissions?: string[];
+  }[];
+  tags?: string[];
+};
 
 const upcomingEvents = [
   {
@@ -41,6 +51,14 @@ const upcomingEvents = [
     description:
       "Learn the fundamentals of deep learning in this hands-on workshop.",
     capacity: 30,
+    registeredUsers: [
+      {
+        id: 1,
+        username: "john_doe",
+        profilePicture: "https://example.com/profile1.jpg"
+      }
+      // ... more registered users
+    ]
   },
   {
     id: 2,
@@ -81,7 +99,20 @@ const clubs: Club[] = [
       "Explore cutting-edge AI and machine learning projects with hands-on experience.",
     members: 128,
     rating: 4.8,
-    achievements: 12,
+    achievements: [
+      {
+        id: 1,
+        title: "Best Technical Club 2023",
+        description: "Awarded for outstanding technical contributions",
+        date: "2023-12-01"
+      },
+      {
+        id: 2,
+        title: "Innovation Award",
+        description: "For pioneering AI research initiatives",
+        date: "2023-10-15"
+      }
+    ],
     icon: Brain,
     joined: false,
     memberCount: {
@@ -90,11 +121,12 @@ const clubs: Club[] = [
       members: 124,
     },
     roles: [
-      { name: "President", member: "Alice Johnson" },
-      { name: "Vice President", member: "Bob Smith" },
-      { name: "Secretary", member: "Carol White" },
-      { name: "Tech Lead", member: "David Brown" },
+      { name: "President", member: "Alice Johnson", permissions: ["manage_members", "manage_events"] },
+      { name: "Vice President", member: "Bob Smith", permissions: ["manage_events"] },
+      { name: "Secretary", member: "Carol White", permissions: ["manage_communications"] },
+      { name: "Tech Lead", member: "David Brown", permissions: ["manage_projects"] },
     ],
+    tags: ["artificial-intelligence", "machine-learning", "deep-learning"]
   },
   {
     id: 2,
@@ -105,7 +137,20 @@ const clubs: Club[] = [
       "Build amazing robots and compete in international robotics competitions.",
     members: 95,
     rating: 4.9,
-    achievements: 15,
+    achievements: [
+      {
+        id: 1,
+        title: "International Robotics Champion",
+        description: "First place in IRO 2023",
+        date: "2023-11-15"
+      },
+      {
+        id: 2,
+        title: "Best Engineering Design",
+        description: "National Robotics Competition",
+        date: "2023-09-20"
+      }
+    ],
     icon: Rocket,
     joined: false,
     memberCount: {
@@ -128,7 +173,20 @@ const clubs: Club[] = [
       "Level up your programming skills through exciting challenges and projects.",
     members: 156,
     rating: 4.7,
-    achievements: 18,
+    achievements: [
+      {
+        id: 1,
+        title: "Hackathon Winners",
+        description: "First place in University Hackathon",
+        date: "2023-12-10"
+      },
+      {
+        id: 2,
+        title: "Best Software Project",
+        description: "Annual Tech Exhibition",
+        date: "2023-08-30"
+      }
+    ],
     icon: Code,
     joined: false,
     memberCount: {
@@ -153,7 +211,20 @@ const clubs: Club[] = [
       "Join competitive gaming tournaments and casual gaming sessions.",
     members: 89,
     rating: 4.6,
-    achievements: 8,
+    achievements: [
+      {
+        id: 1,
+        title: "ESports Tournament Victory",
+        description: "Inter-University Gaming Championship",
+        date: "2023-11-30"
+      },
+      {
+        id: 2,
+        title: "Community Building Award",
+        description: "Excellence in Gaming Community",
+        date: "2023-07-15"
+      }
+    ],
     icon: Gamepad2,
     joined: false,
     memberCount: {
@@ -202,7 +273,7 @@ export default function StudentClubs() {
         case "rating":
           return b.rating - a.rating;
         case "achievements":
-          return b.achievements - a.achievements;
+          return b.achievements.length - a.achievements.length;
         default:
           return 0;
       }
@@ -256,7 +327,7 @@ export default function StudentClubs() {
                   <Badge variant="outline" className="flex items-center gap-1">
                     <Trophy className="h-3 w-3" />
                     {clubsList.reduce(
-                      (acc, club) => acc + club.achievements,
+                      (acc, club) => acc + club.achievements.length,
                       0,
                     )}
                   </Badge>

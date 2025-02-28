@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Search } from "lucide-react";
 import ProjectCard from "@/components/my-space-components/ProjectCard";
@@ -26,6 +26,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
+
+interface ProjectStats {
+  totalApplicants: number;
+  acceptedApplicants: number;
+  completionPercentage: number;
+}
+
 interface Project {
   title: string;
   description: string;
@@ -39,6 +46,22 @@ interface Project {
   skills: string;
   maxTeamSize: string;
   isOpenForApplications: boolean;
+  stats?: ProjectStats;
+  team: {
+    name: string;
+    role: string;
+  }[];
+  tasks: {
+    title: string;
+    assignedTo: string;
+    deadline: string;
+    status: "Pending" | "Completed";
+  }[];
+  resources: {
+    name: string;
+    type: string;
+    url: string;
+  }[];
   applicants: {
     id: string;
     name: string;
@@ -47,7 +70,24 @@ interface Project {
     appliedDate: string;
     experience: string;
     notes?: string;
+    profileUrl?: string;
+    skills?: string[];
   }[];
+}
+
+interface ProjectData {
+  title: string;
+  description: string;
+  tag: string;
+  status: "Not Started" | "In Progress" | "Completed";
+  level: "Easy" | "Medium" | "Difficult";
+  duration: string;
+  mentor: string;
+  prerequisites: string;
+  techStack: string;
+  skills: string;
+  maxTeamSize: string;
+  isOpenForApplications: boolean;
 }
 
 export default function StudentMySpace() {
@@ -65,6 +105,23 @@ export default function StudentMySpace() {
       skills: "Machine Learning, Data Analysis",
       maxTeamSize: "4",
       isOpenForApplications: true,
+      stats: {
+        totalApplicants: 2,
+        acceptedApplicants: 1,
+        completionPercentage: 50,
+      },
+      team: [
+        { name: "John Doe", role: "Team Member" },
+        { name: "Jane Smith", role: "Team Member" },
+      ],
+      tasks: [
+        { title: "Research", assignedTo: "John Doe", deadline: "2024-06-30", status: "Pending" },
+        { title: "Data Analysis", assignedTo: "Jane Smith", deadline: "2024-06-15", status: "Completed" },
+      ],
+      resources: [
+        { name: "AI Research Paper", type: "Document", url: "https://example.com/ai-research-paper.pdf" },
+        { name: "AI Research Dataset", type: "Dataset", url: "https://example.com/ai-research-dataset.csv" },
+      ],
       applicants: [
         {
           id: "1",
@@ -98,6 +155,14 @@ export default function StudentMySpace() {
       skills: "Frontend Development, API Integration",
       maxTeamSize: "3",
       isOpenForApplications: true,
+      stats: {
+        totalApplicants: 0,
+        acceptedApplicants: 0,
+        completionPercentage: 0,
+      },
+      team: [],
+      tasks: [],
+      resources: [],
       applicants: [],
     },
   ]);
@@ -183,12 +248,12 @@ export default function StudentMySpace() {
     );
   };
 
-  const handleSaveProject = (projectData: Omit<Project, "applicants">) => {
+  const handleSaveProject = (data: ProjectData) => {
     if (editingProject) {
       setProjects(
         projects.map((p) =>
           p.title === editingProject.title
-            ? { ...projectData, applicants: p.applicants }
+            ? { ...p, ...data }
             : p,
         ),
       );
@@ -196,7 +261,10 @@ export default function StudentMySpace() {
       setProjects([
         ...projects,
         {
-          ...projectData,
+          ...data,
+          team: [],
+          tasks: [],
+          resources: [],
           applicants: [],
         },
       ]);
@@ -215,6 +283,28 @@ export default function StudentMySpace() {
   });
 
   const isMobile = useIsMobile();
+
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch(
+          `/api/project/search?page=${page}&size=${pageSize}&searchTerm=${searchTerm}&status=${statusFilter}`
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch projects');
+        }
+        const data = await response.json();
+        setProjects(data.data);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      }
+    };
+
+    fetchProjects();
+  }, [page, pageSize, searchTerm, statusFilter]);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
@@ -339,6 +429,44 @@ export default function StudentMySpace() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <div className="mt-6 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-gray-600">
+              Page {page + 1}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => setPage(p => p + 1)}
+              disabled={projects.length < pageSize}
+            >
+              Next
+            </Button>
+          </div>
+          <Select
+            value={pageSize.toString()}
+            onValueChange={(value) => {
+              setPageSize(Number(value));
+              setPage(0);
+            }}
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10 per page</SelectItem>
+              <SelectItem value="20">20 per page</SelectItem>
+              <SelectItem value="50">50 per page</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       {isMobile && <MobileBottomNav role="student" />}
     </div>

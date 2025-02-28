@@ -6,7 +6,33 @@ import { ProjectModal } from "@/components/ui/project-modal";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Project } from "@/components/ui/project-card1";
+import { Project, User, ProjectTeamMember, ProjectApplication } from "@/components/ui/project-card1";
+
+interface ApiResponse {
+  data: ApiProject[];
+  message: string;
+  status: number;
+  success: string;
+  count: number;
+}
+
+interface ApiProject {
+  id: number;
+  projectName: string;
+  projectDescription: string;
+  projectStatus: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+  tags: string;
+  projectImage: string;
+  techStack: string;
+  prerequisites: string;
+  projectTeamMembers: ProjectTeamMember[];
+  facultyMentor: User;
+  projectRepo?: string;
+  projectLevel?: 'EASY' | 'MEDIUM' | 'HARD';
+  projectDurationMonths?: number;
+  projectApplications?: ProjectApplication[];
+  verificationFaculty?: User;
+}
 
 const projects: Project[] = [
   {
@@ -156,29 +182,80 @@ const projects: Project[] = [
   },
 ];
 
+const transformApiProject = (apiProject: ApiProject): Project => {
+  return {
+    id: apiProject.id,
+    name: apiProject.projectName,
+    description: apiProject.projectDescription,
+    status: apiProject.projectStatus === 'COMPLETED' ? 'Completed' : 'Ongoing',
+    tags: apiProject.tags?.split(',').map((tag: string) => tag.trim()) || [],
+    image: apiProject.projectImage || '/default-project-image.jpg',
+    about: apiProject.projectDescription,
+    techStack: apiProject.techStack?.split(',').map((tech: string) => tech.trim()) || [],
+    prerequisites: apiProject.prerequisites?.split(',').map((prereq: string) => prereq.trim()) || [],
+    members: apiProject.projectTeamMembers?.map((member: ProjectTeamMember) => 
+      `${member.user.firstName} ${member.user.lastName}`
+    ) || [],
+    mentor: apiProject.facultyMentor ? 
+      `${apiProject.facultyMentor.firstName} ${apiProject.facultyMentor.lastName}` : 
+      'Unassigned',
+    projectRepo: apiProject.projectRepo,
+    projectLevel: apiProject.projectLevel,
+    projectDurationMonths: apiProject.projectDurationMonths
+  };
+};
+
 export default function StudentProjects() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>(projects);
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
 
+  // Fetch projects from API
+  const fetchProjects = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/project/getAllProjects');
+      if (!response.ok) {
+        throw new Error('Failed to fetch projects');
+      }
+      const data: ApiResponse = await response.json();
+      const transformedProjects = data.data.map(transformApiProject);
+      setFilteredProjects(transformedProjects);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      // Handle error state
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
+
   const allTags = Array.from(
-    new Set(projects.flatMap((project) => project.tags)),
+    new Set(filteredProjects.flatMap((project) => project.tags))
   );
 
   const handleSearch = useCallback(() => {
-    const filtered = projects.filter(
-      (project) =>
-        project.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        (selectedTags.length === 0 ||
-          project.tags.some((tag) => selectedTags.includes(tag))) &&
-        (statusFilter === "All" || project.status === statusFilter),
-    );
+    if (!filteredProjects) return;
+    
+    const filtered = filteredProjects.filter((project) => {
+      const nameMatch = project.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const tagMatch = selectedTags.length === 0 || 
+        project.tags.some((tag) => selectedTags.includes(tag));
+      const statusMatch = statusFilter === "All" || project.status === statusFilter;
+      
+      return nameMatch && tagMatch && statusMatch;
+    });
+    
     setFilteredProjects(filtered);
-  }, [searchTerm, selectedTags, statusFilter]);
+  }, [searchTerm, selectedTags, statusFilter, filteredProjects]);
 
   useEffect(() => {
     handleSearch();
@@ -223,7 +300,11 @@ export default function StudentProjects() {
           allTags={allTags}
         />
 
-        {filteredProjects.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : filteredProjects.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

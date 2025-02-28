@@ -21,6 +21,11 @@ interface Event {
   banner: string
   description?: string
   capacity?: number
+  registeredUsers?: {
+    id: number
+    username: string
+    profilePicture?: string
+  }[]
 }
 
 interface EventCarouselProps {

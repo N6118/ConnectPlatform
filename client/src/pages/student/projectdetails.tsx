@@ -111,6 +111,7 @@ export default function StudentProjectDetails({
   ]);
 
   const [project, setProject] = useState({
+    id: params.title,
     title: decodeURIComponent(params.title),
     description: "This is a detailed description of the project.",
     status: "In Progress" as const,
@@ -216,18 +217,35 @@ export default function StudentProjectDetails({
     }
   };
 
-  const handleTaskStatusChange = (taskTitle: string) => {
-    setProject((prev) => ({
-      ...prev,
-      tasks: prev.tasks.map((task) =>
-        task.title === taskTitle
-          ? {
-              ...task,
-              status: task.status === "Pending" ? "Completed" : "Pending",
-            }
-          : task,
-      ),
-    }));
+  const handleTaskStatusChange = async (taskTitle: string) => {
+    try {
+      const response = await fetch(`/api/project/${project.id}/progress`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          taskId: taskTitle,
+          status: project.tasks?.find(t => t.title === taskTitle)?.status === "Pending" 
+            ? "Completed" 
+            : "Pending"
+        }),
+      });
+
+      if (response.ok) {
+        setProject((prev) => ({
+          ...prev,
+          tasks: prev.tasks?.map((task) =>
+            task.title === taskTitle
+              ? {
+                  ...task,
+                  status: task.status === "Pending" ? "Completed" : "Pending",
+                }
+              : task
+          ) || [],
+        }));
+      }
+    } catch (error) {
+      console.error("Error updating task status:", error);
+    }
   };
 
   const handleUpdateApplicantStatus = (

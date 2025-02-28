@@ -6,14 +6,19 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-export interface Club {
+export type Club = {
   id: number;
   name: string;
   banner: string;
   description: string;
   members: number;
   rating: number;
-  achievements: number;
+  achievements: {
+    id: number;
+    title: string;
+    description: string;
+    date: string;
+  }[];
   icon: LucideIcon;
   joined: boolean;
   memberCount: {
@@ -21,7 +26,13 @@ export interface Club {
     leaders: number;
     members: number;
   };
-}
+  roles: {
+    name: string;
+    member: string;
+    permissions?: string[];
+  }[];
+  tags?: string[];
+};
 
 interface ClubCardProps {
   club: Club;
@@ -78,7 +89,7 @@ export function ClubCard({ club, onJoinToggle }: ClubCardProps) {
             {club.memberCount.total}
           </span>
           <span>★ {club.rating.toFixed(1)}</span>
-          <span>{club.achievements} achievements</span>
+          <span>{club.achievements.length} achievements</span>
         </div>
         <Button
           onClick={(e) => {

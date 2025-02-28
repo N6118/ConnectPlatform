@@ -32,27 +32,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface Author {
-  name: string;
-  role: string;
-  avatar: string;
-}
-
-interface Post {
-  id: string;
-  author: Author;
-  content: string;
-  image?: string;
-  tags: string[];
-  visibility: string;
-  createdAt: Date;
-  likes: number;
-  comments: number;
-  reposts: number;
-}
+import { Post, Author } from "@/pages/types";
 
 interface ActivityFeedProps {
+  clubId: number;
   userData: Author & {
     followers: number;
   };
@@ -62,7 +45,45 @@ interface ActivityFeedProps {
   onDeletePost: (postId: string) => void;
 }
 
+interface CreatePostModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onPostCreated: (post: Post) => void;
+  userData: Author & { followers: number };
+  editingPost?: Post;
+}
+
+const createPost = async (clubId: number, post: Post) => {
+  const response = await fetch(`/api/clubs/${clubId}/posts`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(post),
+  });
+  return response.json();
+};
+
+const updatePost = async (clubId: number, postId: string, post: Post) => {
+  const response = await fetch(`/api/clubs/${clubId}/posts/${postId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(post),
+  });
+  return response.json();
+};
+
+const deletePost = async (clubId: number, postId: string) => {
+  const response = await fetch(`/api/clubs/${clubId}/posts/${postId}`, {
+    method: 'DELETE',
+  });
+  return response.json();
+};
+
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
+  clubId,
   userData,
   posts,
   onCreatePost,
@@ -73,20 +94,36 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
-  const handleCreatePost = (newPost: Post) => {
-    onCreatePost(newPost);
-    setIsCreateModalOpen(false);
+  const handleCreatePost = async (newPost: Partial<Post>) => {
+    try {
+      const response = await createPost(clubId, newPost as Post);
+      onCreatePost(response.data);
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error('Error creating post:', error);
+    }
   };
 
-  const handleEditPost = (updatedPost: Post) => {
-    onEditPost(updatedPost);
-    setEditingPost(null);
+  const handleEditPost = async (updatedPost: Partial<Post>) => {
+    if (!editingPost) return;
+    try {
+      const response = await updatePost(clubId, editingPost.id, updatedPost as Post);
+      onEditPost(response.data);
+      setEditingPost(null);
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (deletingPostId) {
-      onDeletePost(deletingPostId);
-      setDeletingPostId(null);
+      try {
+        await deletePost(clubId, deletingPostId);
+        onDeletePost(deletingPostId);
+        setDeletingPostId(null);
+      } catch (error) {
+        console.error('Error deleting post:', error);
+      }
     }
   };
 

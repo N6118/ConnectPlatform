@@ -1,13 +1,23 @@
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { 
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Search } from "lucide-react";
+} from '@/components/ui/select';
+
+// Add the interface for the filters
+interface ProjectFiltersType {
+  searchTerm: string;
+  status: string;
+  level: string;
+  isOpenForApplications?: boolean;
+  tag?: string;
+  mentor?: string;
+}
 
 interface ProjectFiltersProps {
   searchTerm: string;
@@ -19,51 +29,66 @@ interface ProjectFiltersProps {
   allTags: string[];
 }
 
-export function ProjectFilters({
+export const ProjectFilters = ({
   searchTerm,
   onSearchChange,
   statusFilter,
   onStatusChange,
   selectedTags,
   onTagToggle,
-  allTags,
-}: ProjectFiltersProps) {
+  allTags
+}: ProjectFiltersProps) => {
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Search projects..."
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={onStatusChange}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Filter by status" />
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-4">
+        <Input
+          placeholder="Search projects..."
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="w-full md:w-64"
+        />
+        
+        <Select
+          value={statusFilter}
+          onValueChange={onStatusChange}
+        >
+          <SelectTrigger className="w-full md:w-40">
+            <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="All">All Projects</SelectItem>
-            <SelectItem value="Ongoing">Ongoing</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="Not Started">Not Started</SelectItem>
+            <SelectItem value="In Progress">In Progress</SelectItem>
             <SelectItem value="Completed">Completed</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Tags selection */}
+        <div className="flex flex-wrap gap-2">
+          {allTags.map((tag) => (
+            <Button
+              key={tag}
+              variant={selectedTags.includes(tag) ? "default" : "outline"}
+              onClick={() => onTagToggle(tag)}
+            >
+              {tag}
+            </Button>
+          ))}
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {allTags.map((tag) => (
-          <Badge
-            key={tag}
-            variant={selectedTags.includes(tag) ? "default" : "outline"}
-            className="cursor-pointer hover:opacity-80"
-            onClick={() => onTagToggle(tag)}
-          >
-            {tag}
-          </Badge>
-        ))}
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          onClick={() => {
+            onSearchChange('');
+            onStatusChange('all');
+            onTagToggle('');
+          }}
+        >
+          Clear Filters
+        </Button>
       </div>
     </div>
   );
-}
+};

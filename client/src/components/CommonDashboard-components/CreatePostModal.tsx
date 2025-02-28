@@ -14,33 +14,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface Post {
-  id: string;
-  content: string;
-  author: {
-    name: string;
-    role: string;
-    avatar: string;
-  };
-  image?: string;
-  tags: string[];
-  visibility: string;
-  createdAt: Date;
-  likes: number;
-  comments: number;
-  reposts: number;
-}
+import { Post, Author } from "@/pages/types";
 
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onPostCreated: (post: Post) => void;
-  userData: {
-    name: string;
-    role: string;
-    avatar: string;
-  };
+  onPostCreated: (post: Partial<Post>) => void;
+  userData: Author & { followers?: number };
   editingPost?: Post;
 }
 
@@ -87,13 +67,14 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
       return;
     }
 
-    const newPost: Post = {
+    const newPost: Partial<Post> = {
       id: editingPost ? editingPost.id : Date.now().toString(),
       content,
-      author: userData,
-      image: selectedFile
-        ? URL.createObjectURL(selectedFile)
-        : editingPost?.image,
+      author: {
+        ...userData,
+        id: userData.id || Date.now().toString(),
+      },
+      image: selectedFile ? URL.createObjectURL(selectedFile) : editingPost?.image,
       tags: selectedTags,
       visibility,
       createdAt: editingPost ? editingPost.createdAt : new Date(),

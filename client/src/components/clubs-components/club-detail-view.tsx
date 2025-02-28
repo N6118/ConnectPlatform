@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -251,14 +251,31 @@ const initialClub: Club = {
   ],
 };
 
+const fetchClubDetails = async (id: number) => {
+  const response = await fetch(`/api/clubs/${id}`);
+  return response.json();
+};
+
+const fetchClubAchievements = async (id: number) => {
+  const response = await fetch(`/api/clubs/${id}/achievements`);
+  return response.json();
+};
+
+const fetchClubPosts = async (id: number) => {
+  const response = await fetch(`/api/clubs/${id}/posts`);
+  return response.json();
+};
+
 export default function ClubDetailView({
-  club: initialClubData,
+  clubId,
   currentUserId = "1",
 }: {
-  club: Club;
+  clubId: number;
   currentUserId?: string;
 }) {
-  const [club, setClub] = useState<Club>(initialClubData || initialClub);
+  const [club, setClub] = useState<Club | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [activeSection, setActiveSection] = useState("Activities");
   const [showEventModal, setShowEventModal] = useState(false);
   const [showAchievementModal, setShowAchievementModal] = useState(false);
@@ -271,6 +288,26 @@ export default function ClubDetailView({
     { name: "Members", icon: Users },
   ];
 
+  useEffect(() => {
+    const loadClubData = async () => {
+      try {
+        const [clubData, achievementsData, postsData] = await Promise.all([
+          fetchClubDetails(clubId),
+          fetchClubAchievements(clubId),
+          fetchClubPosts(clubId)
+        ]);
+        
+        setClub(clubData);
+        setAchievements(achievementsData);
+        setPosts(postsData.data);
+      } catch (error) {
+        console.error('Error loading club data:', error);
+      }
+    };
+
+    loadClubData();
+  }, [clubId]);
+
   const handleAddAchievement = (name: string, description: string) => {
     const newAchievement: Achievement = {
       id: Math.random().toString(36).substr(2, 9),
@@ -279,10 +316,13 @@ export default function ClubDetailView({
       date: new Date().toISOString(),
       icon: "trophy",
     };
-    setClub((prev) => ({
-      ...prev,
-      achievements: [...prev.achievements, newAchievement],
-    }));
+    setClub((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        achievements: [...prev.achievements, newAchievement],
+      };
+    });
     setShowAchievementModal(false);
     toast({
       title: "Achievement added",
@@ -298,10 +338,13 @@ export default function ClubDetailView({
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`,
       joinDate: new Date().toISOString(),
     };
-    setClub((prev) => ({
-      ...prev,
-      members: [...prev.members, newMember],
-    }));
+    setClub((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        members: [...prev.members, newMember],
+      };
+    });
     setShowMemberModal(false);
     toast({
       title: "Member added",
@@ -330,7 +373,7 @@ export default function ClubDetailView({
         </Button>
       </div>
       <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {club.upcomingEvents?.map((event) => (
+        {club?.upcomingEvents?.map((event) => (
           <Card
             key={event.id}
             className="hover:shadow-lg transition-all duration-300"
@@ -396,7 +439,7 @@ export default function ClubDetailView({
       </div>
       <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence>
-          {club.achievements.map((achievement) => (
+          {club?.achievements.map((achievement) => (
             <motion.div
               key={achievement.id}
               initial={{ opacity: 0, y: 20 }}
@@ -431,10 +474,10 @@ export default function ClubDetailView({
           <h3 className="text-2xl font-semibold">Members</h3>
           <div className="flex gap-2">
             <Badge variant="outline" className="flex items-center gap-1">
-              Total: {club.memberCount.total}
+              Total: {club?.memberCount.total}
             </Badge>
             <Badge variant="outline" className="flex items-center gap-1">
-              Leaders: {club.memberCount.leaders}
+              Leaders: {club?.memberCount.leaders}
             </Badge>
           </div>
         </div>
@@ -446,7 +489,7 @@ export default function ClubDetailView({
 
       <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence>
-          {club.members.map((member) => (
+          {club?.members.map((member) => (
             <motion.div
               key={member.id}
               initial={{ opacity: 0, y: 20 }}
@@ -504,23 +547,23 @@ export default function ClubDetailView({
     <div className="min-h-screen bg-background antialiased">
       <div className="relative w-full h-[250px] sm:h-[300px] lg:h-[400px] mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-8">
         <img
-          src={club.banner}
-          alt={club.name}
+          src={club?.banner}
+          alt={club?.name}
           className="w-full h-full object-cover rounded-lg"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent rounded-lg" />
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 sm:gap-6">
             <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-background shadow-xl">
-              <AvatarImage src={club.logo} alt={club.name} />
-              <AvatarFallback>{club.name.slice(0, 2)}</AvatarFallback>
+              <AvatarImage src={club?.logo} alt={club?.name} />
+              <AvatarFallback>{club?.name.slice(0, 2)}</AvatarFallback>
             </Avatar>
             <div className="text-center sm:text-left">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
-                {club.name}
+                {club?.name}
               </h1>
               <p className="text-sm sm:text-base text-white/90 max-w-2xl">
-                {club.description}
+                {club?.description}
               </p>
             </div>
           </div>

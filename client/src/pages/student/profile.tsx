@@ -48,6 +48,7 @@ interface ProfileFormData {
 interface Post {
   id: string;
   author: {
+    id: string;
     name: string;
     role: string;
     avatar: string;
@@ -60,6 +61,10 @@ interface Post {
   likes: number;
   comments: number;
   reposts: number;
+  type: string;
+  timestamp: Date;
+  shares: number;
+  isEditable: boolean;
 }
 
 interface Project {
@@ -94,6 +99,7 @@ interface Extracurricular {
   id: number;
   activity: string;
   description: string;
+  status: string;
 }
 
 interface WorkData {
@@ -101,14 +107,17 @@ interface WorkData {
   PAPERS: Paper[];
   INTERNSHIPS: Internship[];
   EXTRACURRICULAR: Extracurricular[];
+  [key: string]: WorkItem[];
 }
+
+type WorkItem = Project | Paper | Internship | Extracurricular;
 
 export default function StudentProfile() {
   const [selectedTab, setSelectedTab] = useState("PROJECTS");
   const [showModal, setShowModal] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showEditDetails, setShowEditDetails] = useState(false);
-  const [editItem, setEditItem] = useState(null);
+  const [editItem, setEditItem] = useState<WorkItem | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
 
   const [userData, setUserData] = useState({
@@ -137,40 +146,51 @@ export default function StudentProfile() {
     {
       id: "1",
       author: {
+        id: "1",
         name: "Aishwarya Patyala",
         role: "SDE Intern @ SAPI Full Stack | Android | ML",
         avatar: "./defaultProfile.jpg",
       },
-      content:
-        "Excited to share that we secured 3rd place at Anokha 2024 TechFair! 🏆✨ Over the course of 3 amazing days, we...",
-      image:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&auto=format&fit=crop&q=80",
+      content: "Excited to share that we secured 3rd place at Anokha 2024 TechFair! 🏆✨ Over the course of 3 amazing days, we...",
+      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&auto=format&fit=crop&q=80",
       tags: ["Event", "Hackathon"],
       visibility: "public",
       createdAt: new Date("2024-03-15T10:00:00"),
       likes: 89,
       comments: 23,
       reposts: 7,
+      type: "post",
+      timestamp: new Date("2024-03-15T10:00:00"),
+      shares: 0,
+      isEditable: true
     },
     {
       id: "2",
       author: {
+        id: "2",
         name: "Aishwarya Patyala",
         role: "SDE Intern @ SAPI Full Stack | Android | ML",
         avatar: "./defaultProfile.jpg",
       },
       content:
         "Just wrapped up an amazing design sprint with the team! We've made some breakthrough discoveries that will revolutionize our user experience. Can't wait to share more details soon! 🎨✨",
+      image:
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&auto=format&fit=crop&q=80",
       tags: ["Project Update"],
       visibility: "public",
       createdAt: new Date("2024-03-20T14:30:00"),
       likes: 156,
       comments: 34,
       reposts: 12,
+      type: "post",
+      timestamp: new Date("2024-03-20T14:30:00"),
+      shares: 0,
+      isEditable: true
     },
   ]);
 
   const userData1 = {
+    id: "1",
     name: "Aishwarya Patyala",
     role: "SDE Intern @ SAPI Full Stack | Android | ML",
     avatar: "./defaultProfile.jpg",
@@ -251,6 +271,7 @@ export default function StudentProfile() {
         id: 1,
         activity: "Hackathon",
         description: "Participated in XYZ Hackathon",
+        status: "Completed"
       },
     ],
   });
@@ -276,14 +297,15 @@ export default function StudentProfile() {
   const handleSaveItem = (formData: any) => {
     const newData = { ...workData };
     const type = (formData.type.toUpperCase() + "S") as keyof WorkData;
+    const items = newData[type] as WorkItem[];
 
     if (editItem) {
-      newData[type] = newData[type].map((item) =>
+      newData[type] = items.map((item) =>
         item.id === editItem.id ? { ...item, ...formData } : item
       );
     } else {
-      const newId = Math.max(...newData[type].map((item) => item.id), 0) + 1;
-      newData[type] = [...newData[type], { id: newId, ...formData }];
+      const newId = Math.max(...(items as WorkItem[]).map((item) => item.id), 0) + 1;
+      newData[type] = [...items, { id: newId, ...formData }];
     }
 
     setWorkData(newData);

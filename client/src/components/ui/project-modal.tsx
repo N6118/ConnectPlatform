@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState } from "react";
 
 interface Project {
   id: number;
@@ -15,7 +16,35 @@ interface Project {
   techStack: string[];
   prerequisites: string[];
   members: string[];
-  mentor: string;  // Added mentor field
+  mentor: string;
+  projectRepo?: string;
+  projectLevel?: 'EASY' | 'MEDIUM' | 'HARD';
+  projectDurationMonths?: number;
+  projectApplications?: ProjectApplication[];
+  projectTeamMembers?: ProjectTeamMember[];
+  verificationFaculty?: User;
+  facultyMentor?: User;
+}
+
+interface ProjectApplication {
+  id: number;
+  student: User;
+  applicationDate: string;
+  status: 'APPLIED' | 'ACCEPTED' | 'REJECTED';
+}
+
+interface ProjectTeamMember {
+  id: number;
+  user: User;
+  role: 'TEAM_MEMBER' | 'TEAM_LEADER';
+}
+
+interface User {
+  id: number;
+  username: string;
+  firstName: string;
+  lastName: string;
+  profilePicture?: string;
 }
 
 interface ProjectModalProps {
@@ -25,6 +54,42 @@ interface ProjectModalProps {
 }
 
 export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
+  const [isApplying, setIsApplying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleProjectApplication = async (projectId: number) => {
+    try {
+      setIsApplying(true);
+      setError(null);
+      
+      const response = await fetch('/api/project/apply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add any auth headers if needed
+        },
+        body: JSON.stringify({
+          projectId,
+          // Add any additional application details needed
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to apply for project');
+      }
+      
+      // Handle successful application
+      onClose();
+      // Could add a success toast/notification here
+    } catch (error) {
+      console.error('Error applying for project:', error);
+      setError(error instanceof Error ? error.message : 'Failed to apply');
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl h-[80vh]">
@@ -78,6 +143,36 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     ))}
                   </div>
                 </div>
+                {project.projectLevel && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Difficulty Level</h3>
+                    <Badge variant={
+                      project.projectLevel === 'EASY' ? 'secondary' :
+                      project.projectLevel === 'MEDIUM' ? 'outline' : 'destructive'
+                    }>
+                      {project.projectLevel}
+                    </Badge>
+                  </div>
+                )}
+                {project.projectDurationMonths && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Duration</h3>
+                    <p className="text-muted-foreground">{project.projectDurationMonths} months</p>
+                  </div>
+                )}
+                {project.projectRepo && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Repository</h3>
+                    <a 
+                      href={project.projectRepo}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      View Repository
+                    </a>
+                  </div>
+                )}
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Prerequisites</h3>
                   <ul className="list-disc list-inside text-muted-foreground">
@@ -101,9 +196,18 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
             </Tabs>
 
             <div className="flex justify-end">
-              {project.status === "Ongoing" && (
-                <Button size="lg">Apply for this Project</Button>
+              {error && (
+                <div className="text-red-500 text-sm mt-2">
+                  {error}
+                </div>
               )}
+              <Button 
+                size="lg" 
+                onClick={() => handleProjectApplication(project.id)}
+                disabled={project.status !== "Ongoing" || isApplying}
+              >
+                {isApplying ? "Applying..." : "Apply for this Project"}
+              </Button>
             </div>
           </div>
         </ScrollArea>

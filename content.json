@@ -1,0 +1,4793 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+      "title": "Connect Platform Backend API",
+      "description": "Connect Platform Backend API Documentation",
+      "version": "1.0"
+    },
+    "servers": [
+      {
+        "url": "http://localhost:9000",
+        "description": "Generated server url"
+      }
+    ],
+    "tags": [
+      {
+        "name": "Auth",
+        "description": "Authentication Endpoints"
+      },
+      {
+        "name": "Awards",
+        "description": "Awards Endpoints"
+      },
+      {
+        "name": "Test",
+        "description": "Shows Server Health Report"
+      },
+      {
+        "name": "Project",
+        "description": "Project Endpoints"
+      },
+      {
+        "name": "Events",
+        "description": "Events Endpoints"
+      },
+      {
+        "name": "User",
+        "description": "User Endpoints"
+      },
+      {
+        "name": "Clubs",
+        "description": "Clubs Endpoints"
+      }
+    ],
+    "paths": {
+      "/api/user/uploadProfilePicture/{username}": {
+        "post": {
+          "tags": [
+            "User"
+          ],
+          "summary": "Upload Profile Picture",
+          "description": "Update or upload user's profile picture by their username",
+          "operationId": "uploadUserProfilePicture",
+          "parameters": [
+            {
+              "name": "username",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "file"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/user/addSkill/{username}": {
+        "post": {
+          "tags": [
+            "User"
+          ],
+          "summary": "Add Skill",
+          "description": "Add a skill to a user. Skill should be sent in the request body",
+          "operationId": "addSkillToUser",
+          "parameters": [
+            {
+              "name": "username",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddUserSkillDTO"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/uploadProjectImage/{id}": {
+        "post": {
+          "tags": [
+            "Project"
+          ],
+          "summary": "Upload Project Image",
+          "description": "Upload or update an image for the project with the given ID",
+          "operationId": "uploadProjectImage",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "type": "object",
+                  "required": ["file"],
+                  "properties": {
+                    "file": {
+                      "type": "string",
+                      "format": "binary",
+                      "description": "Project cover image file"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/createProject": {
+        "post": {
+          "tags": ["Project"],
+          "summary": "Create Project",
+          "description": "Create a new project",
+          "operationId": "createProject",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateProjectDTO"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseProject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/events": {
+        "get": {
+          "tags": [
+            "Events"
+          ],
+          "summary": "Get All Events",
+          "description": "Retrieve a list of all events",
+          "operationId": "getAllEvents",
+          "parameters": [
+            {
+              "name": "dateFrom",
+              "in": "query",
+              "schema": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            {
+              "name": "dateTo",
+              "in": "query",
+              "schema": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            {
+              "name": "featured",
+              "in": "query",
+              "schema": {
+                "type": "boolean"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseListEvent"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "post": {
+          "tags": [
+            "Events"
+          ],
+          "summary": "Create Event",
+          "description": "Create a new event",
+          "operationId": "createEvent",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateEventDTO"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseEvent"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/createClub": {
+        "post": {
+          "tags": [
+            "Clubs"
+          ],
+          "summary": "Create Club",
+          "description": "Create a new club",
+          "operationId": "createClub",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateClubDTO"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseClub"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/addMember": {
+        "post": {
+          "tags": [
+            "Clubs"
+          ],
+          "summary": "Add Member",
+          "description": "Add a member to a club",
+          "operationId": "addMember",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddClubMemberDTO"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseClub"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/awards/createAward": {
+        "post": {
+          "tags": [
+            "Awards"
+          ],
+          "summary": "Create Award",
+          "description": "Create a new award",
+          "operationId": "createAward",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateAwardDTO"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseAwards"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/auth/validate-otp": {
+        "post": {
+          "tags": [
+            "Auth"
+          ],
+          "summary": "Validate OTP",
+          "description": "Validate the OTP sent to the user's email",
+          "operationId": "validateOtp",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateOtpRequest"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseString"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/auth/send-otp": {
+        "post": {
+          "tags": [
+            "Auth"
+          ],
+          "summary": "Send OTP",
+          "description": "Send an OTP to the user's email",
+          "operationId": "sendOtp",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendOtpRequest"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseString"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/auth/register": {
+        "post": {
+          "tags": [
+            "Auth"
+          ],
+          "summary": "Register User",
+          "description": "Register a new user",
+          "operationId": "registerUser",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUserDTO"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseUser"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/auth/login": {
+        "post": {
+          "tags": [
+            "Auth"
+          ],
+          "summary": "Login User",
+          "description": "Authenticate user and return JWT token",
+          "operationId": "loginUser",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginRequest"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseString"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/user/getUser/{username}": {
+        "get": {
+          "tags": [
+            "User"
+          ],
+          "summary": "Get User By Username",
+          "description": "Fetch user by username",
+          "operationId": "getUserByUsername",
+          "parameters": [
+            {
+              "name": "username",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseUser"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/test": {
+        "get": {
+          "tags": [
+            "Test"
+          ],
+          "summary": "Server Health Report",
+          "description": "Check if the server is running and system health",
+          "operationId": "testServer",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseMapStringObject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/getProject/{id}": {
+        "get": {
+          "tags": [
+            "Project"
+          ],
+          "summary": "Get Project By ID",
+          "description": "Retrieve a project by its ID",
+          "operationId": "getProject",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseProject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/getAllProjects": {
+        "get": {
+          "tags": [
+            "Project"
+          ],
+          "summary": "Get All Projects",
+          "description": "Retrieve a list of all projects",
+          "operationId": "getAllProjects",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseListProject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs": {
+        "get": {
+          "tags": ["Clubs"],
+          "summary": "Get All Clubs",
+          "parameters": [
+            {
+              "name": "page",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            },
+            {
+              "name": "sortBy",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["name", "memberCount", "rating"]
+              }
+            },
+            {
+              "name": "tags",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successfully retrieved clubs",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Club"
+                        }
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "properties": {
+                          "totalCount": {
+                            "type": "integer"
+                          },
+                          "currentPage": {
+                            "type": "integer"
+                          },
+                          "totalPages": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/{id}": {
+        "get": {
+          "tags": [
+            "Clubs"
+          ],
+          "summary": "Get Club By ID",
+          "description": "Retrieve a club by its ID",
+          "operationId": "getClubById",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseClub"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/awards": {
+        "get": {
+          "tags": [
+            "Awards"
+          ],
+          "summary": "Get All Awards",
+          "description": "Retrieve a list of all awards",
+          "operationId": "getAllAwards",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseListAwards"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/user/deleteUser/{username}": {
+        "delete": {
+          "tags": [
+            "User"
+          ],
+          "summary": "Delete User",
+          "description": "Delete user by username",
+          "operationId": "deleteUserByUsername",
+          "parameters": [
+            {
+              "name": "username",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/deleteProject/{id}": {
+        "delete": {
+          "tags": [
+            "Project"
+          ],
+          "summary": "Delete Project",
+          "description": "Delete a project by its ID",
+          "operationId": "deleteById",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "*/*": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseProject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/deleteMember": {
+        "delete": {
+          "tags": [
+            "Clubs"
+          ],
+          "summary": "Delete Member",
+          "description": "Remove a member from a club",
+          "operationId": "deleteMember",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoveClubMemberDTO"
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "OK",
+                "content": {
+                  "*/*": {
+                    "schema": {
+                      "$ref": "#/components/schemas/BaseResponseClub"
+                    }
+                  }
+                }
+              },
+              "400": {
+                "description": "Bad Request",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              },
+              "404": {
+                "description": "Not Found",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/user/work-items/{username}": {
+        "get": {
+          "tags": ["User"],
+          "summary": "Get User Work Items",
+          "description": "Get all work items (projects, papers, internships, extracurricular) for a user",
+          "parameters": [
+            {
+              "name": "username",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "type",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["PROJECT", "PAPER", "INTERNSHIP", "EXTRACURRICULAR"]
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Work items retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseWorkItems"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/user/work-items/{username}/{type}": {
+        "post": {
+          "tags": ["User"],
+          "summary": "Add Work Item",
+          "description": "Add a new work item for a user",
+          "parameters": [
+            {
+              "name": "username",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "type",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "enum": ["PROJECT", "PAPER", "INTERNSHIP", "EXTRACURRICULAR"]
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateWorkItemRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Work item created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseWorkItem"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "put": {
+          "tags": ["User"],
+          "summary": "Update Work Item",
+          "description": "Update an existing work item",
+          "parameters": [
+            {
+              "name": "username",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "type",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "enum": ["PROJECT", "PAPER", "INTERNSHIP", "EXTRACURRICULAR"]
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateWorkItemRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Work item updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseWorkItem"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "delete": {
+          "tags": ["User"],
+          "summary": "Delete Work Item",
+          "description": "Delete a work item",
+          "parameters": [
+            {
+              "name": "username",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "type",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "enum": ["PROJECT", "PAPER", "INTERNSHIP", "EXTRACURRICULAR"]
+              }
+            },
+            {
+              "name": "id",
+              "in": "query",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Work item deleted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/apply": {
+        "post": {
+          "tags": ["Project"],
+          "summary": "Apply to Project",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "projectId": {
+                      "type": "integer"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "experience": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Application submitted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/updateApplicationStatus": {
+        "put": {
+          "tags": ["Project"],
+          "summary": "Update Application Status",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "projectId": {
+                      "type": "integer"
+                    },
+                    "applicantId": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["pending", "accepted", "rejected", "waitlisted"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Application status updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/updateProject/{id}": {
+        "put": {
+          "tags": ["Project"],
+          "summary": "Update Project Details",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Project updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseProject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/addNote": {
+        "post": {
+          "tags": ["Project"],
+          "summary": "Add Note to Application",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "projectId": {
+                      "type": "integer"
+                    },
+                    "applicantId": {
+                      "type": "string"
+                    },
+                    "note": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["projectId", "applicantId", "note"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Note added successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/search": {
+        "get": {
+          "tags": ["Project"],
+          "summary": "Search and Filter Projects",
+          "parameters": [
+            {
+              "name": "searchTerm",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "level",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["Easy", "Medium", "Difficult"]
+              }
+            },
+            {
+              "name": "status",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["Not Started", "In Progress", "Completed"]
+              }
+            },
+            {
+              "name": "isOpenForApplications",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "boolean"
+              }
+            },
+            {
+              "name": "tag",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "mentor",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query", 
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            },
+            {
+              "name": "sortBy",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["createdAt", "title", "status", "level"]
+              }
+            },
+            {
+              "name": "sortOrder",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["asc", "desc"]
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Projects retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProjectListResponse" 
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/getProjectsByUser/{username}": {
+        "get": {
+          "tags": ["Project"],
+          "summary": "Get Projects by User",
+          "parameters": [
+            {
+              "name": "username",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Projects retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProjectListResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/getProjectsByMentor/{mentorUsername}": {
+        "get": {
+          "tags": ["Project"],
+          "summary": "Get Projects by Mentor",
+          "parameters": [
+            {
+              "name": "mentorUsername",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Projects retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProjectListResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/{id}/applicants": {
+        "get": {
+          "tags": ["Project"],
+          "summary": "Get Project Applicants",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "List of project applicants",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ProjectApplication"
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/{id}/progress": {
+        "put": {
+          "tags": ["Project"],
+          "summary": "Update Project Progress",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["taskId", "status"],
+                  "properties": {
+                    "taskId": {
+                      "type": "string",
+                      "description": "ID or title of the task"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["Pending", "Completed"],
+                      "description": "New status of the task"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Project progress updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseProject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/{id}/tasks": {
+        "post": {
+          "tags": ["Project"],
+          "summary": "Add Task to Project",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Task added successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseProject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/{id}/resources": {
+        "post": {
+          "tags": ["Project"],
+          "summary": "Add Resource to Project",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resource"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Resource added successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseProject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/{id}/team": {
+        "put": {
+          "tags": ["Project"],
+          "summary": "Update Project Team",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["action", "member"],
+                  "properties": {
+                    "action": {
+                      "type": "string",
+                      "enum": ["add", "remove"],
+                      "description": "Action to perform on team member"
+                    },
+                    "member": {
+                      "$ref": "#/components/schemas/TeamMember"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Team updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseProject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/{id}/tasks/{taskId}": {
+        "delete": {
+          "tags": ["Project"],
+          "summary": "Delete Project Task",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            },
+            {
+              "name": "taskId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Task deleted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseProject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/{id}/resources/{resourceId}": {
+        "delete": {
+          "tags": ["Project"],
+          "summary": "Delete Project Resource",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            },
+            {
+              "name": "resourceId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Resource deleted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseProject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/project/{id}/status": {
+        "put": {
+          "tags": ["Project"],
+          "summary": "Update Project Status",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status"],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["Not Started", "In Progress", "Completed"],
+                      "description": "New status of the project"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Status updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseProject"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/events/club/{clubId}": {
+        "get": {
+          "tags": ["Events"],
+          "summary": "Get Club Events",
+          "parameters": [
+            {
+              "name": "clubId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseListEvent"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/events/{eventId}/register": {
+        "post": {
+          "tags": ["Events"],
+          "summary": "Register for Event",
+          "parameters": [
+            {
+              "name": "eventId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["userId"],
+                  "properties": {
+                    "userId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successfully registered for event",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/search": {
+        "get": {
+          "tags": ["Clubs"],
+          "summary": "Search Clubs",
+          "parameters": [
+            {
+              "name": "query",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "tags",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "name": "joinedOnly",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "boolean"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseListClub"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/removeMember": {
+        "delete": {
+          "tags": ["Clubs"],
+          "summary": "Leave Club",
+          "description": "Remove user from a club",
+          "operationId": "leaveClub",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["clubId", "username"],
+                  "properties": {
+                    "clubId": {
+                      "type": "integer",
+                      "format": "int64"
+                    },
+                    "username": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successfully left the club",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/{id}/achievements": {
+        "get": {
+          "tags": ["Clubs"],
+          "summary": "Get Club Achievements",
+          "description": "Get all achievements for a specific club",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successfully retrieved club achievements",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "date": {
+                          "type": "string",
+                          "format": "date"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Club not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/{id}/stats": {
+        "get": {
+          "tags": ["Clubs"],
+          "summary": "Get Club Statistics",
+          "description": "Get detailed statistics for a specific club",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successfully retrieved club statistics",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "memberCount": {
+                        "type": "object", 
+                        "properties": {
+                          "total": {
+                            "type": "integer"
+                          },
+                          "leaders": {
+                            "type": "integer"
+                          },
+                          "members": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "eventsCount": {
+                        "type": "integer"
+                      },
+                      "rating": {
+                        "type": "number",
+                        "format": "float"
+                      },
+                      "achievementsCount": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Club not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/user/{username}": {
+        "get": {
+          "tags": ["Clubs"],
+          "summary": "Get User's Joined Clubs",
+          "description": "Get all clubs that a user has joined",
+          "parameters": [
+            {
+              "name": "username",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successfully retrieved user's clubs",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseListClub"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/{id}/rate": {
+        "post": {
+          "tags": ["Clubs"],
+          "summary": "Rate Club",
+          "description": "Submit a rating for a club",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["rating", "username"],
+                  "properties": {
+                    "rating": {
+                      "type": "number",
+                      "format": "float",
+                      "minimum": 0,
+                      "maximum": 5
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "comment": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Rating submitted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/{id}/posts": {
+        "get": {
+          "tags": ["Clubs"],
+          "summary": "Get Club Posts",
+          "description": "Get all posts for a specific club",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query",
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successfully retrieved club posts",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Post"
+                        }
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "properties": {
+                          "totalCount": {
+                            "type": "integer"
+                          },
+                          "currentPage": {
+                            "type": "integer"
+                          },
+                          "totalPages": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "post": {
+          "tags": ["Clubs"],
+          "summary": "Create Club Post",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Post created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Post"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/{id}/posts/{postId}": {
+        "put": {
+          "tags": ["Clubs"],
+          "summary": "Update Club Post",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            },
+            {
+              "name": "postId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatePostRequest"
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Post updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Post"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "delete": {
+          "tags": ["Clubs"],
+          "summary": "Delete Club Post",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            },
+            {
+              "name": "postId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Post deleted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "post": {
+          "tags": ["Clubs"],
+          "summary": "Like and Comment on Club Post",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            },
+            {
+              "name": "postId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "action",
+              "in": "query",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "enum": ["like", "comment"]
+              }
+            }
+          ],
+          "requestBody": {
+            "required": false,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "content": {
+                      "type": "string",
+                      "description": "Required when action is comment"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Post updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseVoid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/clubs/{id}/events": {
+        "post": {
+          "tags": ["Clubs"],
+          "summary": "Create Club Event",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["title", "description", "date", "location", "type"],
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "date": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "location": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["Hackathon", "Workshop", "Meeting", "Other"]
+                    },
+                    "registrationLink": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Event created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BaseResponseEvent"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "BaseResponseVoid": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer"
+            },
+            "success": {
+              "type": "boolean"
+            }
+          }
+        },
+        "AddUserSkillDTO": {
+          "type": "object",
+          "properties": {
+            "skillName": {
+              "type": "string"
+            },
+            "proficiencyLevel": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "CreateProjectDTO": {
+          "type": "object",
+          "required": [
+            "title",
+            "description",
+            "prerequisites",
+            "mentor",
+            "techStack",
+            "tag",
+            "duration",
+            "level",
+            "status",
+            "maxTeamSize",
+            "isOpenForApplications"
+          ],
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "prerequisites": {
+              "type": "string"
+            },
+            "mentor": {
+              "type": "string"
+            },
+            "techStack": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "duration": {
+              "type": "string"
+            },
+            "level": {
+              "type": "string",
+              "enum": ["Easy", "Medium", "Difficult"]
+            },
+            "status": {
+              "type": "string",
+              "enum": ["Not Started", "In Progress", "Completed"]
+            },
+            "maxTeamSize": {
+              "type": "string"
+            },
+            "isOpenForApplications": {
+              "type": "boolean"
+            },
+            "skills": {
+              "type": "string"
+            }
+          }
+        },
+        "Awards": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "user": {
+              "$ref": "#/components/schemas/User"
+            },
+            "award_name": {
+              "type": "string"
+            },
+            "year": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": {
+              "type": "string"
+            }
+          }
+        },
+        "BaseResponseProject": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "$ref": "#/components/schemas/Project"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer"
+            },
+            "success": {
+              "type": "boolean"
+            }
+          }
+        },
+        "BooksPublished": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "title": {
+              "type": "string"
+            },
+            "author": {
+              "$ref": "#/components/schemas/User"
+            },
+            "publisher": {
+              "type": "string"
+            },
+            "year": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "isbn": {
+              "type": "string"
+            }
+          }
+        },
+        "Club": {
+          "type": "object",
+          "required": ["id", "name", "banner", "description", "memberCount", "roles"],
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "name": {
+              "type": "string"
+            },
+            "banner": {
+              "type": "string",
+              "description": "URL to club banner image"
+            },
+            "description": {
+              "type": "string"
+            },
+            "memberCount": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "type": "integer"
+                },
+                "leaders": {
+                  "type": "integer"
+                },
+                "members": {
+                  "type": "integer"
+                }
+              }
+            },
+            "achievements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            },
+            "roles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "member": {
+                    "type": "string"
+                  },
+                  "permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "rating": {
+              "type": "number",
+              "format": "float"
+            },
+            "icon": {
+              "type": "string",
+              "description": "Icon identifier for the club"
+            },
+            "joined": {
+              "type": "boolean",
+              "description": "Whether the current user has joined this club"
+            },
+            "recentActivities": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": "string",
+                  "date": "string",
+                  "description": "string"
+                }
+              }
+            },
+            "metrics": {
+              "type": "object",
+              "properties": {
+                "eventCount": "integer",
+                "activeMembers": "integer",
+                "projectCount": "integer"
+              }
+            }
+          }
+        },
+        "ClubMember": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "club": {
+              "$ref": "#/components/schemas/Club"
+            },
+            "user": {
+              "$ref": "#/components/schemas/User"
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "MEMBER",
+                "LEADER"
+              ]
+            }
+          }
+        },
+        "Event": {
+          "type": "object",
+          "required": ["id", "title", "date", "time", "location", "clubId", "clubName", "banner"],
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "title": {
+              "type": "string"
+            },
+            "date": {
+              "type": "string",
+              "format": "date"
+            },
+            "time": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "clubId": {
+              "type": "integer"
+            },
+            "clubName": {
+              "type": "string"
+            },
+            "banner": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "capacity": {
+              "type": "integer"
+            },
+            "registeredUsers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "profilePicture": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Faculty_Details": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "user": {
+              "$ref": "#/components/schemas/User"
+            },
+            "designation": {
+              "type": "string"
+            },
+            "department": {
+              "type": "string"
+            },
+            "expertise": {
+              "type": "string"
+            }
+          }
+        },
+        "Project": {
+          "type": "object",
+          "required": [
+            "id",
+            "title",
+            "description",
+            "status",
+            "level",
+            "mentor",
+            "prerequisites",
+            "techStack",
+            "duration",
+            "maxTeamSize",
+            "isOpenForApplications"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "title": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["Not Started", "In Progress", "Completed"]
+            },
+            "level": {
+              "type": "string",
+              "enum": ["Easy", "Medium", "Difficult"]
+            },
+            "duration": {
+              "type": "string"
+            },
+            "mentor": {
+              "type": "string"
+            },
+            "prerequisites": {
+              "type": "string"
+            },
+            "techStack": {
+              "type": "string"
+            },
+            "skills": {
+              "type": "string"
+            },
+            "maxTeamSize": {
+              "type": "string"
+            },
+            "isOpenForApplications": {
+              "type": "boolean"
+            },
+            "imageUrl": {
+              "type": "string"
+            },
+            "team": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/TeamMember"
+              }
+            },
+            "tasks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Task"
+              }
+            },
+            "resources": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Resource"
+              }
+            },
+            "applicants": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ProjectApplication"
+              }
+            },
+            "stats": {
+              "type": "object",
+              "properties": {
+                "totalApplicants": {
+                  "type": "integer"
+                },
+                "acceptedApplicants": {
+                  "type": "integer"
+                },
+                "completionPercentage": {
+                  "type": "integer"
+                }
+              }
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string", 
+              "format": "date-time"
+            },
+            "createdBy": {
+              "type": "string"
+            },
+            "timeline": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": "string",
+                  "milestone": "string",
+                  "status": "string"
+                }
+              }
+            },
+            "metrics": {
+              "type": "object",
+              "properties": {
+                "completionRate": "number",
+                "taskCount": "integer",
+                "activeContributors": "integer"
+              }
+            }
+          }
+        },
+        "ProjectApplication": {
+          "type": "object",
+          "required": ["id", "projectId", "applicantId", "status", "appliedDate"],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "projectId": {
+              "type": "integer"
+            },
+            "applicantId": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["pending", "accepted", "rejected", "waitlisted"]
+            },
+            "appliedDate": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "experience": {
+              "type": "string"
+            },
+            "notes": {
+              "type": "string",
+              "description": "Notes added by project mentor/admin about the applicant"
+            },
+            "applicantName": {
+              "type": "string"
+            },
+            "applicantEmail": {
+              "type": "string"
+            },
+            "profileUrl": {
+              "type": "string"
+            }
+          }
+        },
+        "ProjectTeamMember": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "project": {
+              "$ref": "#/components/schemas/Project"
+            },
+            "user": {
+              "$ref": "#/components/schemas/User"
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "TEAM_MEMBER",
+                "TEAM_LEADER"
+              ]
+            }
+          }
+        },
+        "ProjectVerification": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "project": {
+              "$ref": "#/components/schemas/Project"
+            },
+            "verifiedBy": {
+              "$ref": "#/components/schemas/User"
+            },
+            "verificationStatus": {
+              "type": "string",
+              "enum": [
+                "VERIFIED",
+                "UNVERIFIED"
+              ]
+            },
+            "verificationDate": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        },
+        "ResearchProposals": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "title": {
+              "type": "string"
+            },
+            "submittedBy": {
+              "$ref": "#/components/schemas/User"
+            },
+            "submissionDate": {
+              "type": "string",
+              "format": "date"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "SUBMITTED",
+                "REVIEWED",
+                "APPROVED",
+                "REJECTED"
+              ]
+            },
+            "fundingAmount": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        },
+        "Student_Details": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "user": {
+              "$ref": "#/components/schemas/User"
+            },
+            "enrollmentNumber": {
+              "type": "string"
+            },
+            "batchYear": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "User": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "username": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            },
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            },
+            "profilePicture": {
+              "type": "string"
+            },
+            "headline": {
+              "type": "string"
+            },
+            "about": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "industry": {
+              "type": "string"
+            },
+            "currentPosition": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "STUDENT",
+                "FACULTY",
+                "ADMIN"
+              ]
+            },
+            "projectTeamMembers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ProjectTeamMember"
+              }
+            },
+            "userSkills": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/UserSkill"
+              }
+            },
+            "studentDetails": {
+              "$ref": "#/components/schemas/Student_Details"
+            },
+            "facultyDetails": {
+              "$ref": "#/components/schemas/Faculty_Details"
+            },
+            "booksPublished": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/BooksPublished"
+              }
+            },
+            "researchProposals": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ResearchProposals"
+              }
+            },
+            "awards": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Awards"
+              }
+            },
+            "eventsOrganized": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Event"
+              }
+            },
+            "clubs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ClubMember"
+              }
+            },
+            "active": {
+              "type": "boolean"
+            },
+            "socialLinks": {
+              "type": "object",
+              "properties": {
+                "github": { "type": "string" },
+                "linkedin": { "type": "string" },
+                "portfolio": { "type": "string" }
+              }
+            },
+            "achievements": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "interests": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "careerPath": { "type": "string" },
+            "semester": { "type": "string" },
+            "graduationYear": { "type": "string" }
+          }
+        },
+        "UserSkill": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "skillName": {
+              "type": "string"
+            },
+            "proficiencyLevel": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "user": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        },
+        "CreateEventDTO": {
+          "required": [
+            "date",
+            "description",
+            "eventName",
+            "location",
+            "username"
+          ],
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string"
+            },
+            "eventName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "date": {
+              "type": "string"
+            }
+          }
+        },
+        "BaseResponseEvent": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "$ref": "#/components/schemas/Event"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "success": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "CreateClubDTO": {
+          "required": [
+            "activities",
+            "clubName"
+          ],
+          "type": "object",
+          "properties": {
+            "clubName": {
+              "type": "string"
+            },
+            "activities": {
+              "type": "string"
+            }
+          }
+        },
+        "BaseResponseClub": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "$ref": "#/components/schemas/Club"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "success": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "AddClubMemberDTO": {
+          "required": [
+            "clubId",
+            "username"
+          ],
+          "type": "object",
+          "properties": {
+            "clubId": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "username": {
+              "type": "string"
+            }
+          }
+        },
+        "CreateAwardDTO": {
+          "required": [
+            "awardName",
+            "description",
+            "recipientID",
+            "year"
+          ],
+          "type": "object",
+          "properties": {
+            "recipientID": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "awardName": {
+              "type": "string"
+            },
+            "year": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": {
+              "type": "string"
+            }
+          }
+        },
+        "BaseResponseAwards": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "$ref": "#/components/schemas/Awards"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "success": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "ValidateOtpRequest": {
+          "required": [
+            "email",
+            "otp"
+          ],
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string"
+            },
+            "otp": {
+              "type": "string"
+            }
+          }
+        },
+        "BaseResponseString": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "success": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "SendOtpRequest": {
+          "required": [
+            "email"
+          ],
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string"
+            }
+          }
+        },
+        "CreateUserDTO": {
+          "required": [
+            "about",
+            "currentPosition",
+            "email",
+            "firstName",
+            "headline",
+            "industry",
+            "lastName",
+            "location",
+            "password",
+            "role",
+            "username"
+          ],
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            },
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            },
+            "headline": {
+              "type": "string"
+            },
+            "about": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "industry": {
+              "type": "string"
+            },
+            "currentPosition": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "STUDENT",
+                "FACULTY",
+                "ADMIN"
+              ]
+            }
+          }
+        },
+        "BaseResponseUser": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "$ref": "#/components/schemas/User"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "success": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "LoginRequest": {
+          "required": [
+            "password",
+            "username"
+          ],
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            }
+          }
+        },
+        "BaseResponseMapStringObject": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object"
+              }
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "success": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "BaseResponseListProject": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Project"
+              }
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer"
+            },
+            "success": {
+              "type": "boolean"
+            }
+          }
+        },
+        "BaseResponseListEvent": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Event"
+              }
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "success": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "BaseResponseListClub": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Club"
+              }
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "success": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "BaseResponseListAwards": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Awards"
+              }
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "success": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "RemoveClubMemberDTO": {
+          "required": [
+            "clubId",
+            "username"
+          ],
+          "type": "object",
+          "properties": {
+            "clubId": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "username": {
+              "type": "string"
+            }
+          }
+        },
+        "WorkItem": {
+          "type": "object",
+          "required": ["id", "type", "status"],
+          "properties": {
+            "id": { 
+              "type": "integer"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["PROJECT", "PAPER", "INTERNSHIP", "EXTRACURRICULAR"]
+            },
+            "name": { "type": "string" },
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "status": {
+              "type": "string",
+              "enum": ["Completed", "Ongoing", "Published", "Dropped"]
+            },
+            "level": {
+              "type": "string",
+              "enum": ["Easy", "Medium", "Difficult"]
+            },
+            "verified": {
+              "type": "string",
+              "enum": ["Verified", "Unverified"]
+            },
+            "faculty": { "type": "string" },
+            "company": { "type": "string" },
+            "duration": { "type": "string" },
+            "activity": { "type": "string" },
+            "techStack": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "collaborators": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "achievement": { "type": "string" }
+          }
+        },
+        "ProjectListResponse": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Project"
+              }
+            },
+            "metadata": {
+              "type": "object",
+              "properties": {
+                "totalCount": {
+                  "type": "integer"
+                },
+                "totalPages": {
+                  "type": "integer"
+                },
+                "currentPage": {
+                  "type": "integer"
+                },
+                "filters": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "level": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ErrorResponse": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer"
+            },
+            "success": {
+              "type": "boolean"
+            }
+          }
+        },
+        "TeamMember": {
+          "type": "object",
+          "required": ["name", "role"],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string"
+            }
+          }
+        },
+        "Task": {
+          "type": "object",
+          "required": ["title", "assignedTo", "deadline", "status"],
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "assignedTo": {
+              "type": "string"
+            },
+            "deadline": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["Pending", "Completed"]
+            }
+          }
+        },
+        "Resource": {
+          "type": "object",
+          "required": ["name", "type", "url"],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          }
+        },
+        "CreateWorkItemRequest": {
+          "type": "object",
+          "required": ["type", "status"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["PROJECT", "PAPER", "INTERNSHIP", "EXTRACURRICULAR"]
+            },
+            "name": { "type": "string" },
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "status": {
+              "type": "string",
+              "enum": ["Completed", "Ongoing", "Published", "Dropped"]
+            },
+            "level": {
+              "type": "string",
+              "enum": ["Easy", "Medium", "Difficult"]
+            },
+            "faculty": { "type": "string" }
+          }
+        },
+        "UpdateWorkItemRequest": {
+          "type": "object",
+          "required": ["id"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string" },
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "status": {
+              "type": "string",
+              "enum": ["Completed", "Ongoing", "Published", "Dropped"]
+            },
+            "level": {
+              "type": "string",
+              "enum": ["Easy", "Medium", "Difficult"]
+            },
+            "faculty": { "type": "string" }
+          }
+        },
+        "BaseResponseWorkItem": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "$ref": "#/components/schemas/WorkItem"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer"
+            },
+            "success": {
+              "type": "boolean"
+            }
+          }
+        },
+        "BaseResponseWorkItems": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "object",
+              "properties": {
+                "PROJECTS": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/WorkItem" }
+                },
+                "PAPERS": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/WorkItem" }
+                },
+                "INTERNSHIPS": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/WorkItem" }
+                },
+                "EXTRACURRICULAR": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/WorkItem" }
+                }
+              }
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "integer"
+            },
+            "success": {
+              "type": "boolean"
+            }
+          }
+        },
+        "Post": {
+          "type": "object",
+          "required": ["id", "content", "author", "createdAt"],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "content": {
+              "type": "string"
+            },
+            "author": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "avatar": {
+                  "type": "string"
+                }
+              }
+            },
+            "image": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "visibility": {
+              "type": "string",
+              "enum": ["public", "department", "club"]
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "likes": {
+              "type": "integer"
+            },
+            "comments": {
+              "type": "integer"
+            },
+            "reposts": {
+              "type": "integer"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["post", "announcement", "event", "achievement"]
+            }
+          }
+        },
+        "CreatePostRequest": {
+          "type": "object",
+          "required": ["content"],
+          "properties": {
+            "content": {
+              "type": "string"
+            },
+            "image": {
+              "type": "string",
+              "format": "binary"
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "visibility": {
+              "type": "string",
+              "enum": ["public", "department", "club"]
+            }
+          }
+        },
+        "UpdatePostRequest": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "visibility": {
+              "type": "string",
+              "enum": ["public", "department", "club"]
+            }
+          }
+        },
+        "ClubEvent": {
+          "type": "object",
+          "required": ["id", "title", "description", "date", "type", "location"],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "date": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["Hackathon", "Workshop", "Meeting", "Other"]
+            },
+            "location": {
+              "type": "string"
+            },
+            "registrationLink": {
+              "type": "string"
+            }
+          }
+        },
+        "ClubAchievement": {
+          "type": "object",
+          "required": ["id", "name", "description", "date", "icon"],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "date": {
+              "type": "string",
+              "format": "date"
+            },
+            "icon": {
+              "type": "string",
+              "enum": ["trophy", "medal", "certificate"]
+            }
+          }
+        }
+      },
+      "headers": {
+        "X-RateLimit-Limit": {
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Request limit per hour"
+        },
+        "X-RateLimit-Remaining": {
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Remaining requests for the hour"
+        }
+      }
+    }
+  }
+}

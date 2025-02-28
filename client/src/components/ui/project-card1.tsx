@@ -1,6 +1,29 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+
+export interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
+export interface ProjectApplication {
+  id: number;
+  user: User;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  appliedAt: string;
+}
+
+export interface ProjectTeamMember {
+  id: number;
+  user: User;
+  role: string;
+  joinedAt: string;
+}
 
 export interface Project {
   id: number;
@@ -14,6 +37,9 @@ export interface Project {
   prerequisites: string[];
   members: string[];
   mentor: string;
+  projectRepo?: string;
+  projectLevel?: 'EASY' | 'MEDIUM' | 'HARD';
+  projectDurationMonths?: number;
 }
 
 interface ProjectCardProps {
@@ -22,6 +48,8 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onClick }: ProjectCardProps) {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <Card 
       onClick={() => onClick(project)}
@@ -30,9 +58,10 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
       <CardHeader className="p-0">
         <div className="relative h-48 overflow-hidden">
           <img
-            src={project.image}
+            src={imageError ? '/default-project-image.jpg' : project.image}
             alt={project.name}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            onError={() => setImageError(true)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <Badge 

@@ -66,3 +66,29 @@ export interface Applicant {
   experience: string;
   notes?: string;
 }
+
+// Author type for posts
+export interface Author {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+}
+
+// Post type used across components
+export interface Post {
+  id: string;
+  author: Author;
+  content: string;
+  image?: string;
+  tags: string[];
+  visibility: string;
+  createdAt: Date;
+  likes: number;
+  comments: number;
+  reposts: number;
+  type: string;
+  timestamp: Date;  // Changed from string to Date
+  shares: number;
+  isEditable: boolean;
+}
