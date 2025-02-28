@@ -6,7 +6,6 @@ export interface Club {
     events: number;
     advisor: string;
     clubHead: string;
-    status: 'active' | 'inactive';
 }
 
 export interface MembershipData {

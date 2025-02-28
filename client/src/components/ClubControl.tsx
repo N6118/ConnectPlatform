@@ -8,16 +8,25 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Plus, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Edit } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Club } from "../types/clubs";
+
+// Simplified Club type without active/inactive status
+interface Club {
+    id: number;
+    name: string;
+    description: string;
+    members: number;
+    events: number;
+    advisor: string;
+    clubHead: string;
+}
 
 interface ClubControlProps {
     clubData: Club[];
@@ -26,21 +35,23 @@ interface ClubControlProps {
 }
 
 export const ClubControl: React.FC<ClubControlProps> = ({ clubData, availableUsers, facultyMentors }) => {
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [newClubModalOpen, setNewClubModalOpen] = useState<boolean>(false);
+    const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
     const [displayedClubs, setDisplayedClubs] = useState<number>(5);
     const [showMore, setShowMore] = useState<boolean>(false);
-    const [statusFilter, setStatusFilter] = useState<string>("all");
-
-    // Filter clubs based on status
-    const filteredClubs = clubData.filter(club => 
-        statusFilter === "all" || club.status === statusFilter
-    );
-
+    const [currentClub, setCurrentClub] = useState<Club | null>(null);
+    
     // Get displayed club data with "show more" feature
-    const visibleClubs = showMore ? filteredClubs : filteredClubs.slice(0, displayedClubs);
+    const visibleClubs = showMore ? clubData : clubData.slice(0, displayedClubs);
 
     // Toggle show more/less clubs
     const toggleShowMore = () => setShowMore(!showMore);
+    
+    // Handle opening the edit modal with the selected club
+    const handleEditClub = (club: Club) => {
+        setCurrentClub(club);
+        setEditModalOpen(true);
+    };
 
     return (
         <>
@@ -48,38 +59,9 @@ export const ClubControl: React.FC<ClubControlProps> = ({ clubData, availableUse
                 <CardHeader>
                     <div className="flex justify-between items-center flex-wrap gap-4">
                         <CardTitle>Club Management</CardTitle>
-                        <div className="flex gap-2">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                        <Filter className="w-4 h-4 mr-2" /> Status
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuCheckboxItem
-                                        checked={statusFilter === "all"}
-                                        onCheckedChange={() => setStatusFilter("all")}
-                                    >
-                                        All Clubs
-                                    </DropdownMenuCheckboxItem>
-                                    <DropdownMenuCheckboxItem
-                                        checked={statusFilter === "active"}
-                                        onCheckedChange={() => setStatusFilter("active")}
-                                    >
-                                        Active Only
-                                    </DropdownMenuCheckboxItem>
-                                    <DropdownMenuCheckboxItem
-                                        checked={statusFilter === "inactive"}
-                                        onCheckedChange={() => setStatusFilter("inactive")}
-                                    >
-                                        Inactive Only
-                                    </DropdownMenuCheckboxItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <Button onClick={() => setIsModalOpen(true)}>
-                                <Plus className="w-4 h-4 mr-2" /> New Club
-                            </Button>
-                        </div>
+                        <Button onClick={() => setNewClubModalOpen(true)}>
+                            <Plus className="w-4 h-4 mr-2" /> New Club
+                        </Button>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -92,7 +74,6 @@ export const ClubControl: React.FC<ClubControlProps> = ({ clubData, availableUse
                                     <TableHead className="hidden md:table-cell">Events</TableHead>
                                     <TableHead className="hidden md:table-cell">Club Head</TableHead>
                                     <TableHead className="hidden lg:table-cell">Advisor</TableHead>
-                                    <TableHead>Status</TableHead>
                                     <TableHead>Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -105,12 +86,13 @@ export const ClubControl: React.FC<ClubControlProps> = ({ clubData, availableUse
                                         <TableCell className="hidden md:table-cell">{club.clubHead}</TableCell>
                                         <TableCell className="hidden lg:table-cell">{club.advisor}</TableCell>
                                         <TableCell>
-                                            <span className={`px-2 py-1 rounded-full text-xs ${club.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                                {club.status}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="sm">Edit</Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                onClick={() => handleEditClub(club)}
+                                            >
+                                                <Edit className="w-4 h-4 mr-1" /> Edit
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -118,7 +100,7 @@ export const ClubControl: React.FC<ClubControlProps> = ({ clubData, availableUse
                         </Table>
                     </div>
                 </CardContent>
-                {filteredClubs.length > displayedClubs && (
+                {clubData.length > displayedClubs && (
                     <CardFooter className="flex justify-center pt-2 pb-4">
                         <Button 
                             variant="ghost" 
@@ -136,7 +118,7 @@ export const ClubControl: React.FC<ClubControlProps> = ({ clubData, availableUse
             </Card>
 
             {/* New Club Modal */}
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <Dialog open={newClubModalOpen} onOpenChange={setNewClubModalOpen}>
                 <DialogContent className="sm:max-w-[550px]">
                     <DialogHeader>
                         <DialogTitle>Create New Club</DialogTitle>
@@ -156,20 +138,12 @@ export const ClubControl: React.FC<ClubControlProps> = ({ clubData, availableUse
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="club-status">Status</Label>
-                                <Select defaultValue="active">
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="active">Active</SelectItem>
-                                        <SelectItem value="inactive">Inactive</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-2">
                                 <Label htmlFor="club-members">Initial Members</Label>
                                 <Input id="club-members" type="number" placeholder="e.g. 20" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="club-events">Initial Events</Label>
+                                <Input id="club-events" type="number" placeholder="e.g. 0" />
                             </div>
                         </div>
                         <div className="grid gap-2">
@@ -208,8 +182,96 @@ export const ClubControl: React.FC<ClubControlProps> = ({ clubData, availableUse
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button onClick={() => setIsModalOpen(false)}>Create Club</Button>
+                        <Button variant="outline" onClick={() => setNewClubModalOpen(false)}>Cancel</Button>
+                        <Button onClick={() => setNewClubModalOpen(false)}>Create Club</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Club Modal */}
+            <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+                <DialogContent className="sm:max-w-[550px]">
+                    <DialogHeader>
+                        <DialogTitle>Edit Club</DialogTitle>
+                    </DialogHeader>
+                    {currentClub && (
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-club-name">Club Name</Label>
+                                <Input 
+                                    id="edit-club-name" 
+                                    defaultValue={currentClub.name}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-club-description">Description</Label>
+                                <Textarea
+                                    id="edit-club-description"
+                                    defaultValue={currentClub.description}
+                                    rows={3}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="edit-club-members">Members</Label>
+                                    <Input 
+                                        id="edit-club-members" 
+                                        type="number" 
+                                        defaultValue={currentClub.members.toString()}
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="edit-club-events">Events</Label>
+                                    <Input 
+                                        id="edit-club-events" 
+                                        type="number" 
+                                        defaultValue={currentClub.events.toString()}
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-club-head">Club Head</Label>
+                                <Select defaultValue={availableUsers.find(user => 
+                                    user.name === currentClub.clubHead
+                                )?.id.toString()}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a club head" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <ScrollArea className="h-[200px]">
+                                            {availableUsers.map(user => (
+                                                <SelectItem key={user.id} value={user.id.toString()}>
+                                                    {user.name}
+                                                </SelectItem>
+                                            ))}
+                                        </ScrollArea>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-club-advisor">Faculty Advisor</Label>
+                                <Select defaultValue={facultyMentors.find(mentor => 
+                                    mentor.name === currentClub.advisor
+                                )?.id.toString()}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a faculty advisor" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <ScrollArea className="h-[200px]">
+                                            {facultyMentors.map(mentor => (
+                                                <SelectItem key={mentor.id} value={mentor.id.toString()}>
+                                                    {mentor.name} ({mentor.department})
+                                                </SelectItem>
+                                            ))}
+                                        </ScrollArea>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setEditModalOpen(false)}>Cancel</Button>
+                        <Button onClick={() => setEditModalOpen(false)}>Save Changes</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

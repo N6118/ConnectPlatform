@@ -28,7 +28,6 @@ export const ClubManagement = () => {
             events: 45,
             advisor: 'Dr. Emily Smith',
             clubHead: 'Alex Johnson',
-            status: 'active'
         },
         {
             id: 2,
@@ -38,7 +37,6 @@ export const ClubManagement = () => {
             events: 30,
             advisor: 'Prof. James Williams',
             clubHead: 'Sarah Chen',
-            status: 'active'
         },
         {
             id: 3,
@@ -48,7 +46,6 @@ export const ClubManagement = () => {
             events: 25,
             advisor: 'Dr. Ravi Patel',
             clubHead: 'Miguel Rodriguez',
-            status: 'inactive'
         },
         {
             id: 4,
@@ -58,7 +55,6 @@ export const ClubManagement = () => {
             events: 28,
             advisor: 'Ms. Rebecca Taylor',
             clubHead: 'Jamie Lee',
-            status: 'active'
         },
         {
             id: 5,
@@ -68,7 +64,6 @@ export const ClubManagement = () => {
             events: 32,
             advisor: 'Dr. Daniel Matthews',
             clubHead: 'Devon White',
-            status: 'active'
         },
         {
             id: 6,
@@ -78,7 +73,6 @@ export const ClubManagement = () => {
             events: 40,
             advisor: 'Prof. Sofia Garcia',
             clubHead: 'Jordan Smith',
-            status: 'active'
         },
         {
             id: 7,
@@ -88,7 +82,6 @@ export const ClubManagement = () => {
             events: 15,
             advisor: 'Mr. Wei Li',
             clubHead: 'Priya Agarwal',
-            status: 'inactive'
         },
         {
             id: 8,
@@ -98,7 +91,6 @@ export const ClubManagement = () => {
             events: 38,
             advisor: 'Dr. Olivia Nguyen',
             clubHead: 'Marcus Chen',
-            status: 'active'
         },
         {
             id: 9,
@@ -108,7 +100,6 @@ export const ClubManagement = () => {
             events: 22,
             advisor: 'Prof. Thomas Parker',
             clubHead: 'Leila Sanchez',
-            status: 'active'
         },
         {
             id: 10,
@@ -118,7 +109,6 @@ export const ClubManagement = () => {
             events: 26,
             advisor: 'Ms. Jasmine Kwan',
             clubHead: 'Kai Washington',
-            status: 'inactive'
         }
     ];
 
