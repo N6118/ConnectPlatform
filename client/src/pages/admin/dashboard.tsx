@@ -1,5 +1,5 @@
 import { UserActivityChart } from '@/components/UserActivityChart';
-import { StatsGrid } from '../../components/StatsGrid';
+import { StatsGrid } from '../../components/AdminStat-components/StatsGrid';
 import AdminNavbar from '@/components/navigation/AdminNavbar';
 import AdminMobileBottomNav from "@/components/navigation/AdminMobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
