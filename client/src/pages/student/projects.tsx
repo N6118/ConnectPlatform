@@ -6,56 +6,7 @@ import { ProjectModal } from "@/components/ui/project-modal";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Project, User, ProjectTeamMember, ProjectApplication } from "@/components/ui/project-card1";
-
-interface ApiResponse {
-  data: ApiProject[];
-  message: string;
-  status: number;
-  success: string;
-  count: number;
-}
-
-interface ApiProject {
-  id: number;
-  projectName: string;
-  projectDescription: string;
-  projectStatus: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
-  tags: string;
-  projectImage: string;
-  techStack: string;
-  prerequisites: string;
-  projectTeamMembers: ProjectTeamMember[];
-  facultyMentor: User;
-  projectRepo?: string;
-  projectLevel?: 'EASY' | 'MEDIUM' | 'HARD';
-  projectDurationMonths?: number;
-  projectApplications?: ProjectApplication[];
-  verificationFaculty?: User;
-}
-
-const transformApiProject = (apiProject: ApiProject): Project => {
-  return {
-    id: apiProject.id,
-    name: apiProject.projectName,
-    description: apiProject.projectDescription,
-    status: apiProject.projectStatus === 'COMPLETED' ? 'Completed' : 'Ongoing',
-    tags: apiProject.tags?.split(',').map((tag: string) => tag.trim()) || [],
-    image: apiProject.projectImage || '/default-project-image.jpg',
-    about: apiProject.projectDescription,
-    techStack: apiProject.techStack?.split(',').map((tech: string) => tech.trim()) || [],
-    prerequisites: apiProject.prerequisites?.split(',').map((prereq: string) => prereq.trim()) || [],
-    members: apiProject.projectTeamMembers?.map((member: ProjectTeamMember) => 
-      `${member.user.firstName} ${member.user.lastName}`
-    ) || [],
-    mentor: apiProject.facultyMentor ? 
-      `${apiProject.facultyMentor.firstName} ${apiProject.facultyMentor.lastName}` : 
-      'Unassigned',
-    projectRepo: apiProject.projectRepo,
-    projectLevel: apiProject.projectLevel,
-    projectDurationMonths: apiProject.projectDurationMonths
-  };
-};
+import { Project } from "@/components/ui/project-card1";
 
 export default function StudentProjects() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,49 +16,64 @@ export default function StudentProjects() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
-  // Fetch projects from API
-  const fetchProjects = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/project/getAllProjects');
-      if (!response.ok) {
-        throw new Error('Failed to fetch projects');
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('http://139.59.38.207:8080/api/project/getAllProjects', {
+          method: "GET",
+          mode: "cors"
+        });
+        const data = await response.json();
+        console.log('API Response:', data);
+        
+        if (data.data) {
+          console.log('Projects before transformation:', data.data);
+          // Transform the API data to match our Project interface
+          const transformedProjects = data.data.map((project: any) => ({
+            id: project.id,
+            name: project.projectName || '',
+            description: project.projectDescription || '',
+            status: project.projectStatus || 'NOT_STARTED',
+            tags: Array.isArray(project.tags) ? project.tags : [],
+            image: project.projectImage || null,
+            about: project.projectDescription || '',
+            techStack: Array.isArray(project.techStack) ? project.techStack : [],
+            prerequisites: project.prerequisites ? [project.prerequisites] : [],
+            members: [], // API doesn't provide members data
+            mentor: "", // API doesn't provide mentor data
+          }));
+          setFilteredProjects(transformedProjects);
+        } else {
+          setError('No projects data received from the server');
+        }
+      } catch (err) {
+        setError('Failed to fetch projects. Please try again later.');
+        console.error('Error fetching projects:', err);
+      } finally {
+        setIsLoading(false);
       }
-      const data: ApiResponse = await response.json();
-      const transformedProjects = data.data.map(transformApiProject);
-      setFilteredProjects(transformedProjects);
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-      // Handle error state
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    fetchProjects();
   }, []);
 
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
-
   const allTags = Array.from(
-    new Set(filteredProjects.flatMap((project) => project.tags))
+    new Set(filteredProjects.flatMap((project) => project.tags)),
   );
 
   const handleSearch = useCallback(() => {
-    if (!filteredProjects) return;
-    
-    const filtered = filteredProjects.filter((project) => {
-      const nameMatch = project.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const tagMatch = selectedTags.length === 0 || 
-        project.tags.some((tag) => selectedTags.includes(tag));
-      const statusMatch = statusFilter === "All" || project.status === statusFilter;
-      
-      return nameMatch && tagMatch && statusMatch;
-    });
-    
+    const filtered = filteredProjects.filter(
+      (project) =>
+        project.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        (selectedTags.length === 0 ||
+          project.tags.some((tag) => selectedTags.includes(tag))) &&
+        (statusFilter === "All" || project.status === statusFilter),
+    );
     setFilteredProjects(filtered);
-  }, [searchTerm, selectedTags, statusFilter, filteredProjects]);
+  }, [searchTerm, selectedTags, statusFilter]);
 
   useEffect(() => {
     handleSearch();
@@ -153,9 +119,21 @@ export default function StudentProjects() {
         />
 
         {isLoading ? (
-          <div className="flex justify-center items-center min-h-[400px]">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12"
+          >
+            <p className="text-xl text-muted-foreground">Loading projects...</p>
+          </motion.div>
+        ) : error ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12"
+          >
+            <p className="text-xl text-red-500">{error}</p>
+          </motion.div>
         ) : filteredProjects.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
