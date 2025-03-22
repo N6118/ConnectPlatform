@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { StatCard } from './StatCard';
 import { FeaturedStatCard } from './FeaturedStatCard';
 import { CircularProgressCard } from './CircularProgressCard';
-import { Users, Target, BookMarked, UserCheck, Building, Briefcase, GraduationCap, School } from "lucide-react";
+import { Users, Target, BookMarked, UserCheck, Building, Briefcase, GraduationCap, School, Calendar } from "lucide-react";
 import { useLocation } from "wouter";
 
 // Generate some sample chart data
@@ -91,6 +91,17 @@ export const StatsGrid = () => {
     trend: 10,
     color: "yellow",
     chartData: generateChartData(12, 20, 35, 10)
+  };
+
+  // Events data
+  const eventsStats = {
+    title: "Events",
+    value: "12",
+    icon: <Calendar className="w-5 h-5 text-orange-600" />,
+    description: "Upcoming academic events",
+    trend: 8,
+    color: "orange",
+    chartData: generateChartData(12, 8, 15, 8)
   };
 
   const handleCardClick = (path: string) => {
@@ -332,6 +343,36 @@ export const StatsGrid = () => {
             {clubsStats.trend !== undefined && (
               <div className={`inline-flex items-center gap-1 px-2 py-1 mt-3 rounded-full text-sm ${clubsStats.trend > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                 {clubsStats.trend > 0 ? '↑' : '↓'} {Math.abs(clubsStats.trend)}%
+                <span className="text-xs text-gray-500">vs last month</span>
+              </div>
+            )}
+          </div>
+        </motion.div>
+        
+        {/* Events card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="cursor-pointer"
+          onClick={() => handleCardClick("/admin/events")}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+        >
+          <div className="bg-white rounded-xl shadow-lg border border-orange-100 hover:border-orange-200 transition-all p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-xl">
+                  {eventsStats.icon}
+                </div>
+                <h3 className="font-medium text-gray-700">{eventsStats.title}</h3>
+              </div>
+            </div>
+            <p className="text-4xl font-bold">{eventsStats.value}</p>
+            <p className="text-sm text-gray-500 mt-2">{eventsStats.description}</p>
+            {eventsStats.trend !== undefined && (
+              <div className={`inline-flex items-center gap-1 px-2 py-1 mt-3 rounded-full text-sm ${eventsStats.trend > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                {eventsStats.trend > 0 ? '↑' : '↓'} {Math.abs(eventsStats.trend)}%
                 <span className="text-xs text-gray-500">vs last month</span>
               </div>
             )}

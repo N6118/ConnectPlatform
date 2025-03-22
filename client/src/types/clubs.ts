@@ -2,8 +2,29 @@ export interface Club {
     id: number;
     name: string;
     description: string;
-    members: number;
-    events: number;
+    officeBearers: {
+        name: string;
+        role: string;
+        details: string;
+    }[];
+    department: string;
+    members: {
+        rollNo: string;
+        name: string;
+    }[];
+    otherDetails: string;
+    planOfAction: {
+        summary: string;
+        budget: number;
+    };
+    events: {
+        name: string;
+        description: string;
+        date: string;
+        outcomes: string;
+        awards: string;
+        remarks: string;
+    }[];
     advisor: string;
     clubHead: string;
 }

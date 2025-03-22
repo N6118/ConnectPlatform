@@ -22,8 +22,29 @@ interface Club {
     id: number;
     name: string;
     description: string;
-    members: number;
-    events: number;
+    officeBearers: {
+        name: string;
+        role: string;
+        details: string;
+    }[];
+    department: string;
+    members: {
+        rollNo: string;
+        name: string;
+    }[];
+    otherDetails: string;
+    planOfAction: {
+        summary: string;
+        budget: number;
+    };
+    events: {
+        name: string;
+        description: string;
+        date: string;
+        outcomes: string;
+        awards: string;
+        remarks: string;
+    }[];
     advisor: string;
     clubHead: string;
 }
@@ -65,33 +86,105 @@ export const ClubControl: React.FC<ClubControlProps> = ({ clubData, availableUse
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="overflow-x-auto">
+                    <div className="rounded-md border">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Club Name</TableHead>
-                                    <TableHead className="hidden md:table-cell">Members</TableHead>
-                                    <TableHead className="hidden md:table-cell">Events</TableHead>
-                                    <TableHead className="hidden md:table-cell">Club Head</TableHead>
-                                    <TableHead className="hidden lg:table-cell">Advisor</TableHead>
+                                    <TableHead>Sl No.</TableHead>
+                                    <TableHead>Name of Student Club/Chapter</TableHead>
+                                    <TableHead>Name of Office Bearers and Details</TableHead>
+                                    <TableHead>Department</TableHead>
+                                    <TableHead>Members (Roll No.)</TableHead>
+                                    <TableHead>Other Details</TableHead>
+                                    <TableHead>Plan of Action and Budget Summary</TableHead>
+                                    <TableHead>Events</TableHead>
+                                    <TableHead>Description</TableHead>
+                                    <TableHead>Date of Event</TableHead>
+                                    <TableHead>Outcomes/Awards/Remarks</TableHead>
                                     <TableHead>Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {visibleClubs.map((club) => (
+                                {clubData.map((club, index) => (
                                     <TableRow key={club.id}>
-                                        <TableCell className="font-medium">{club.name}</TableCell>
-                                        <TableCell className="hidden md:table-cell">{club.members}</TableCell>
-                                        <TableCell className="hidden md:table-cell">{club.events}</TableCell>
-                                        <TableCell className="hidden md:table-cell">{club.clubHead}</TableCell>
-                                        <TableCell className="hidden lg:table-cell">{club.advisor}</TableCell>
+                                        <TableCell>{index + 1}</TableCell>
+                                        <TableCell>{club.name}</TableCell>
                                         <TableCell>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm"
+                                            <ul className="list-none">
+                                                {club.officeBearers.map((bearer, i) => (
+                                                    <li key={i}>
+                                                        {bearer.name} - {bearer.role}<br />
+                                                        <span className="text-sm text-gray-500">{bearer.details}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </TableCell>
+                                        <TableCell>{club.department}</TableCell>
+                                        <TableCell>
+                                            <ul className="list-none">
+                                                {club.members.map((member, i) => (
+                                                    <li key={i}>
+                                                        {member.rollNo} - {member.name}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </TableCell>
+                                        <TableCell>{club.otherDetails}</TableCell>
+                                        <TableCell>
+                                            <div>
+                                                <p>{club.planOfAction.summary}</p>
+                                                <p className="text-sm text-gray-500">
+                                                    Budget: ${club.planOfAction.budget}
+                                                </p>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <ul className="list-none">
+                                                {club.events.map((event, i) => (
+                                                    <li key={i} className="mb-2">
+                                                        {event.name}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </TableCell>
+                                        <TableCell>
+                                            <ul className="list-none">
+                                                {club.events.map((event, i) => (
+                                                    <li key={i} className="mb-2">
+                                                        {event.description}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </TableCell>
+                                        <TableCell>
+                                            <ul className="list-none">
+                                                {club.events.map((event, i) => (
+                                                    <li key={i} className="mb-2">
+                                                        {event.date}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </TableCell>
+                                        <TableCell>
+                                            <ul className="list-none">
+                                                {club.events.map((event, i) => (
+                                                    <li key={i} className="mb-2">
+                                                        <div>
+                                                            <p><strong>Outcomes:</strong> {event.outcomes}</p>
+                                                            <p><strong>Awards:</strong> {event.awards}</p>
+                                                            <p><strong>Remarks:</strong> {event.remarks}</p>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
                                                 onClick={() => handleEditClub(club)}
                                             >
-                                                <Edit className="w-4 h-4 mr-1" /> Edit
+                                                <Edit className="h-4 w-4" />
                                             </Button>
                                         </TableCell>
                                     </TableRow>
@@ -217,7 +310,7 @@ export const ClubControl: React.FC<ClubControlProps> = ({ clubData, availableUse
                                     <Input 
                                         id="edit-club-members" 
                                         type="number" 
-                                        defaultValue={currentClub.members.toString()}
+                                        defaultValue={currentClub.members.length.toString()}
                                     />
                                 </div>
                                 <div className="grid gap-2">
@@ -225,7 +318,7 @@ export const ClubControl: React.FC<ClubControlProps> = ({ clubData, availableUse
                                     <Input 
                                         id="edit-club-events" 
                                         type="number" 
-                                        defaultValue={currentClub.events.toString()}
+                                        defaultValue={currentClub.events.length.toString()}
                                     />
                                 </div>
                             </div>

@@ -8,15 +8,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/App";
 import { authenticateUser } from "@/lib/auth";
+import { response } from "express";
+import { error } from "console";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required").email("Must be a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password must be at least 1 characters"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
+  const baseurl = "http://localhost:8080";
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -37,20 +40,24 @@ export default function Login() {
 
     try {
       // ✅ Ensure authentication is awaited
-      const user = await authenticateUser(data.username, data.password);
+      const response = await fetch(`${baseurl}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: data.username,
+          password: data.password,
+        }),
+      });
 
-      // ✅ Validate user object and role
-      if (!user || typeof user !== "object" || !user.role) {
-        throw new Error("Invalid credentials");
+      if (!response.ok) {
+        throw new Error("Invalid username or password");
       }
 
-      // ✅ Ensure the role is expected
-      const validRoles = ["admin", "faculty", "student"];
-      if (!validRoles.includes(user.role)) {
-        console.error("Unexpected user role:", user.role);
-        throw new Error("Access denied. Contact support.");
-      }
-
+      const user = await response.json();
+      localStorage.setItem("user", user.data.user);
+      localStorage.setItem("token", user.data.token);
       // ✅ Show success message
       toast({
         title: "Success!",
@@ -58,14 +65,16 @@ export default function Login() {
       });
 
       // ✅ Login user (navigation handled in auth context)
-      auth.login(user);
-
+      //auth.login(user);
     } catch (error) {
       console.error("Login error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error instanceof Error ? error.message : "Invalid username or password",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Invalid username or password",
       });
 
       // Only reset the form if authentication fails completely
@@ -124,12 +133,14 @@ export default function Login() {
             onSubmit={form.handleSubmit(handleLogin)}
           >
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Username
               </label>
               <input
                 id="username"
-                type="email"
                 {...form.register("username")}
                 className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-300"
                 placeholder="Enter your username"
@@ -143,7 +154,10 @@ export default function Login() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <div className="relative">
@@ -186,9 +200,9 @@ export default function Login() {
             </motion.button>
 
             <motion.div className="text-center mt-6">
-              <button 
-                type="button" 
-                onClick={() => navigate("/forgot-credentials")} 
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-credentials")}
                 className="text-indigo-600 hover:text-indigo-500 transition"
               >
                 Forgot your password?

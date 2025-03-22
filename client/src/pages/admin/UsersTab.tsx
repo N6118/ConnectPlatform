@@ -35,9 +35,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Plus, Edit, Trash2, UserPlus, Search, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, UserPlus, Search, AlertCircle, Users, UserCog, GraduationCap, Building2, Pencil } from 'lucide-react';
 import { UserActivityChart } from '@/components/UserActivityChart';
 import { UserApproval } from '../../components/UserApproval';
+import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 
 // Types for different user roles
 interface BaseUser {
@@ -89,9 +91,6 @@ const sampleUsers: User[] = [
 const departmentData = [
   { name: 'Computer Science', value: 45 },
   { name: 'Physics', value: 30 },
-  { name: 'Mathematics', value: 25 },
-  { name: 'Chemistry', value: 20 },
-  { name: 'Biology', value: 15 },
   { name: 'Electrical Engineering', value: 18 },
   { name: 'Mechanical Engineering', value: 22 },
 ];
@@ -114,6 +113,25 @@ export const UsersTab = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedRole, setSelectedRole] = useState<'admin' | 'faculty' | 'student'>('admin');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Add animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1
+    }
+  };
 
   const handleDeleteUser = (userId: string) => {
     setUsers(users.filter(user => user.id !== userId));
@@ -168,67 +186,64 @@ export const UsersTab = () => {
           </Button>
         </div>
 
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Department</TableHead>
-                {role === 'student' && (
-                  <>
-                    <TableHead>Roll No</TableHead>
-                    <TableHead>Year</TableHead>
-                  </>
-                )}
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={role === 'student' ? 6 : 4} className="text-center text-muted-foreground">
-                    No {role}s found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.department}</TableCell>
-                    {role === 'student' && user.role === 'student' && (
-                      <>
-                        <TableCell>{user.rollNo}</TableCell>
-                        <TableCell>{user.year}</TableCell>
-                      </>
-                    )}
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditUser(user)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => confirmDelete(user)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+        {filtered.length === 0 ? (
+          <div className="text-center py-10 text-gray-500">
+            No {role}s found
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filtered.map((user) => (
+              <Card key={user.id} className="overflow-hidden group hover:shadow-lg transition-all duration-200 border border-transparent hover:border-primary/20">
+                <CardHeader 
+                  className="p-4 bg-gray-50/50 cursor-pointer hover:bg-gray-100/80 transition-colors" 
+                >
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1">
+                      <CardTitle className="text-base font-medium group-hover:text-primary transition-colors">{user.name}</CardTitle>
+                      <div className="text-sm text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
+                        <span className="flex items-center gap-1">
+                          <span>{user.email}</span>
+                          <span>•</span>
+                          <Badge variant="outline" className="text-xs">{user.department}</Badge>
+                        </span>
+                        {user.role === 'student' && (
+                          <>
+                            <span>•</span>
+                            <Badge variant="secondary" className="text-xs">
+                              {(user as StudentUser).rollNo}
+                            </Badge>
+                            <span>•</span>
+                            <Badge variant="secondary" className="text-xs">
+                              Year {(user as StudentUser).year}
+                            </Badge>
+                          </>
+                        )}
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleEditUser(user)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => confirmDelete(user)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -284,90 +299,220 @@ export const UsersTab = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-16 md:pb-0">
       <AdminNavbar />
-      <div className="px-8 py-10">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">User Management</h1>
-            <p className="text-muted-foreground">Manage users, roles, and permissions</p>
-          </div>
-        </div>
+      <motion.div 
+        className="p-6 max-w-7xl mx-auto"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
+        <motion.div className="mb-8" variants={itemVariants}>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            User Management
+          </h1>
+          <p className="text-muted-foreground mt-2">Manage users, roles, and permissions</p>
+        </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Department Distribution</CardTitle>
-              <CardDescription>Users across different departments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={departmentData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {departmentData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+        {/* Summary Cards */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+          variants={containerVariants}
+        >
+          <motion.div variants={itemVariants}>
+            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium opacity-80 flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Total Users
+                    </p>
+                    <h3 className="text-3xl font-bold mt-2">{users.length}</h3>
+                    <p className="text-sm opacity-80 mt-1">Last 30 days: +5</p>
+                  </div>
+                  <div className="p-3 bg-white/10 rounded-full">
+                    <Users className="h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium opacity-80 flex items-center gap-2">
+                      <UserCog className="h-4 w-4" />
+                      Administrators
+                    </p>
+                    <h3 className="text-3xl font-bold mt-2">{users.filter(u => u.role === 'admin').length}</h3>
+                    <p className="text-sm opacity-80 mt-1">Last 30 days: +1</p>
+                  </div>
+                  <div className="p-3 bg-white/10 rounded-full">
+                    <UserCog className="h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium opacity-80 flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      Faculty Members
+                    </p>
+                    <h3 className="text-3xl font-bold mt-2">{users.filter(u => u.role === 'faculty').length}</h3>
+                    <p className="text-sm opacity-80 mt-1">Last 30 days: +2</p>
+                  </div>
+                  <div className="p-3 bg-white/10 rounded-full">
+                    <Building2 className="h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium opacity-80 flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      Students
+                    </p>
+                    <h3 className="text-3xl font-bold mt-2">{users.filter(u => u.role === 'student').length}</h3>
+                    <p className="text-sm opacity-80 mt-1">Last 30 days: +3</p>
+                  </div>
+                  <div className="p-3 bg-white/10 rounded-full">
+                    <GraduationCap className="h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
+
+        {/* Charts Section */}
+        <motion.div 
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"
+          variants={containerVariants}
+        >
+          <motion.div variants={itemVariants}>
+            <Card className="hover:shadow-lg transition-all duration-300">
+              <CardHeader className="border-b">
+                <CardTitle className="text-xl font-semibold">Department Distribution</CardTitle>
+                <CardDescription>Users across different departments</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={departmentData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {departmentData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                          border: 'none',
+                          borderRadius: '4px',
+                          color: 'white'
+                        }}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <Card className="hover:shadow-lg transition-all duration-300">
+              <CardHeader className="border-b">
+                <CardTitle className="text-xl font-semibold">Student Year Distribution</CardTitle>
+                <CardDescription>Students across different years</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={yearWiseData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="year" />
+                      <YAxis />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                          border: 'none',
+                          borderRadius: '4px',
+                          color: 'white'
+                        }}
+                      />
+                      <Bar dataKey="students" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
+
+        {/* User Tables */}
+        <motion.div variants={itemVariants}>
+          <Card className="hover:shadow-lg transition-all duration-300">
+            <CardContent className="pt-6">
+              <Tabs defaultValue="admin" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-6">
+                  <TabsTrigger 
+                    value="admin" 
+                    className="flex-1 min-w-[100px] md:flex-none data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+                  >
+                    Administrators
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="faculty" 
+                    className="flex-1 min-w-[100px] md:flex-none data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+                  >
+                    Faculty
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="student" 
+                    className="flex-1 min-w-[100px] md:flex-none data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+                  >
+                    Students
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="admin" className="mt-6">
+                  <UserTable role="admin" />
+                </TabsContent>
+                <TabsContent value="faculty" className="mt-6">
+                  <UserTable role="faculty" />
+                </TabsContent>
+                <TabsContent value="student" className="mt-6">
+                  <UserTable role="student" />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Student Year Distribution</CardTitle>
-              <CardDescription>Students across different years</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={yearWiseData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="year" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="students" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-
-        <Card>
-          <CardContent className="pt-6">
-            <Tabs defaultValue="admin" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="admin">Administrators</TabsTrigger>
-                <TabsTrigger value="faculty">Faculty</TabsTrigger>
-                <TabsTrigger value="student">Students</TabsTrigger>
-              </TabsList>
-              <TabsContent value="admin" className="mt-6">
-                <UserTable role="admin" />
-              </TabsContent>
-              <TabsContent value="faculty" className="mt-6">
-                <UserTable role="faculty" />
-              </TabsContent>
-              <TabsContent value="student" className="mt-6">
-                <UserTable role="student" />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+        </motion.div>
 
         {/* Create User Modal */}
         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
@@ -478,7 +623,7 @@ export const UsersTab = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </motion.div>
       {isMobile && <AdminMobileBottomNav />}
     </div>
   );

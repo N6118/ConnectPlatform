@@ -18,6 +18,9 @@ import ProjectsTab from "@/pages/admin/ProjectsTab";
 import PublicationsTab from "@/pages/admin/PublicationsTab";
 import SettingsTab from "@/pages/admin/SettingsTab";
 import UsersTab from "@/pages/admin/UsersTab";
+import EventManagement from './pages/admin/EventManagement';
+import { Route as WouterRoute } from "wouter";
+
 
 // Faculty pages
 import FacultyDashboard from "@/pages/faculty/dashboard";
@@ -142,6 +145,10 @@ function Router() {
       <Route
         path="/admin/clubs"
         component={() => <Route component={ClubManagement} roles={["admin"]} />}
+      />
+      <Route
+        path="/admin/events"
+        component={() => <Route component={EventManagement} roles={["admin"]} />}
       />
       <Route
         path="/admin/projects"

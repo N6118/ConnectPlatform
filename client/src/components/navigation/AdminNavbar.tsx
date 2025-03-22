@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Group,
   BookOpen,
+  Calendar,
 } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 import {
@@ -46,6 +47,11 @@ const navItems = [
     icon: <Group className="w-5 h-5" />,
   },
   {
+    label: "Events",
+    path: "/admin/events",
+    icon: <Calendar className="w-5 h-5" />,
+  },
+  {
     label: "Projects",
     path: "/admin/projects",
     icon: <FileText className="w-5 h-5" />,
@@ -55,11 +61,7 @@ const navItems = [
     path: "/admin/publications",
     icon: <BookOpen className="w-5 h-5" />,
   },
-  {
-    label: "Approvals",
-    path: "/admin/approvals",
-    icon: <ClipboardList className="w-5 h-5" />,
-  },
+  
 ];
 
 export default function AdminNavbar() {

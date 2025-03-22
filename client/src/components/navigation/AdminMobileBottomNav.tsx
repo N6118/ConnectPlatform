@@ -7,6 +7,7 @@ import {
   Group,
   BookOpen,
   ClipboardList,
+  Calendar,
 } from "lucide-react";
 
 const navItems = [
@@ -24,6 +25,11 @@ const navItems = [
     icon: <Group className="h-5 w-5" />,
     label: "Clubs",
     path: "/admin/clubs",
+  },
+  {
+    icon: <Calendar className="h-5 w-5" />,
+    label: "Events",
+    path: "/admin/events",
   },
   {
     icon: <FileText className="h-5 w-5" />,

@@ -22,7 +22,7 @@ export default function StudentProjects() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('http://139.59.38.207:8080/api/project/getAllProjects', {
+        const response = await fetch('http://localhost:8080/api/project/getAllProjects', {
           method: "GET",
           mode: "cors"
         });
