@@ -88,6 +88,9 @@ interface ProjectData {
   skills: string;
   maxTeamSize: string;
   isOpenForApplications: boolean;
+  ownerId?: number;
+  facultyMentorId?: number;
+  verificationFacultyId?: number;
 }
 
 export default function StudentMySpace() {
@@ -258,16 +261,16 @@ export default function StudentMySpace() {
         body: JSON.stringify({
           projectName: data.title,
           projectDescription: data.description,
+          ownerId: 1, // Default owner ID
           prerequisites: data.prerequisites,
-          facultyMentorUsername: data.mentor,
-          techStack: data.techStack,
-          tags: data.tag,
+          facultyMentor: 0, // Default mentor ID
+          verificationFaculty: 0, // Default verification faculty ID
+          techStack: data.techStack.split(',').map(tech => tech.trim()),
+          tags: data.tag.split(',').map(tag => tag.trim()),
           projectDurationMonths: parseInt(data.duration),
           projectLevel: data.level.toUpperCase(),
           projectStatus: data.status.toUpperCase().replace(' ', '_'),
-          maxTeamSize: parseInt(data.maxTeamSize),
-          projectRepo: '', // Optional field
-          verificationFacultyUsername: data.mentor // Using mentor as verification faculty
+          projectRepo: '' // Optional field
         }),
       });
 
