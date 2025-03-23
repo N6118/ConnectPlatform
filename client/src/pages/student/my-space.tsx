@@ -248,29 +248,61 @@ export default function StudentMySpace() {
     );
   };
 
-  const handleSaveProject = (data: ProjectData) => {
-    if (editingProject) {
-      setProjects(
-        projects.map((p) =>
-          p.title === editingProject.title
-            ? { ...p, ...data }
-            : p,
-        ),
-      );
-    } else {
-      setProjects([
-        ...projects,
-        {
-          ...data,
-          team: [],
-          tasks: [],
-          resources: [],
-          applicants: [],
+  const handleSaveProject = async (data: ProjectData) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/project/createProject', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      ]);
+        body: JSON.stringify({
+          projectName: data.title,
+          projectDescription: data.description,
+          prerequisites: data.prerequisites,
+          facultyMentorUsername: data.mentor,
+          techStack: data.techStack,
+          tags: data.tag,
+          projectDurationMonths: parseInt(data.duration),
+          projectLevel: data.level.toUpperCase(),
+          projectStatus: data.status.toUpperCase().replace(' ', '_'),
+          maxTeamSize: parseInt(data.maxTeamSize),
+          projectRepo: '', // Optional field
+          verificationFacultyUsername: data.mentor // Using mentor as verification faculty
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create project');
+      }
+
+      const result = await response.json();
+      
+      if (editingProject) {
+        setProjects(
+          projects.map((p) =>
+            p.title === editingProject.title
+              ? { ...p, ...data }
+              : p,
+          ),
+        );
+      } else {
+        setProjects([
+          ...projects,
+          {
+            ...data,
+            team: [],
+            tasks: [],
+            resources: [],
+            applicants: [],
+          },
+        ]);
+      }
+      setShowModal(false);
+      setEditingProject(null);
+    } catch (error) {
+      console.error('Error creating project:', error);
+      // You might want to show an error message to the user here
     }
-    setShowModal(false);
-    setEditingProject(null);
   };
 
   const filteredProjects = projects.filter((project) => {
