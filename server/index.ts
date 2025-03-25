@@ -98,5 +98,5 @@ app.use('/api', profileRoutes);
     }
   };
 
-  startServer(5000);
+  startServer(3000);
 })();

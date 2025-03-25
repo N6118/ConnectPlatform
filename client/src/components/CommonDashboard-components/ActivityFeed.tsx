@@ -16,40 +16,8 @@ import {
   X,
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-
-interface Comment {
-  id: string;
-  author: {
-    name: string;
-    avatar: string;
-    role: string;
-  };
-  content: string;
-  timestamp: string;
-}
-
-interface Activity {
-  id: string;
-  type: "Event" | "Publication" | "Hackathon" | "Project";
-  content: string;
-  timestamp: string;
-  likes: number;
-  comments: number;
-  isLiked?: boolean;
-  isBookmarked?: boolean;
-  author: {
-    name: string;
-    avatar: string;
-    role: string;
-  };
-  media?: {
-    type: "image" | "video";
-    url: string;
-  };
-  tags: string[];
-  commentList?: Comment[];
-  showComments?: boolean;
-}
+import { postService, PostData, PostComment, CreateCommentData } from "@/services/post";
+import CreatePostModal from "./CreatePostModal";
 
 interface ImageModalProps {
   url: string;
@@ -110,16 +78,21 @@ const ActivitySkeleton: React.FC = () => (
 );
 
 const CommentSection: React.FC<{
-  comments: Comment[];
+  postId: number;
+  comments: PostComment[];
   onAddComment: (content: string) => void;
-}> = ({ comments, onAddComment }) => {
+}> = ({ postId, comments, onAddComment }) => {
   const [newComment, setNewComment] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newComment.trim()) {
-      onAddComment(newComment);
-      setNewComment("");
+      const commentData: CreateCommentData = { content: newComment };
+      const response = await postService.addComment(postId, commentData);
+      if (response.success) {
+        onAddComment(newComment);
+        setNewComment("");
+      }
     }
   };
 
@@ -159,28 +132,25 @@ const CommentSection: React.FC<{
           >
             <Avatar className="w-8 h-8">
               <AvatarImage
-                src={comment.author.avatar}
-                alt={comment.author.name}
+                src={comment.authorAvatar}
+                alt={comment.authorName}
                 className="object-cover"
               />
               <AvatarFallback className="bg-blue-500 text-white">
-                {comment.author.name.charAt(0).toUpperCase()}
+                {comment.authorName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="bg-gray-50 rounded-lg px-3 py-2">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm">
-                    {comment.author.name}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {comment.author.role}
+                    {comment.authorName}
                   </span>
                 </div>
                 <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
               </div>
               <span className="text-xs text-gray-500 ml-2">
-                {comment.timestamp}
+                {new Date(comment.createdAt).toLocaleDateString()}
               </span>
             </div>
           </motion.div>
@@ -192,114 +162,15 @@ const CommentSection: React.FC<{
 
 const ActivityFeed: React.FC = () => {
   const [filter, setFilter] = useState<
-    "All" | "Event" | "Publication" | "Hackathon" | "Project"
-  >("All");
+    "ALL" | "EVENT" | "PUBLICATION" | "HACKATHON" | "PROJECT"
+  >("ALL");
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([
-    {
-      id: "1",
-      type: "Project",
-      content:
-        "Just completed my final year project on Rural Healthcare AI Solutions! Our system helps connect remote villages with medical professionals. Check out the implementation details.",
-      timestamp: "2 hours ago",
-      likes: 145,
-      comments: 32,
-      isLiked: false,
-      isBookmarked: false,
-      author: {
-        name: "Arjun Patel",
-        avatar: "https://i.pravatar.cc/150?img=11",
-        role: "Final Year BTech Student",
-      },
-      media: {
-        type: "image",
-        url: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
-      },
-      tags: ["AI", "Healthcare", "RuralDevelopment"],
-      commentList: [
-        {
-          id: "11",
-          author: { name: "User A", avatar: "avatar1.jpg", role: "Engineer" },
-          content: "Great work!",
-          timestamp: "1 hour ago",
-        },
-        {
-          id: "12",
-          author: { name: "User B", avatar: "avatar2.jpg", role: "Designer" },
-          content: "Impressive!",
-          timestamp: "30 minutes ago",
-        },
-      ],
-      showComments: false,
-    },
-    {
-      id: "2",
-      type: "Publication",
-      content:
-        'Honored to have our research paper on "Sustainable Smart Cities: An Indian Perspective" accepted at the International Conference on Urban Technology 2024!',
-      timestamp: "Yesterday",
-      likes: 278,
-      comments: 43,
-      isLiked: false,
-      isBookmarked: false,
-      author: {
-        name: "Dr. Priya Sharma",
-        avatar: "https://i.pravatar.cc/150?img=25",
-        role: "Research Associate",
-      },
-      media: {
-        type: "image",
-        url: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=800",
-      },
-      tags: ["SmartCities", "Sustainability", "Research"],
-      showComments: false,
-    },
-    {
-      id: "3",
-      type: "Hackathon",
-      content:
-        'Team CodeCrafters wins first place at SIH 2024! Our project "KisanTech" focuses on empowering farmers with AI-driven crop management solutions.',
-      timestamp: "3 days ago",
-      likes: 456,
-      comments: 85,
-      isLiked: false,
-      isBookmarked: false,
-      author: {
-        name: "Rahul Verma",
-        avatar: "https://i.pravatar.cc/150?img=68",
-        role: "Team Lead - CodeCrafters",
-      },
-      media: {
-        type: "image",
-        url: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjJ2GXXjJLhcOf1SEAKCM9URL1zGJ2i04IfN4V_7jHXsAVXfOSgc7d3sLGdZAA22KuErj-rKYjwpuGQQWmZe-uN7cF4dcZM_L1Xq_6cJ6tatEP64C-L8IEORK5nQj5v0bAWhjY6u5pQDKNEpTQkb5EzahgMbHyPnrTNvuOm95qWm7GUkC40JzEk5ZogadMC/s2048/470797474_998441002320167_7024409163699524016_n.jpg",
-      },
-      tags: ["SIH2024", "AgriTech", "Innovation"],
-      showComments: false,
-    },
-    {
-      id: "4",
-      type: "Event",
-      content:
-        "Join us for TechFest 2024 at IIT Mumbai! Featuring workshops on Quantum Computing, Blockchain, and AI. Register now for early bird discounts.",
-      timestamp: "4 days ago",
-      likes: 234,
-      comments: 56,
-      isLiked: false,
-      isBookmarked: false,
-      author: {
-        name: "Aisha Khan",
-        avatar: "https://i.pravatar.cc/150?img=41",
-        role: "Event Coordinator",
-      },
-      media: {
-        type: "image",
-        url: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
-      },
-      tags: ["TechFest2024", "IITMumbai", "Workshop"],
-      showComments: false,
-    },
-  ]);
+  const [posts, setPosts] = useState<PostData[]>([]);
+  const [comments, setComments] = useState<Record<number, PostComment[]>>({});
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
 
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -319,93 +190,114 @@ const ActivityFeed: React.FC = () => {
   };
 
   useEffect(() => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-  }, []);
+    const fetchPosts = async () => {
+      setIsLoading(true);
+      try {
+        const response = await postService.getAllPosts(page);
+        if (response.success && response.data) {
+          const newPosts = response.data.filter((post): post is PostData => post !== undefined);
+          setPosts(prev => [...prev, ...newPosts]);
+          setHasMore(newPosts.length === 10); // Assuming 10 is our page size
+        }
+      } catch (error) {
+        console.error('Failed to fetch posts:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, [page]);
 
   const handleFilterChange = (newFilter: typeof filter) => {
     setFilter(newFilter);
+    setPage(1);
+    setPosts([]);
   };
 
-  const handleLike = (id: string) => {
-    setActivities((prevActivities) =>
-      prevActivities.map((activity) =>
-        activity.id === id
-          ? {
-              ...activity,
-              likes: activity.isLiked ? activity.likes - 1 : activity.likes + 1,
-              isLiked: !activity.isLiked,
-            }
-          : activity,
-      ),
-    );
+  const handleLike = async (postId: number) => {
+    try {
+      const response = await postService.toggleLike(postId);
+      if (response.success && response.data) {
+        setPosts(prev =>
+          prev.map(post =>
+            post.id === postId ? response.data : post
+          ).filter((post): post is PostData => post !== undefined)
+        );
+      }
+    } catch (error) {
+      console.error('Failed to toggle like:', error);
+    }
   };
 
-  const handleBookmark = (id: string) => {
-    setActivities((prevActivities) =>
-      prevActivities.map((activity) =>
-        activity.id === id
-          ? { ...activity, isBookmarked: !activity.isBookmarked }
-          : activity,
-      ),
-    );
+  const handleBookmark = async (postId: number) => {
+    try {
+      const response = await postService.toggleBookmark(postId);
+      if (response.success && response.data) {
+        setPosts(prev =>
+          prev.map(post =>
+            post.id === postId ? response.data : post
+          ).filter((post): post is PostData => post !== undefined)
+        );
+      }
+    } catch (error) {
+      console.error('Failed to toggle bookmark:', error);
+    }
   };
 
-  const getActivityIcon = (type: Activity["type"]) => {
+  const handleToggleComments = async (postId: number) => {
+    if (!comments[postId]) {
+      try {
+        const response = await postService.getComments(postId);
+        if (response.success && response.data) {
+          const newComments = response.data.filter((comment): comment is PostComment => comment !== undefined);
+          setComments(prev => ({
+            ...prev,
+            [postId]: newComments
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch comments:', error);
+      }
+    }
+  };
+
+  const handleAddComment = async (postId: number, content: string) => {
+    try {
+      const response = await postService.addComment(postId, { content });
+      if (response.success && response.data) {
+        setComments(prev => ({
+          ...prev,
+          [postId]: [...(prev[postId] || []), response.data].filter((comment): comment is PostComment => comment !== undefined)
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+    }
+  };
+
+  const getActivityIcon = (type: string) => {
     switch (type) {
-      case "Event":
+      case "EVENT":
         return <Calendar className="w-5 h-5 text-blue-500" />;
-      case "Publication":
+      case "PUBLICATION":
         return <FileText className="w-5 h-5 text-green-500" />;
-      case "Hackathon":
+      case "HACKATHON":
         return <Medal className="w-5 h-5 text-yellow-500" />;
-      case "Project":
+      case "PROJECT":
         return <Folder className="w-5 h-5 text-purple-500" />;
       default:
         return <FileText className="w-5 h-5 text-gray-500" />;
     }
   };
 
-  const handleToggleComments = (id: string) => {
-    setActivities((prevActivities) =>
-      prevActivities.map((activity) =>
-        activity.id === id
-          ? { ...activity, showComments: !activity.showComments }
-          : activity,
-      ),
-    );
-  };
-
-  const handleAddComment = (activityId: string, content: string) => {
-    setActivities((prevActivities) =>
-      prevActivities.map((activity) =>
-        activity.id === activityId
-          ? {
-              ...activity,
-              comments: activity.comments + 1,
-              commentList: [
-                ...(activity.commentList || []),
-                {
-                  id: Date.now().toString(),
-                  author: {
-                    name: "Current User",
-                    avatar: "https://i.pravatar.cc/150?img=2",
-                    role: "Student",
-                  },
-                  content,
-                  timestamp: "Just now",
-                },
-              ],
-            }
-          : activity,
-      ),
-    );
-  };
-
-  const filteredActivities = activities.filter(
-    (activity) => filter === "All" || activity.type === filter,
+  const filteredPosts = posts.filter(
+    (post) => filter === "ALL" || post.type === filter
   );
+
+  const handlePostCreated = (newPost: PostData) => {
+    setPosts(prev => [newPost, ...prev]);
+  };
 
   return (
     <div className="bg-gradient-to-br from-gray-50 to-white rounded-lg shadow-xl p-4 md:p-6">
@@ -454,7 +346,7 @@ const ActivityFeed: React.FC = () => {
           ref={scrollContainerRef}
           className="flex space-x-3 mb-6 overflow-x-auto scrollbar-hide px-10 py-2"
         >
-          {["All", "Event", "Publication", "Hackathon", "Project"].map(
+          {["ALL", "EVENT", "PUBLICATION", "HACKATHON", "PROJECT"].map(
             (category) => (
               <motion.button
                 key={category}
@@ -467,8 +359,8 @@ const ActivityFeed: React.FC = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                {getActivityIcon(category as Activity["type"])}
-                <span>{category}</span>
+                {getActivityIcon(category)}
+                <span>{category.charAt(0) + category.slice(1).toLowerCase()}</span>
               </motion.button>
             ),
           )}
@@ -488,10 +380,10 @@ const ActivityFeed: React.FC = () => {
                 <ActivitySkeleton key={i} />
               ))}
             </motion.div>
-          ) : filteredActivities.length > 0 ? (
-            filteredActivities.map((activity) => (
+          ) : filteredPosts.length > 0 ? (
+            filteredPosts.map((post) => (
               <motion.li
-                key={activity.id}
+                key={post.id}
                 className="bg-white rounded-xl shadow-md overflow-hidden"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -501,44 +393,43 @@ const ActivityFeed: React.FC = () => {
                 <div className="p-4 flex items-center space-x-3">
                   <Avatar className="w-10 h-10">
                     <AvatarImage
-                      src={activity.author.avatar}
-                      alt={activity.author.name}
+                      src={post.authorAvatar}
+                      alt={post.authorName}
                       className="object-cover"
                     />
                     <AvatarFallback className="bg-blue-500 text-white">
-                      {activity.author.name.charAt(0).toUpperCase()}
+                      {(post.authorName || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <p className="font-semibold text-gray-800">
-                      {activity.author.name}
+                      {post.authorName}
                     </p>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-500">
-                        {activity.author.role}
+                        {post.authorName}
                       </span>
                       <span className="text-sm text-gray-400">•</span>
                       <span className="text-xs text-gray-400">
-                        {activity.timestamp}
+                        {post.createdAt}
                       </span>
                     </div>
                   </div>
-                  {getActivityIcon(activity.type)}
                 </div>
 
                 <div className="px-4 py-2">
                   <p className="text-gray-800 mb-3 leading-relaxed">
-                    {activity.content}
+                    {post.content}
                   </p>
-                  {activity.media && (
+                  {post.media && (
                     <motion.div
                       className="rounded-lg overflow-hidden mb-3 relative group cursor-pointer"
                       whileHover={{ scale: 1.02 }}
                       transition={{ duration: 0.2 }}
-                      onClick={() => setSelectedImage(activity.media!.url)}
+                      onClick={() => setSelectedImage(post.media!.url)}
                     >
                       <motion.img
-                        src={activity.media.url}
+                        src={post.media.url}
                         alt="Post content"
                         className="w-full h-64 object-cover transition-all duration-300 group-hover:scale-105"
                         initial={{ filter: "blur(10px)", opacity: 0 }}
@@ -554,16 +445,13 @@ const ActivityFeed: React.FC = () => {
                     </motion.div>
                   )}
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {activity.tags.map((tag) => (
-                      <motion.span
-                        key={tag}
-                        className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors cursor-pointer"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        #{tag}
-                      </motion.span>
-                    ))}
+                    <motion.span
+                      className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors cursor-pointer"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      #{post.type}
+                    </motion.span>
                   </div>
                 </div>
 
@@ -571,15 +459,15 @@ const ActivityFeed: React.FC = () => {
                   <div className="flex space-x-6">
                     <motion.button
                       className={`flex items-center space-x-2 ${
-                        activity.isLiked
+                        post.isLiked
                           ? "text-red-500"
                           : "text-gray-500 hover:text-red-500"
                       } transition-colors`}
-                      onClick={() => handleLike(activity.id)}
+                      onClick={() => handleLike(post.id)}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       animate={
-                        activity.isLiked
+                        post.isLiked
                           ? {
                               scale: [1, 1.2, 1],
                               transition: { duration: 0.3 },
@@ -588,18 +476,18 @@ const ActivityFeed: React.FC = () => {
                       }
                     >
                       <Heart
-                        className={`w-5 h-5 ${activity.isLiked ? "fill-current" : ""}`}
+                        className={`w-5 h-5 ${post.isLiked ? "fill-current" : ""}`}
                       />
-                      <span>{activity.likes}</span>
+                      <span>{post.likes}</span>
                     </motion.button>
                     <motion.button
                       className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors"
-                      onClick={() => handleToggleComments(activity.id)}
+                      onClick={() => handleToggleComments(post.id)}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                     >
                       <MessageCircle className="w-5 h-5" />
-                      <span>{activity.comments}</span>
+                      <span>{post.comments}</span>
                     </motion.button>
                     <motion.button
                       className="flex items-center space-x-2 text-gray-500 hover:text-green-500 transition-colors"
@@ -612,15 +500,15 @@ const ActivityFeed: React.FC = () => {
                   </div>
                   <motion.button
                     className={`${
-                      activity.isBookmarked
+                      post.isBookmarked
                         ? "text-yellow-500"
                         : "text-gray-500 hover:text-yellow-500"
                     } transition-colors`}
-                    onClick={() => handleBookmark(activity.id)}
+                    onClick={() => handleBookmark(post.id)}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     animate={
-                      activity.isBookmarked
+                      post.isBookmarked
                         ? {
                             scale: [1, 1.2, 1],
                             transition: { duration: 0.3 },
@@ -629,18 +517,17 @@ const ActivityFeed: React.FC = () => {
                     }
                   >
                     <Bookmark
-                      className={`w-5 h-5 ${activity.isBookmarked ? "fill-current" : ""}`}
+                      className={`w-5 h-5 ${post.isBookmarked ? "fill-current" : ""}`}
                     />
                   </motion.button>
                 </div>
 
                 <AnimatePresence>
-                  {activity.showComments && (
+                  {comments[post.id] && (
                     <CommentSection
-                      comments={activity.commentList || []}
-                      onAddComment={(content) =>
-                        handleAddComment(activity.id, content)
-                      }
+                      postId={post.id}
+                      comments={comments[post.id]}
+                      onAddComment={(content) => handleAddComment(post.id, content)}
                     />
                   )}
                 </AnimatePresence>
@@ -665,6 +552,7 @@ const ActivityFeed: React.FC = () => {
                   className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 flex items-center space-x-2"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsCreatePostModalOpen(true)}
                 >
                   <Plus className="w-5 h-5" />
                   <span>Create Post</span>
@@ -682,6 +570,11 @@ const ActivityFeed: React.FC = () => {
             onClose={() => setSelectedImage(null)}
           />
         )}
+        <CreatePostModal
+          isOpen={isCreatePostModalOpen}
+          onClose={() => setIsCreatePostModalOpen(false)}
+          onPostCreated={handlePostCreated}
+        />
       </AnimatePresence>
     </div>
   );

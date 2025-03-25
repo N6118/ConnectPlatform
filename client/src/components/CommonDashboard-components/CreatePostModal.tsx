@@ -1,214 +1,162 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { X, Upload, Hash } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Post, Author } from "@/pages/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { postService, PostData, CreatePostData } from "@/services/post";
 
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onPostCreated: (post: Partial<Post>) => void;
-  userData: Author & { followers?: number };
-  editingPost?: Post;
+  onPostCreated: (post: PostData) => void;
 }
 
-const CreatePostModal: React.FC<CreatePostModalProps> = ({
-  isOpen,
-  onClose,
-  onPostCreated,
-  userData,
-  editingPost,
-}) => {
+const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPostCreated }) => {
   const [content, setContent] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [visibility, setVisibility] = useState("public");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [newTag, setNewTag] = useState("");
-  const { toast } = useToast();
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState<string>("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (editingPost) {
-      setContent(editingPost.content);
-      setSelectedTags(editingPost.tags);
-      setVisibility(editingPost.visibility);
-      // Note: We can't set the file here as we don't have access to the File object
-    } else {
-      resetForm();
-    }
-  }, [editingPost]);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-  const resetForm = () => {
-    setContent("");
-    setSelectedFile(null);
-    setVisibility("public");
-    setSelectedTags([]);
-    setNewTag("");
-  };
+    try {
+      const postData: CreatePostData = {
+        title,
+        content,
+        type: category,
+        media: imageUrl ? { type: "image", url: imageUrl } : undefined,
+      };
 
-  const handleSubmit = async () => {
-    if (!content.trim()) {
-      toast({
-        title: "Error",
-        description: "Post content cannot be empty",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newPost: Partial<Post> = {
-      id: editingPost ? editingPost.id : Date.now().toString(),
-      content,
-      author: {
-        ...userData,
-        id: userData.id || Date.now().toString(),
-      },
-      image: selectedFile ? URL.createObjectURL(selectedFile) : editingPost?.image,
-      tags: selectedTags,
-      visibility,
-      createdAt: editingPost ? editingPost.createdAt : new Date(),
-      likes: editingPost ? editingPost.likes : 0,
-      comments: editingPost ? editingPost.comments : 0,
-      reposts: editingPost ? editingPost.reposts : 0,
-    };
-
-    onPostCreated(newPost);
-    toast({
-      title: editingPost ? "Post updated" : "Post created",
-      description: editingPost
-        ? "Your post has been successfully updated."
-        : "Your post has been successfully created.",
-    });
-    onClose();
-    resetForm();
-  };
-
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
-    );
-  };
-
-  const addNewTag = () => {
-    if (newTag && !selectedTags.includes(newTag)) {
-      setSelectedTags([...selectedTags, newTag]);
-      setNewTag("");
+      const response = await postService.createPost(postData);
+      if (response.success && response.data) {
+        onPostCreated(response.data);
+        onClose();
+        // Reset form
+        setContent("");
+        setTitle("");
+        setCategory("");
+        setImageUrl("");
+      }
+    } catch (error) {
+      console.error('Failed to create post:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[625px]">
-        <DialogHeader>
-          <DialogTitle>{editingPost ? "Edit Post" : "Create Post"}</DialogTitle>
-          <DialogDescription>
-            Share your thoughts, achievements, or updates with your network
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="post-content">Content</Label>
-            <Textarea
-              id="post-content"
-              placeholder="What's on your mind?"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="min-h-[150px]"
+    <motion.div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-white rounded-lg w-full max-w-2xl p-6"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Create New Post</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter post title"
+              required
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="file-upload">Attachments</Label>
-            <div className="flex items-center gap-2">
+
+          <div className="space-y-2">
+            <Label htmlFor="content">Content</Label>
+            <Textarea
+              id="content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="What's on your mind?"
+              className="min-h-[150px]"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="EVENT">Event</SelectItem>
+                <SelectItem value="PUBLICATION">Publication</SelectItem>
+                <SelectItem value="HACKATHON">Hackathon</SelectItem>
+                <SelectItem value="PROJECT">Project</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="image">Image URL (optional)</Label>
+            <div className="flex gap-2">
               <Input
-                id="file-upload"
-                type="file"
-                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                className="hidden"
+                id="image"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="Enter image URL"
               />
-              <Label
-                htmlFor="file-upload"
-                className="flex items-center gap-2 px-4 py-2 border rounded-md cursor-pointer hover:bg-gray-100"
-              >
-                <Upload className="w-4 h-4" />
-                Upload File
-              </Label>
-              {(selectedFile || editingPost?.image) && (
-                <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-600 text-sm flex items-center gap-2">
-                  {selectedFile ? selectedFile.name : "Current image"}
-                  <button onClick={() => setSelectedFile(null)}>
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
+              {imageUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setImageUrl("")}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               )}
             </div>
           </div>
-          <div className="grid gap-2">
-            <Label>Tags</Label>
-            <div className="flex flex-wrap gap-2">
-              {selectedTags.map((tag) => (
-                <span
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  className="px-3 py-1 rounded-full bg-blue-100 text-blue-600 text-sm cursor-pointer"
-                >
-                  {tag}
-                  <X className="w-3 h-3 inline ml-1" />
-                </span>
-              ))}
-              <div className="flex items-center">
-                <Input
-                  type="text"
-                  placeholder="Add new tag"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  className="w-32"
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={addNewTag}
-                >
-                  <Hash className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="visibility">Visibility</Label>
-            <select
-              id="visibility"
-              value={visibility}
-              onChange={(e) => setVisibility(e.target.value)}
-              className="w-full p-2 border rounded-md"
+
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
             >
-              <option value="public">Public</option>
-              <option value="department">Department Only</option>
-              <option value="club">Club Specific</option>
-            </select>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating..." : "Create Post"}
+            </Button>
           </div>
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit}>
-            {editingPost ? "Update" : "Post"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </form>
+      </motion.div>
+    </motion.div>
   );
 };
 
