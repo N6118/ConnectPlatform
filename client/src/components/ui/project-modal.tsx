@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
+import { projectService } from "@/services/project";
 
 interface Project {
   id: number;
@@ -62,21 +63,13 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
       setIsApplying(true);
       setError(null);
       
-      const response = await fetch('/api/project/apply', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add any auth headers if needed
-        },
-        body: JSON.stringify({
-          projectId,
-          // Add any additional application details needed
-        })
+      const response = await projectService.applyToProject({
+        projectId,
+        userId: 1, // TODO: Get actual user ID from auth context or session
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to apply for project');
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to apply for project');
       }
       
       // Handle successful application
@@ -201,13 +194,18 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                   {error}
                 </div>
               )}
-              <Button 
-                size="lg" 
-                onClick={() => handleProjectApplication(project.id)}
-                disabled={project.status !== "Ongoing" || isApplying}
-              >
-                {isApplying ? "Applying..." : "Apply for this Project"}
-              </Button>
+              {project.status === 'Ongoing' ? (
+                <Button
+                  onClick={() => handleProjectApplication(project.id)}
+                  disabled={isApplying}
+                >
+                  {isApplying ? "Applying..." : "Apply Now"}
+                </Button>
+              ) : (
+                <Button variant="secondary" onClick={onClose}>
+                  Close
+                </Button>
+              )}
             </div>
           </div>
         </ScrollArea>

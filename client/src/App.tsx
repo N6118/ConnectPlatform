@@ -45,6 +45,7 @@ import { default as StudentClubDetail } from "@/pages/student/clubdetails";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { User } from "@/lib/auth";
 import { useLocation } from "wouter";
+import { authService } from "@/services/auth";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -68,6 +69,14 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [_, navigate] = useLocation();
 
+  // Initialize auth state from localStorage on component mount
+  useEffect(() => {
+    const storedUser = authService.getCurrentUser();
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  }, []);
+
   const login = (newUser: User) => {
     setUser(newUser);
     const roleRoutes: Record<string, string> = {
@@ -86,6 +95,8 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    // Use the auth service to handle logout
+    authService.logout();
     setUser(null);
     navigate("/login");
   };

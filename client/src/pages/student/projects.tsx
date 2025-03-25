@@ -7,47 +7,44 @@ import StudentNavbar from "@/components/navigation/StudentNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Project } from "@/components/ui/project-card1";
+import { projectService } from "@/services/project";
+import { useAuth } from "@/App";
+import { useToast } from "@/hooks/use-toast";
 
 export default function StudentProjects() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
+  const [allProjects, setAllProjects] = useState<Project[]>([]);
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const auth = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/project/getAllProjects', {
-          method: "GET",
-          mode: "cors"
-        });
-        const data = await response.json();
-        console.log('API Response:', data);
+        setIsLoading(true);
+        const response = await projectService.getAllProjects();
         
-        if (data.data) {
-          console.log('Projects before transformation:', data.data);
-          // Transform the API data to match our Project interface
-          const transformedProjects = data.data.map((project: any) => ({
-            id: project.id,
-            name: project.projectName || '',
-            description: project.projectDescription || '',
-            status: project.projectStatus || 'NOT_STARTED',
-            tags: Array.isArray(project.tags) ? project.tags : [],
-            image: project.projectImage || null,
-            about: project.projectDescription || '',
-            techStack: Array.isArray(project.techStack) ? project.techStack : [],
-            prerequisites: project.prerequisites ? [project.prerequisites] : [],
-            members: [], // API doesn't provide members data
-            mentor: "", // API doesn't provide mentor data
-          }));
-          setFilteredProjects(transformedProjects);
+        if (response.success && response.data) {
+          setAllProjects(response.data);
+          setFilteredProjects(response.data);
         } else {
-          setError('No projects data received from the server');
+          setError(response.error || 'No projects data received from the server');
+          // If unauthorized, redirect to login
+          if (response.error?.includes('unauthorized') || response.error?.includes('Unauthorized')) {
+            toast({
+              variant: "destructive",
+              title: "Session Expired",
+              description: "Your session has expired. Please log in again.",
+            });
+            auth.logout();
+          }
         }
       } catch (err) {
         setError('Failed to fetch projects. Please try again later.');
@@ -58,14 +55,14 @@ export default function StudentProjects() {
     };
 
     fetchProjects();
-  }, []);
+  }, [auth, toast]);
 
   const allTags = Array.from(
-    new Set(filteredProjects.flatMap((project) => project.tags)),
+    new Set(allProjects.flatMap((project) => project.tags)),
   );
 
   const handleSearch = useCallback(() => {
-    const filtered = filteredProjects.filter(
+    const filtered = allProjects.filter(
       (project) =>
         project.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
         (selectedTags.length === 0 ||
@@ -73,7 +70,7 @@ export default function StudentProjects() {
         (statusFilter === "All" || project.status === statusFilter),
     );
     setFilteredProjects(filtered);
-  }, [searchTerm, selectedTags, statusFilter]);
+  }, [searchTerm, selectedTags, statusFilter, allProjects]);
 
   useEffect(() => {
     handleSearch();

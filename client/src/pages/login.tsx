@@ -7,9 +7,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/App";
-import { authenticateUser } from "@/lib/auth";
-import { response } from "express";
-import { error } from "console";
+import { authService } from "@/services/auth";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -19,7 +17,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
-  const baseurl = "http://localhost:8080";
+  
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -39,33 +37,26 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // ✅ Ensure authentication is awaited
-      const response = await fetch(`${baseurl}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-type": "application/json",
-        },
-        body: JSON.stringify({
-          username: data.username,
-          password: data.password,
-        }),
+      const response = await authService.login({
+        username: data.username,
+        password: data.password,
       });
 
-      if (!response.ok) {
-        throw new Error("Invalid username or password");
+      if (!response.success) {
+        throw new Error(response.error || "Invalid username or password");
       }
 
-      const user = await response.json();
-      localStorage.setItem("user", user.data.user);
-      localStorage.setItem("token", user.data.token);
-      // ✅ Show success message
+      // Show success message
       toast({
         title: "Success!",
-        description: `Welcome back, ${user.name}!`,
+        description: `Welcome back, ${response.data?.user?.name || data.username}!`,
       });
 
-      // ✅ Login user (navigation handled in auth context)
-      //auth.login(user);
+      // Login user with the auth context
+      if (auth && response.data?.user) {
+        auth.login(response.data.user);
+        // No need to navigate here, the auth context will handle that
+      }
     } catch (error) {
       console.error("Login error:", error);
       toast({
@@ -77,8 +68,8 @@ export default function Login() {
             : "Invalid username or password",
       });
 
-      // Only reset the form if authentication fails completely
-      form.reset();
+      // Only reset the password field on authentication failure
+      form.setValue("password", "");
     } finally {
       setIsLoading(false);
     }
