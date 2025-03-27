@@ -25,13 +25,22 @@ export interface Club {
         awards: string;
         remarks: string;
     }[];
+    achievements: {
+        id: number;
+        title: string;
+        description: string;
+        date: string;
+        clubId: number;
+        createdAt: string;
+        updatedAt: string;
+    }[];
     advisor: string;
     clubHead: string;
 }
 
 export interface MembershipData {
     month: string;
-    [clubName: string]: number | string;
+    [key: string]: string | number;
 }
 
 export interface ClubEventData {

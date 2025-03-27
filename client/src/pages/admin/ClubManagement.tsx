@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminNavbar from "@/components/navigation/AdminNavbar";
 import AdminMobileBottomNav from "@/components/navigation/AdminMobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ClubControl } from "../../components/ClubControl";
 import { ClubCharts } from "../../components/ClubCharts";
-import { Club, ClubEventData, MembershipData } from "../../types/clubs";
 import { Filter, Search, PlusCircle, ChevronDown, ChevronUp, Pencil, Eye, Trash2, Calendar, TrendingUp, Users, Award } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -17,8 +16,19 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { 
+    ClubData, 
+    ClubAchievement, 
+    CreateAchievementData, 
+    CreateClubData, 
+    clubService,
+    ClubEventData,
+    MembershipData 
+} from "../../services/club";
+import { useToast } from "@/hooks/use-toast";
 
 export const ClubManagement = () => {
+    const { toast } = useToast();
     const isMobile = useIsMobile();
     const [activeTab, setActiveTab] = useState<"members" | "events">("members");
     const [filterModalOpen, setFilterModalOpen] = useState<boolean>(false);
@@ -26,194 +36,25 @@ export const ClubManagement = () => {
     const [eventTypeFilter, setEventTypeFilter] = useState<string[]>(["workshops", "competitions", "socialEvents"]);
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
-    const [selectedClub, setSelectedClub] = useState<Club | null>(null);
+    const [selectedClub, setSelectedClub] = useState<ClubData | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isAddAchievementDialogOpen, setIsAddAchievementDialogOpen] = useState(false);
+    const [isEditAchievementDialogOpen, setIsEditAchievementDialogOpen] = useState(false);
+    const [isDeleteAchievementDialogOpen, setIsDeleteAchievementDialogOpen] = useState(false);
+    const [selectedAchievement, setSelectedAchievement] = useState<ClubAchievement | null>(null);
+    const [newAchievement, setNewAchievement] = useState<CreateAchievementData>({
+        title: '',
+        description: '',
+        date: new Date().toISOString().split('T')[0]
+    });
+    const [loading, setLoading] = useState<boolean>(true);
 
     // Club data
-    const clubData: Club[] = [
-        {
-            id: 1,
-            name: 'Tech Club',
-            description: 'A club dedicated to exploring new technologies and fostering innovation',
-            officeBearers: [
-                {
-                    name: 'Alex Johnson',
-                    role: 'President',
-                    details: 'Senior Computer Science Student'
-                },
-                {
-                    name: 'Sarah Chen',
-                    role: 'Vice President',
-                    details: 'Junior Software Engineering Student'
-                }
-            ],
-            department: 'Computer Science',
-            members: [
-                { rollNo: 'CS001', name: 'John Doe' },
-                { rollNo: 'CS002', name: 'Jane Smith' },
-                { rollNo: 'CS003', name: 'Mike Johnson' }
-            ],
-            otherDetails: 'Weekly meetings on Thursdays, 5 PM',
-            planOfAction: {
-                summary: 'Focus on AI/ML workshops and hackathons',
-                budget: 5000
-            },
-            events: [
-                {
-                    name: 'AI Workshop Series',
-                    description: 'Three-part workshop on artificial intelligence basics',
-                    date: '2024-03-15',
-                    outcomes: 'Increased AI literacy among members',
-                    awards: 'Best Workshop Series 2024',
-                    remarks: 'High attendance and engagement'
-                }
-            ],
-            advisor: 'Dr. Emily Smith',
-            clubHead: 'Alex Johnson'
-        },
-        {
-            id: 2,
-            name: 'Debate Society',
-            description: 'Fostering critical thinking and public speaking skills through debate',
-            officeBearers: [
-                {
-                    name: 'Sarah Chen',
-                    role: 'President',
-                    details: 'Senior Political Science Student'
-                }
-            ],
-            department: 'Political Science',
-            members: [
-                { rollNo: 'PS001', name: 'Robert Wilson' },
-                { rollNo: 'PS002', name: 'Emma Davis' }
-            ],
-            otherDetails: 'Bi-weekly debates on current affairs',
-            planOfAction: {
-                summary: 'Host inter-college debate championship',
-                budget: 3000
-            },
-            events: [
-                {
-                    name: 'Spring Debate Championship',
-                    description: 'Inter-college debate competition',
-                    date: '2024-04-20',
-                    outcomes: 'Enhanced public speaking skills',
-                    awards: 'First Place in Regional Finals',
-                    remarks: 'Record participation from 10 colleges'
-                }
-            ],
-            advisor: 'Prof. James Williams',
-            clubHead: 'Sarah Chen'
-        },
-        {
-            id: 3,
-            name: 'Robotics Club',
-            description: 'Building the future through robotics and automation',
-            officeBearers: [
-                {
-                    name: 'Devon White',
-                    role: 'President',
-                    details: 'Senior Robotics Engineering Student'
-                }
-            ],
-            department: 'Engineering',
-            members: [
-                { rollNo: 'EN001', name: 'Alex Kim' },
-                { rollNo: 'EN002', name: 'David Chen' }
-            ],
-            otherDetails: 'Weekly robotics workshops',
-            planOfAction: {
-                summary: 'Build competition robots and host hackathon',
-                budget: 6000
-            },
-            events: [
-                {
-                    name: 'Robotics Competition',
-                    description: 'Annual robotics challenge',
-                    date: '2024-06-20',
-                    outcomes: 'Advanced robotics skills',
-                    awards: 'First Place Nationals',
-                    remarks: 'Record participation'
-                }
-            ],
-            advisor: 'Dr. Daniel Matthews',
-            clubHead: 'Devon White'
-        },
-        {
-            id: 4,
-            name: 'Environmental Club',
-            description: 'Working towards a sustainable future through research and action',
-            officeBearers: [
-                {
-                    name: 'Jordan Smith',
-                    role: 'President',
-                    details: 'Senior Environmental Science Student'
-                }
-            ],
-            department: 'Environmental Science',
-            members: [
-                { rollNo: 'ES001', name: 'Lisa Park' },
-                { rollNo: 'ES002', name: 'James Wilson' }
-            ],
-            otherDetails: 'Monthly clean-up drives and research projects',
-            planOfAction: {
-                summary: 'Campus sustainability initiatives and research projects',
-                budget: 3500
-            },
-            events: [
-                {
-                    name: 'Earth Day Festival',
-                    description: 'Campus-wide sustainability event',
-                    date: '2024-04-22',
-                    outcomes: 'Increased environmental awareness',
-                    awards: 'Green Campus Award',
-                    remarks: 'Strong community impact'
-                }
-            ],
-            advisor: 'Prof. Sofia Garcia',
-            clubHead: 'Jordan Smith'
-        },
-        {
-            id: 5,
-            name: 'Chess Club',
-            description: 'Developing strategic thinking through chess',
-            officeBearers: [
-                {
-                    name: 'Priya Agarwal',
-                    role: 'President',
-                    details: 'Senior Mathematics Student'
-                }
-            ],
-            department: 'Mathematics',
-            members: [
-                { rollNo: 'MT001', name: 'Kevin Zhang' },
-                { rollNo: 'MT002', name: 'Sarah Lee' }
-            ],
-            otherDetails: 'Weekly chess tournaments and training sessions',
-            planOfAction: {
-                summary: 'Host chess championship and training sessions',
-                budget: 2000
-            },
-            events: [
-                {
-                    name: 'Chess Championship',
-                    description: 'Annual chess tournament',
-                    date: '2024-05-15',
-                    outcomes: 'Improved strategic thinking',
-                    awards: 'Regional Champions',
-                    remarks: 'High skill development'
-                }
-            ],
-            advisor: 'Mr. Wei Li',
-            clubHead: 'Priya Agarwal'
-        }
-    ];
-
-    const [clubs, setClubs] = useState<Club[]>(clubData);
-    const [newClub, setNewClub] = useState<Partial<Club>>({
+    const [clubs, setClubs] = useState<ClubData[]>([]);
+    const [newClub, setNewClub] = useState<Partial<CreateClubData>>({
         name: '',
         description: '',
         department: '',
@@ -225,32 +66,76 @@ export const ClubManagement = () => {
             budget: 0
         },
         events: [],
+        achievements: [],
         advisor: '',
         clubHead: ''
     });
 
-    // Data for membership growth chart
-    const membershipGrowthData: MembershipData[] = [
-        { month: 'Jan', 'Tech Club': 100, 'Debate Society': 65, 'Robotics Club': 70, 'Environmental Club': 80, 'Music Society': 95, 'Culinary Club': 55 },
-        { month: 'Feb', 'Tech Club': 105, 'Debate Society': 68, 'Robotics Club': 75, 'Environmental Club': 85, 'Music Society': 100, 'Culinary Club': 58 },
-        { month: 'Mar', 'Tech Club': 110, 'Debate Society': 70, 'Robotics Club': 78, 'Environmental Club': 90, 'Music Society': 104, 'Culinary Club': 60 },
-        { month: 'Apr', 'Tech Club': 115, 'Debate Society': 72, 'Robotics Club': 82, 'Environmental Club': 92, 'Music Society': 107, 'Culinary Club': 62 },
-        { month: 'May', 'Tech Club': 120, 'Debate Society': 75, 'Robotics Club': 85, 'Environmental Club': 95, 'Music Society': 110, 'Culinary Club': 65 }
-    ];
+    // Fetch clubs on component mount
+    useEffect(() => {
+        const fetchClubs = async () => {
+            setLoading(true);
+            try {
+                const response = await clubService.getAllClubs();
+                if (response.success && response.data) {
+                    setClubs(response.data);
+                    // Initialize the clubs filter with the fetched club names
+                    setSelectedClubsFilter(response.data.map(club => club.name));
+                } else {
+                    toast({
+                        title: "Error",
+                        description: response.error || "Failed to fetch clubs",
+                        variant: "destructive",
+                    });
+                }
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: "An unexpected error occurred while fetching clubs",
+                    variant: "destructive",
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    // Data for events chart
-    const eventsData: ClubEventData[] = [
-        { name: 'Tech Club', workshops: 15, competitions: 10, socialEvents: 20 },
-        { name: 'Debate Society', workshops: 8, competitions: 18, socialEvents: 4 },
-        { name: 'Film Club', workshops: 12, competitions: 5, socialEvents: 8 },
-        { name: 'Photography Club', workshops: 10, competitions: 8, socialEvents: 10 },
-        { name: 'Robotics Club', workshops: 20, competitions: 10, socialEvents: 2 },
-        { name: 'Environmental Club', workshops: 12, competitions: 8, socialEvents: 20 },
-        { name: 'Chess Club', workshops: 5, competitions: 8, socialEvents: 2 },
-        { name: 'Music Society', workshops: 10, competitions: 15, socialEvents: 13 },
-        { name: 'Culinary Club', workshops: 15, competitions: 2, socialEvents: 5 },
-        { name: 'Dance Troupe', workshops: 8, competitions: 12, socialEvents: 6 }
-    ];
+        fetchClubs();
+    }, [toast]);
+
+    // Data for membership growth chart
+    const [membershipGrowthData, setMembershipGrowthData] = useState<MembershipData[]>([]);
+    const [eventsData, setEventsData] = useState<ClubEventData[]>([]);
+    const [chartDataLoading, setChartDataLoading] = useState<boolean>(true);
+
+    // Fetch chart data
+    useEffect(() => {
+        const fetchChartData = async () => {
+            setChartDataLoading(true);
+            try {
+                // Fetch membership data
+                const membershipResponse = await clubService.getMembershipData();
+                if (membershipResponse.success && membershipResponse.data) {
+                    setMembershipGrowthData(membershipResponse.data);
+                }
+
+                // Fetch events data
+                const eventsResponse = await clubService.getClubEventsData();
+                if (eventsResponse.success && eventsResponse.data) {
+                    setEventsData(eventsResponse.data);
+                }
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: "Failed to fetch chart data",
+                    variant: "destructive",
+                });
+            } finally {
+                setChartDataLoading(false);
+            }
+        };
+
+        fetchChartData();
+    }, [toast]);
 
     // List of users for select dropdown
     const availableUsers = [
@@ -316,10 +201,9 @@ export const ClubManagement = () => {
         setIsAddDialogOpen(true);
     };
 
-    const handleAddSubmit = () => {
+    const handleAddSubmit = async () => {
         if (newClub.name && newClub.description && newClub.department) {
-            const clubToAdd: Club = {
-                id: clubs.length + 1,
+            const clubToAdd: CreateClubData = {
                 name: newClub.name,
                 description: newClub.description,
                 department: newClub.department,
@@ -331,60 +215,287 @@ export const ClubManagement = () => {
                     budget: newClub.planOfAction?.budget || 0
                 },
                 events: newClub.events || [],
+                achievements: [],
                 advisor: newClub.advisor || '',
                 clubHead: newClub.clubHead || ''
             };
-            setClubs([...clubs, clubToAdd]);
-            setIsAddDialogOpen(false);
-            setNewClub({
-                name: '',
-                description: '',
-                department: '',
-                officeBearers: [],
-                members: [],
-                otherDetails: '',
-                planOfAction: {
-                    summary: '',
-                    budget: 0
-                },
-                events: [],
-                advisor: '',
-                clubHead: ''
+
+            try {
+                const response = await clubService.createClub(clubToAdd);
+                if (response.success && response.data) {
+                    setClubs([...clubs, response.data]);
+                    setIsAddDialogOpen(false);
+                    setNewClub({
+                        name: '',
+                        description: '',
+                        department: '',
+                        officeBearers: [],
+                        members: [],
+                        otherDetails: '',
+                        planOfAction: {
+                            summary: '',
+                            budget: 0
+                        },
+                        events: [],
+                        achievements: [],
+                        advisor: '',
+                        clubHead: ''
+                    });
+                    toast({
+                        title: "Success",
+                        description: "Club created successfully",
+                        variant: "default",
+                    });
+                } else {
+                    toast({
+                        title: "Error",
+                        description: response.error || "Failed to create club",
+                        variant: "destructive",
+                    });
+                }
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: "An unexpected error occurred while creating the club",
+                    variant: "destructive",
+                });
+            }
+        } else {
+            toast({
+                title: "Validation Error",
+                description: "Please fill in all required fields",
+                variant: "destructive",
             });
         }
     };
 
-    const handleEdit = (club: Club) => {
+    const handleEdit = (club: ClubData) => {
         setSelectedClub(club);
         setIsEditDialogOpen(true);
     };
 
-    const handleEditSubmit = () => {
+    const handleEditSubmit = async () => {
         if (selectedClub) {
-            setClubs(clubs.map(club => 
-                club.id === selectedClub.id ? selectedClub : club
-            ));
-            setIsEditDialogOpen(false);
-            setSelectedClub(null);
+            try {
+                const response = await clubService.updateClub(selectedClub.id, selectedClub);
+                if (response.success && response.data) {
+                    setClubs(prevClubs => 
+                        prevClubs
+                            .map(club => club.id === selectedClub.id ? response.data : club)
+                            .filter((club): club is ClubData => club !== undefined)
+                    );
+                    setIsEditDialogOpen(false);
+                    setSelectedClub(null);
+                    toast({
+                        title: "Success",
+                        description: "Club updated successfully",
+                        variant: "default",
+                    });
+                } else {
+                    toast({
+                        title: "Error",
+                        description: response.error || "Failed to update club",
+                        variant: "destructive",
+                    });
+                }
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: "An unexpected error occurred while updating the club",
+                    variant: "destructive",
+                });
+            }
         }
     };
 
-    const handleDelete = (club: Club) => {
+    const handleDelete = (club: ClubData) => {
         setSelectedClub(club);
         setIsDeleteDialogOpen(true);
     };
 
-    const handleDeleteConfirm = () => {
+    const handleDeleteConfirm = async () => {
         if (selectedClub) {
-            setClubs(clubs.filter(club => club.id !== selectedClub.id));
-            setIsDeleteDialogOpen(false);
-            setSelectedClub(null);
+            try {
+                const response = await clubService.deleteClub(selectedClub.id);
+                if (response.success) {
+                    setClubs(prevClubs => 
+                        prevClubs
+                            .filter(club => club.id !== selectedClub.id)
+                            .filter((club): club is ClubData => club !== undefined)
+                    );
+                    setIsDeleteDialogOpen(false);
+                    setSelectedClub(null);
+                    toast({
+                        title: "Success",
+                        description: "Club deleted successfully",
+                        variant: "default",
+                    });
+                } else {
+                    toast({
+                        title: "Error",
+                        description: response.error || "Failed to delete club",
+                        variant: "destructive",
+                    });
+                }
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: "An unexpected error occurred while deleting the club",
+                    variant: "destructive",
+                });
+            }
         }
     };
 
-    const handleViewDetails = (club: Club) => {
+    const handleViewDetails = (club: ClubData) => {
         setSelectedClub(club);
         setIsViewDialogOpen(true);
+    };
+
+    // Achievement Handlers
+    const handleAddAchievement = (clubId: number) => {
+        setSelectedClub(clubs.find(club => club.id === clubId) || null);
+        setIsAddAchievementDialogOpen(true);
+    };
+
+    const handleAddAchievementSubmit = async () => {
+        if (selectedClub && newAchievement.title && newAchievement.description && newAchievement.date) {
+            try {
+                const response = await clubService.addAchievement(selectedClub.id, newAchievement);
+                if (response.success && response.data) {
+                    const updatedClub: ClubData = {
+                        ...selectedClub,
+                        achievements: [...selectedClub.achievements, response.data]
+                    };
+                    setClubs(prevClubs => 
+                        prevClubs
+                            .map(club => club.id === selectedClub.id ? updatedClub : club)
+                            .filter((club): club is ClubData => club !== undefined)
+                    );
+                    setIsAddAchievementDialogOpen(false);
+                    setNewAchievement({
+                        title: '',
+                        description: '',
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                    toast({
+                        title: "Success",
+                        description: "Achievement added successfully",
+                        variant: "default",
+                    });
+                } else {
+                    toast({
+                        title: "Error",
+                        description: response.error || "Failed to add achievement",
+                        variant: "destructive",
+                    });
+                }
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: "An unexpected error occurred while adding the achievement",
+                    variant: "destructive",
+                });
+            }
+        }
+    };
+
+    const handleEditAchievement = (clubId: number, achievement: ClubAchievement) => {
+        setSelectedClub(clubs.find(club => club.id === clubId) || null);
+        setSelectedAchievement(achievement);
+        setIsEditAchievementDialogOpen(true);
+    };
+
+    const handleEditAchievementSubmit = async () => {
+        if (selectedClub && selectedAchievement) {
+            try {
+                const response = await clubService.updateAchievement(
+                    selectedClub.id,
+                    selectedAchievement.id,
+                    {
+                        title: selectedAchievement.title,
+                        description: selectedAchievement.description,
+                        date: selectedAchievement.date
+                    }
+                );
+                if (response.success && response.data) {
+                    const updatedClub: ClubData = {
+                        ...selectedClub,
+                        achievements: selectedClub.achievements.map(a =>
+                            a.id === selectedAchievement.id ? response.data : a
+                        ).filter((a): a is ClubAchievement => a !== undefined)
+                    };
+                    setClubs(prevClubs => 
+                        prevClubs
+                            .map(club => club.id === selectedClub.id ? updatedClub : club)
+                            .filter((club): club is ClubData => club !== undefined)
+                    );
+                    setIsEditAchievementDialogOpen(false);
+                    setSelectedAchievement(null);
+                    toast({
+                        title: "Success",
+                        description: "Achievement updated successfully",
+                        variant: "default",
+                    });
+                } else {
+                    toast({
+                        title: "Error",
+                        description: response.error || "Failed to update achievement",
+                        variant: "destructive",
+                    });
+                }
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: "An unexpected error occurred while updating the achievement",
+                    variant: "destructive",
+                });
+            }
+        }
+    };
+
+    const handleDeleteAchievement = (clubId: number, achievement: ClubAchievement) => {
+        setSelectedClub(clubs.find(club => club.id === clubId) || null);
+        setSelectedAchievement(achievement);
+        setIsDeleteAchievementDialogOpen(true);
+    };
+
+    const handleDeleteAchievementConfirm = async () => {
+        if (selectedClub && selectedAchievement) {
+            try {
+                const response = await clubService.deleteAchievement(selectedClub.id, selectedAchievement.id);
+                if (response.success) {
+                    const updatedClub: ClubData = {
+                        ...selectedClub,
+                        achievements: selectedClub.achievements.filter(a => a.id !== selectedAchievement.id)
+                    };
+                    setClubs(prevClubs => 
+                        prevClubs
+                            .map(club => club.id === selectedClub.id ? updatedClub : club)
+                            .filter((club): club is ClubData => club !== undefined)
+                    );
+                    setIsDeleteAchievementDialogOpen(false);
+                    setSelectedAchievement(null);
+                    toast({
+                        title: "Success",
+                        description: "Achievement deleted successfully",
+                        variant: "default",
+                    });
+                } else {
+                    toast({
+                        title: "Error",
+                        description: response.error || "Failed to delete achievement",
+                        variant: "destructive",
+                    });
+                }
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: "An unexpected error occurred while deleting the achievement",
+                    variant: "destructive",
+                });
+            }
+        }
     };
 
     // Animation variants
@@ -406,7 +517,7 @@ export const ClubManagement = () => {
         }
     };
 
-    const ClubCard = ({ club }: { club: Club }) => {
+    const ClubCard = ({ club }: { club: ClubData }) => {
         const isExpanded = expandedItems.has(club.id);
 
         return (
@@ -422,12 +533,12 @@ export const ClubManagement = () => {
                             </CardTitle>
                             <div className="text-sm text-gray-600 mt-2 flex items-center gap-3 flex-wrap">
                                 <span className="flex items-center gap-2">
-                                    <span className="font-medium">Head: {club.clubHead}</span>
+                                    <span className="font-medium">Head: {typeof club.clubHead === 'object' ? (club.clubHead as any).name || 'Unknown' : club.clubHead}</span>
                                     <span>•</span>
                                     <Badge variant="outline" className="text-xs bg-primary/5">{club.department}</Badge>
                                 </span>
                                 <span>•</span>
-                                <Badge variant="secondary" className="text-xs bg-secondary/10">{club.members.length} Members</Badge>
+                                <Badge variant="secondary" className="text-xs bg-secondary/10">{club.members?.length || 0} Members</Badge>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -483,7 +594,7 @@ export const ClubManagement = () => {
                                 <dt className="text-sm font-medium text-gray-500">Office Bearers</dt>
                                 <dd className="mt-1">
                                     <ul className="list-none space-y-2">
-                                        {club.officeBearers.map((bearer, index) => (
+                                        {club.officeBearers?.map((bearer, index) => (
                                             <li key={index} className="p-2 bg-gray-50 rounded-lg">
                                                 <div className="font-medium">{bearer.name}</div>
                                                 <div className="text-sm text-gray-600">{bearer.role}</div>
@@ -497,9 +608,9 @@ export const ClubManagement = () => {
                                 <dt className="text-sm font-medium text-gray-500">Members</dt>
                                 <dd className="mt-1">
                                     <ul className="list-none space-y-2">
-                                        {club.members.map((member, index) => (
+                                        {club.members?.map((member, index) => (
                                             <li key={index} className="p-2 bg-gray-50 rounded-lg">
-                                                {member.name} ({member.rollNo})
+                                                {typeof member === 'object' ? `${member.name} (${member.rollNo})` : member}
                                             </li>
                                         ))}
                                     </ul>
@@ -508,15 +619,22 @@ export const ClubManagement = () => {
                             <div className="col-span-2">
                                 <dt className="text-sm font-medium text-gray-500">Plan of Action</dt>
                                 <dd className="mt-1 p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-gray-700">{club.planOfAction.summary}</p>
-                                    <p className="text-sm text-gray-600 mt-2">Budget: ₹{club.planOfAction.budget.toLocaleString()}</p>
+                                    <p className="text-gray-700">
+                                        {typeof club.planOfAction === 'object' ? 
+                                            club.planOfAction.summary : 
+                                            'No summary available'}
+                                    </p>
+                                    <p className="text-sm text-gray-600 mt-2">
+                                        Budget: ₹{typeof club.planOfAction === 'object' ? 
+                                            club.planOfAction.budget : 0}
+                                    </p>
                                 </dd>
                             </div>
                             <div className="col-span-2">
                                 <dt className="text-sm font-medium text-gray-500">Events</dt>
                                 <dd className="mt-1">
                                     <div className="space-y-3">
-                                        {club.events.map((event, index) => (
+                                        {club.events?.map((event, index) => (
                                             <div key={index} className="p-4 bg-gray-50 rounded-lg">
                                                 <h4 className="font-medium text-gray-900">{event.name}</h4>
                                                 <p className="text-sm text-gray-600 mt-1">{event.description}</p>
@@ -545,11 +663,71 @@ export const ClubManagement = () => {
                             </div>
                             <div className="col-span-1">
                                 <dt className="text-sm font-medium text-gray-500">Faculty Advisor</dt>
-                                <dd className="mt-1 p-2 bg-gray-50 rounded-lg">{club.advisor}</dd>
+                                <dd className="mt-1 p-2 bg-gray-50 rounded-lg">
+                                    {club.advisor ? (
+                                        typeof club.advisor === 'object' ? 
+                                            (club.advisor as any)?.name || 'Unknown' : 
+                                            club.advisor
+                                    ) : 'No advisor assigned'}
+                                </dd>
                             </div>
                             <div className="col-span-1">
                                 <dt className="text-sm font-medium text-gray-500">Other Details</dt>
                                 <dd className="mt-1 p-2 bg-gray-50 rounded-lg">{club.otherDetails}</dd>
+                            </div>
+                            <div className="col-span-2">
+                                <div className="flex justify-between items-center mb-4">
+                                    <dt className="text-sm font-medium text-gray-500">Achievements</dt>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex items-center gap-2"
+                                        onClick={() => handleAddAchievement(club.id)}
+                                    >
+                                        <PlusCircle className="h-4 w-4" />
+                                        Add Achievement
+                                    </Button>
+                                </div>
+                                <dd className="mt-1">
+                                    <div className="space-y-3">
+                                        {club.achievements?.map((achievement) => (
+                                            <div key={achievement.id} className="p-4 bg-gray-50 rounded-lg group/achievement">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h4 className="font-medium text-gray-900">{achievement.title}</h4>
+                                                        <p className="text-sm text-gray-600 mt-1">{achievement.description}</p>
+                                                        <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                                                            <Calendar className="h-4 w-4" />
+                                                            <span>Date: {achievement.date}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover/achievement:opacity-100 transition-opacity">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleEditAchievement(club.id, achievement)}
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                                            onClick={() => handleDeleteAchievement(club.id, achievement)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {(club.achievements === null || club.achievements.length === 0) && (
+                                            <div className="text-center py-4 text-gray-500">
+                                                No achievements yet. Add one to get started!
+                                            </div>
+                                        )}
+                                    </div>
+                                </dd>
                             </div>
                         </dl>
                     </CardContent>
@@ -588,7 +766,7 @@ export const ClubManagement = () => {
                                             <Calendar className="h-4 w-4" />
                                             Total Clubs
                                         </p>
-                                        <h3 className="text-3xl font-bold mt-2">{clubData.length}</h3>
+                                        <h3 className="text-3xl font-bold mt-2">{clubs.length}</h3>
                                         <p className="text-sm opacity-80 mt-1">Active clubs</p>
                                     </div>
                                 </div>
@@ -606,7 +784,7 @@ export const ClubManagement = () => {
                                             Total Members
                                         </p>
                                         <h3 className="text-3xl font-bold mt-2">
-                                            {clubData.reduce((acc, club) => acc + club.members.length, 0)}
+                                            {clubs.reduce((acc, club) => acc + (club.members?.length || 0), 0)}
                                         </h3>
                                         <p className="text-sm opacity-80 mt-1">Across all clubs</p>
                                     </div>
@@ -625,7 +803,7 @@ export const ClubManagement = () => {
                                             Total Events
                                         </p>
                                         <h3 className="text-3xl font-bold mt-2">
-                                            {clubData.reduce((acc, club) => acc + club.events.length, 0)}
+                                            {clubs.reduce((acc, club) => acc + (club.events?.length || 0), 0)}
                                         </h3>
                                         <p className="text-sm opacity-80 mt-1">Organized this year</p>
                                     </div>
@@ -644,7 +822,7 @@ export const ClubManagement = () => {
                                             Total Budget
                                         </p>
                                         <h3 className="text-3xl font-bold mt-2">
-                                            ₹{clubData.reduce((acc, club) => acc + club.planOfAction.budget, 0).toLocaleString()}
+                                            ₹{clubs.reduce((acc, club) => acc + (club.planOfAction?.budget || 0), 0).toLocaleString()}
                                         </h3>
                                         <p className="text-sm opacity-80 mt-1">Allocated this year</p>
                                     </div>
@@ -677,11 +855,52 @@ export const ClubManagement = () => {
                                 </Button>
                             </div>
 
-                            <div className="space-y-4">
-                                {filteredClubs.map(club => (
-                                    <ClubCard key={club.id} club={club} />
-                                ))}
-                            </div>
+                            {loading ? (
+                                <div className="py-16 flex flex-col items-center justify-center text-center">
+                                    <div className="w-8 h-8 border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mb-4"></div>
+                                    <p className="text-muted-foreground">Loading clubs...</p>
+                                </div>
+                            ) : filteredClubs.length > 0 ? (
+                                <div className="space-y-4">
+                                    {filteredClubs.map(club => (
+                                        <ClubCard key={club.id} club={club} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="py-16 flex flex-col items-center justify-center text-center">
+                                    <p className="text-muted-foreground mb-2">No clubs found</p>
+                                    <p className="text-sm text-gray-500">
+                                        {searchQuery ? 'Try adjusting your search term' : 'Add a new club to get started'}
+                                    </p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </motion.div>
+
+                {/* Club Charts */}
+                <motion.div className="mt-8" variants={itemVariants}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Club Analytics</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {chartDataLoading ? (
+                                <div className="py-16 flex flex-col items-center justify-center text-center">
+                                    <div className="w-8 h-8 border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mb-4"></div>
+                                    <p className="text-muted-foreground">Loading chart data...</p>
+                                </div>
+                            ) : (
+                                <ClubCharts 
+                                    activeTab={activeTab}
+                                    setActiveTab={setActiveTab}
+                                    filteredMembershipData={filteredMembershipData}
+                                    filteredEventsData={filteredEventsData}
+                                    membershipGrowthData={membershipGrowthData}
+                                    eventTypeFilter={eventTypeFilter}
+                                    selectedClubsFilter={selectedClubsFilter}
+                                />
+                            )}
                         </CardContent>
                     </Card>
                 </motion.div>
@@ -697,7 +916,7 @@ export const ClubManagement = () => {
                         <div>
                             <h3 className="mb-3 text-sm font-medium">Select Clubs to Display</h3>
                             <div className="space-y-2 max-h-40 overflow-y-auto p-1">
-                                {clubData.map((club) => (
+                                {clubs.map((club) => (
                                     <div key={club.id} className="flex items-center space-x-2">
                                         <Checkbox 
                                             id={`club-${club.id}`} 
@@ -883,7 +1102,7 @@ export const ClubManagement = () => {
                             <div className="grid gap-2">
                                 <Label htmlFor="edit-clubHead">Club Head</Label>
                                 <Select
-                                    value={selectedClub.clubHead}
+                                    value={typeof selectedClub.clubHead === 'object' ? String((selectedClub.clubHead as any).id) : selectedClub.clubHead}
                                     onValueChange={(value) => setSelectedClub({ ...selectedClub, clubHead: value })}
                                 >
                                     <SelectTrigger>
@@ -891,7 +1110,7 @@ export const ClubManagement = () => {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {availableUsers.map((user) => (
-                                            <SelectItem key={user.id} value={user.name}>
+                                            <SelectItem key={user.id} value={user.id.toString()}>
                                                 {user.name}
                                             </SelectItem>
                                         ))}
@@ -901,7 +1120,7 @@ export const ClubManagement = () => {
                             <div className="grid gap-2">
                                 <Label htmlFor="edit-advisor">Faculty Advisor</Label>
                                 <Select
-                                    value={selectedClub.advisor}
+                                    value={typeof selectedClub.advisor === 'object' ? String((selectedClub.advisor as any).id) : selectedClub.advisor}
                                     onValueChange={(value) => setSelectedClub({ ...selectedClub, advisor: value })}
                                 >
                                     <SelectTrigger>
@@ -944,7 +1163,8 @@ export const ClubManagement = () => {
                         <DialogTitle>Delete Club</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                        <p>Are you sure you want to delete {selectedClub?.name}? This action cannot be undone.</p>
+                        <p>Are you sure you want to delete {typeof selectedClub?.name === 'object' ? 
+                            'this club' : selectedClub?.name}? This action cannot be undone.</p>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
@@ -971,29 +1191,48 @@ export const ClubManagement = () => {
                             </div>
                             <div>
                                 <h3 className="font-medium">Club Head</h3>
-                                <p className="text-sm text-gray-600">{selectedClub.clubHead}</p>
+                                <p className="text-sm text-gray-600">
+                                    {typeof selectedClub.clubHead === 'object' ? 
+                                        (selectedClub.clubHead as any).name || 'Unknown' : 
+                                        selectedClub.clubHead}
+                                </p>
                             </div>
                             <div>
                                 <h3 className="font-medium">Faculty Advisor</h3>
-                                <p className="text-sm text-gray-600">{selectedClub.advisor}</p>
+                                <p className="text-sm text-gray-600">
+                                    {typeof selectedClub.advisor === 'object' ? 
+                                        (selectedClub.advisor as any).name || 'Unknown' : 
+                                        selectedClub.advisor}
+                                </p>
                             </div>
                             <div>
                                 <h3 className="font-medium">Members</h3>
                                 <ul className="text-sm text-gray-600">
-                                    {selectedClub.members.map((member, index) => (
-                                        <li key={index}>{member.name} ({member.rollNo})</li>
+                                    {selectedClub.members?.map((member, index) => (
+                                        <li key={index}>
+                                            {typeof member === 'object' ? 
+                                                `${member.name} (${member.rollNo})` : 
+                                                member}
+                                        </li>
                                     ))}
                                 </ul>
                             </div>
                             <div>
                                 <h3 className="font-medium">Plan of Action</h3>
-                                <p className="text-sm text-gray-600">{selectedClub.planOfAction.summary}</p>
-                                <p className="text-sm text-gray-600">Budget: ₹{selectedClub.planOfAction.budget}</p>
+                                <p className="text-sm text-gray-600">
+                                    {typeof selectedClub.planOfAction === 'object' ? 
+                                        selectedClub.planOfAction.summary : 
+                                        'No summary available'}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                    Budget: ₹{typeof selectedClub.planOfAction === 'object' ? 
+                                        selectedClub.planOfAction.budget : 0}
+                                </p>
                             </div>
                             <div>
                                 <h3 className="font-medium">Events</h3>
                                 <div className="space-y-2">
-                                    {selectedClub.events.map((event, index) => (
+                                    {selectedClub.events?.map((event, index) => (
                                         <div key={index} className="p-2 bg-gray-50 rounded">
                                             <p className="font-medium">{event.name}</p>
                                             <p className="text-sm text-gray-600">{event.description}</p>
@@ -1006,6 +1245,106 @@ export const ClubManagement = () => {
                     )}
                     <DialogFooter>
                         <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Add Achievement Dialog */}
+            <Dialog open={isAddAchievementDialogOpen} onOpenChange={setIsAddAchievementDialogOpen}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>Add Achievement</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="achievement-title">Title</Label>
+                            <Input
+                                id="achievement-title"
+                                value={newAchievement.title}
+                                onChange={(e) => setNewAchievement({ ...newAchievement, title: e.target.value })}
+                                placeholder="Enter achievement title"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="achievement-description">Description</Label>
+                            <Textarea
+                                id="achievement-description"
+                                value={newAchievement.description}
+                                onChange={(e) => setNewAchievement({ ...newAchievement, description: e.target.value })}
+                                placeholder="Enter achievement description"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="achievement-date">Date</Label>
+                            <Input
+                                id="achievement-date"
+                                type="date"
+                                value={newAchievement.date}
+                                onChange={(e) => setNewAchievement({ ...newAchievement, date: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAddAchievementDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleAddAchievementSubmit}>Add Achievement</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Achievement Dialog */}
+            <Dialog open={isEditAchievementDialogOpen} onOpenChange={setIsEditAchievementDialogOpen}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>Edit Achievement</DialogTitle>
+                    </DialogHeader>
+                    {selectedAchievement && (
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-achievement-title">Title</Label>
+                                <Input
+                                    id="edit-achievement-title"
+                                    value={selectedAchievement.title}
+                                    onChange={(e) => setSelectedAchievement({ ...selectedAchievement, title: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-achievement-description">Description</Label>
+                                <Textarea
+                                    id="edit-achievement-description"
+                                    value={selectedAchievement.description}
+                                    onChange={(e) => setSelectedAchievement({ ...selectedAchievement, description: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-achievement-date">Date</Label>
+                                <Input
+                                    id="edit-achievement-date"
+                                    type="date"
+                                    value={selectedAchievement.date}
+                                    onChange={(e) => setSelectedAchievement({ ...selectedAchievement, date: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsEditAchievementDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleEditAchievementSubmit}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Achievement Dialog */}
+            <Dialog open={isDeleteAchievementDialogOpen} onOpenChange={setIsDeleteAchievementDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Achievement</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p>Are you sure you want to delete the achievement "{selectedAchievement?.title}"? This action cannot be undone.</p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteAchievementDialogOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={handleDeleteAchievementConfirm}>Delete</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

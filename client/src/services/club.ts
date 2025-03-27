@@ -1,6 +1,28 @@
 import { api, ApiResponse } from './api';
 
 /**
+ * Interface for club achievement
+ */
+export interface ClubAchievement {
+  id: number;
+  title: string;
+  description: string;
+  date: string;
+  clubId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Interface for creating a new achievement
+ */
+export interface CreateAchievementData {
+  title: string;
+  description: string;
+  date: string;
+}
+
+/**
  * Interface for club data from API
  */
 export interface ClubData {
@@ -30,6 +52,7 @@ export interface ClubData {
     awards: string;
     remarks: string;
   }[];
+  achievements: ClubAchievement[];
   advisor: string;
   clubHead: string;
   createdAt: string;
@@ -65,6 +88,7 @@ export interface CreateClubData {
     awards: string;
     remarks: string;
   }[];
+  achievements?: CreateAchievementData[];
   advisor: string;
   clubHead: string;
 }
@@ -104,6 +128,12 @@ export const transformClub = (club: ClubData): ClubData => ({
   ...club,
   createdAt: new Date(club.createdAt).toLocaleDateString(),
   updatedAt: new Date(club.updatedAt).toLocaleDateString(),
+  achievements: club.achievements?.map(achievement => ({
+    ...achievement,
+    date: new Date(achievement.date).toLocaleDateString(),
+    createdAt: new Date(achievement.createdAt).toLocaleDateString(),
+    updatedAt: new Date(achievement.updatedAt).toLocaleDateString(),
+  })) || [],
 });
 
 /**
@@ -337,5 +367,84 @@ export const clubService = {
       success: false,
       error: response.error || 'Failed to remove event',
     };
-  }
+  },
+
+  /**
+   * Get club achievements
+   */
+  getClubAchievements: async (clubId: number): Promise<ApiResponse<ClubAchievement[]>> => {
+    const response = await api.get<ClubAchievement[]>(`clubs/${clubId}/achievements`);
+    
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: response.data.map(achievement => ({
+          ...achievement,
+          date: new Date(achievement.date).toLocaleDateString(),
+          createdAt: new Date(achievement.createdAt).toLocaleDateString(),
+          updatedAt: new Date(achievement.updatedAt).toLocaleDateString(),
+        }))
+      };
+    }
+    
+    return {
+      success: false,
+      error: response.error || 'Failed to get club achievements',
+    };
+  },
+
+  /**
+   * Add achievement to club
+   */
+  addAchievement: async (clubId: number, achievementData: CreateAchievementData): Promise<ApiResponse<ClubAchievement>> => {
+    const response = await api.post<ClubAchievement>(`clubs/${clubId}/achievements`, achievementData);
+    
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: {
+          ...response.data,
+          date: new Date(response.data.date).toLocaleDateString(),
+          createdAt: new Date(response.data.createdAt).toLocaleDateString(),
+          updatedAt: new Date(response.data.updatedAt).toLocaleDateString(),
+        }
+      };
+    }
+    
+    return {
+      success: false,
+      error: response.error || 'Failed to add achievement',
+    };
+  },
+
+  /**
+   * Update club achievement
+   */
+  updateAchievement: async (clubId: number, achievementId: number, achievementData: Partial<CreateAchievementData>): Promise<ApiResponse<ClubAchievement>> => {
+    const response = await api.put<ClubAchievement>(`clubs/${clubId}/achievements/${achievementId}`, achievementData);
+    
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: {
+          ...response.data,
+          date: new Date(response.data.date).toLocaleDateString(),
+          createdAt: new Date(response.data.createdAt).toLocaleDateString(),
+          updatedAt: new Date(response.data.updatedAt).toLocaleDateString(),
+        }
+      };
+    }
+    
+    return {
+      success: false,
+      error: response.error || 'Failed to update achievement',
+    };
+  },
+
+  /**
+   * Delete club achievement
+   */
+  deleteAchievement: async (clubId: number, achievementId: number): Promise<ApiResponse<void>> => {
+    return api.delete(`clubs/${clubId}/achievements/${achievementId}`);
+  },
 }; 

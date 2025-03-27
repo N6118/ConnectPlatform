@@ -1,5 +1,5 @@
 import { FaEdit, FaGithub, FaLinkedin, FaGlobe } from "react-icons/fa";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import WorkList from "@/components/WorkList";
 import WorkModal from "@/components/WorkModal";
@@ -35,82 +35,8 @@ import { useToast } from "@/hooks/use-toast";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface ProfileFormData {
-  about: string;
-  github: string;
-  linkedin: string;
-  portfolio: string;
-  achievements: string;
-  interests: string[];
-}
-
-interface Post {
-  id: string;
-  author: {
-    id: string;
-    name: string;
-    role: string;
-    avatar: string;
-  };
-  content: string;
-  image?: string;
-  tags: string[];
-  visibility: string;
-  createdAt: Date;
-  likes: number;
-  comments: number;
-  reposts: number;
-  type: string;
-  timestamp: Date;
-  shares: number;
-  isEditable: boolean;
-}
-
-interface Project {
-  id: number;
-  name: string;
-  description: string;
-  status: string;
-  level: string;
-  verified: string;
-  faculty: string;
-}
-
-interface Paper {
-  id: number;
-  title: string;
-  status: string;
-  verified: string;
-  faculty: string;
-}
-
-interface Internship {
-  id: number;
-  name: string;
-  company: string;
-  status: string;
-  duration: string;
-  verified: string;
-  faculty: string;
-}
-
-interface Extracurricular {
-  id: number;
-  activity: string;
-  description: string;
-  status: string;
-}
-
-interface WorkData {
-  PROJECTS: Project[];
-  PAPERS: Paper[];
-  INTERNSHIPS: Internship[];
-  EXTRACURRICULAR: Extracurricular[];
-  [key: string]: WorkItem[];
-}
-
-type WorkItem = Project | Paper | Internship | Extracurricular;
+import { profileService, ProfileInfo, WorkData, WorkItem, UpdateProfileData } from "@/services/profile";
+import { Post } from "@/pages/types";
 
 export default function StudentProfile() {
   const [selectedTab, setSelectedTab] = useState("PROJECTS");
@@ -119,216 +45,335 @@ export default function StudentProfile() {
   const [showEditDetails, setShowEditDetails] = useState(false);
   const [editItem, setEditItem] = useState<WorkItem | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [userData, setUserData] = useState({
-    name: "Aishwarya Patyala",
-    rollNo: "CB.EN.U4CSE21052",
-    branch: "Computer Science",
-    course: "B Tech",
-    college: "Amrita Vishwa Vidhyapeetham",
-    semester: "7",
-    graduationYear: "2025",
-    careerPath: "Software Engineer",
-    followers: 128,
-    following: 89,
-    about:
-      "Passionate software engineer with a focus on web development and machine learning.",
-    achievements: ["Star Contributor", "Best Researcher", "Innovation Award"],
-    interests: ["Web Development", "Machine Learning", "Cloud Computing"],
+  const [userData, setUserData] = useState<ProfileInfo>({
+    id: "",
+    name: "",
+    rollNo: "",
+    branch: "",
+    course: "",
+    college: "",
+    semester: "",
+    graduationYear: "",
+    careerPath: "",
+    followers: 0,
+    following: 0,
+    about: "",
+    achievements: [],
+    interests: [],
     socialLinks: {
-      github: "https://github.com/sajithrajan",
-      linkedin: "https://linkedin.com/in/sajithrajan",
-      portfolio: "https://sajithrajan.dev",
+      github: "",
+      linkedin: "",
+      portfolio: "",
     },
   });
 
-  const [posts, setPosts] = useState<Post[]>([
-    {
-      id: "1",
-      author: {
-        id: "1",
-        name: "Aishwarya Patyala",
-        role: "SDE Intern @ SAPI Full Stack | Android | ML",
-        avatar: "./defaultProfile.jpg",
-      },
-      content: "Excited to share that we secured 3rd place at Anokha 2024 TechFair! 🏆✨ Over the course of 3 amazing days, we...",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&auto=format&fit=crop&q=80",
-      tags: ["Event", "Hackathon"],
-      visibility: "public",
-      createdAt: new Date("2024-03-15T10:00:00"),
-      likes: 89,
-      comments: 23,
-      reposts: 7,
-      type: "post",
-      timestamp: new Date("2024-03-15T10:00:00"),
-      shares: 0,
-      isEditable: true
-    },
-    {
-      id: "2",
-      author: {
-        id: "2",
-        name: "Aishwarya Patyala",
-        role: "SDE Intern @ SAPI Full Stack | Android | ML",
-        avatar: "./defaultProfile.jpg",
-      },
-      content:
-        "Just wrapped up an amazing design sprint with the team! We've made some breakthrough discoveries that will revolutionize our user experience. Can't wait to share more details soon! 🎨✨",
-      image:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&auto=format&fit=crop&q=80",
-      tags: ["Project Update"],
-      visibility: "public",
-      createdAt: new Date("2024-03-20T14:30:00"),
-      likes: 156,
-      comments: 34,
-      reposts: 12,
-      type: "post",
-      timestamp: new Date("2024-03-20T14:30:00"),
-      shares: 0,
-      isEditable: true
-    },
-  ]);
-
-  const userData1 = {
-    id: "1",
-    name: "Aishwarya Patyala",
-    role: "SDE Intern @ SAPI Full Stack | Android | ML",
-    avatar: "./defaultProfile.jpg",
-    followers: 1234,
-  };
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [workData, setWorkData] = useState<WorkData>({
+    PROJECTS: [],
+    PAPERS: [],
+    INTERNSHIPS: [],
+    EXTRACURRICULAR: [],
+  });
 
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
-  const handleCreatePost = (newPost: Post) => {
-    setPosts([newPost, ...posts]);
-    toast({
-      title: "Post created",
-      description: "Your post has been successfully created.",
-    });
+  // Fetch profile data
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch profile info
+        const profileResponse = await profileService.getCurrentProfile();
+        if (profileResponse.success && profileResponse.data) {
+          setUserData(profileResponse.data);
+        } else {
+          setError(profileResponse.error || "Failed to load profile data");
+          toast({
+            title: "Error",
+            description: profileResponse.error || "Failed to load profile data",
+            variant: "destructive",
+          });
+        }
+
+        // Fetch work data
+        const workResponse = await profileService.getWorkData();
+        if (workResponse.success && workResponse.data) {
+          setWorkData(workResponse.data);
+        }
+
+        // Fetch posts
+        const postsResponse = await profileService.getPosts();
+        if (postsResponse.success && postsResponse.data) {
+          setPosts(postsResponse.data);
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+        setError(errorMessage);
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [toast]);
+
+  const handleCreatePost = async (newPost: Post) => {
+    try {
+      const response = await profileService.createPost(newPost);
+      if (response.success && response.data) {
+        setPosts([response.data, ...posts]);
+        toast({
+          title: "Post created",
+          description: "Your post has been successfully created.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to create post",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while creating the post",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleEditPost = (updatedPost: Post) => {
-    setPosts(
-      posts.map((post) => (post.id === updatedPost.id ? updatedPost : post)),
-    );
-    toast({
-      title: "Post updated",
-      description: "Your post has been successfully updated.",
-    });
+  const handleEditPost = async (updatedPost: Post) => {
+    try {
+      const response = await profileService.updatePost(updatedPost.id, updatedPost);
+      if (response.success && response.data) {
+        setPosts(posts.map((post) => (post.id === updatedPost.id ? response.data! : post)));
+        toast({
+          title: "Post updated",
+          description: "Your post has been successfully updated.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to update post",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while updating the post",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeletePost = (postId: string) => {
-    setPosts(posts.filter((post) => post.id !== postId));
-    toast({
-      title: "Post deleted",
-      description: "Your post has been successfully deleted.",
-    });
+  const handleDeletePost = async (postId: string) => {
+    try {
+      const response = await profileService.deletePost(postId);
+      if (response.success) {
+        setPosts(posts.filter((post) => post.id !== postId));
+        toast({
+          title: "Post deleted",
+          description: "Your post has been successfully deleted.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to delete post",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while deleting the post",
+        variant: "destructive",
+      });
+    }
   };
-
-  const [workData, setWorkData] = useState<WorkData>({
-    PROJECTS: [
-      {
-        id: 1,
-        name: "Sony Project",
-        description: "A web app built using React and Node.js",
-        status: "Completed",
-        level: "Medium",
-        verified: "Verified",
-        faculty: "Dr. Ritwik M",
-      },
-      {
-        id: 2,
-        name: "PiSave",
-        description: "An Android app for task management",
-        status: "Ongoing",
-        level: "Easy",
-        verified: "Unverified",
-        faculty: "",
-      },
-    ],
-    PAPERS: [
-      {
-        id: 1,
-        title: "Research Paper A",
-        status: "Published",
-        verified: "Verified",
-        faculty: "Prof. Anisha",
-      },
-    ],
-    INTERNSHIPS: [
-      {
-        id: 1,
-        name: "Software Developer Intern",
-        company: "Tech Corp",
-        status: "Completed",
-        duration: "3 months",
-        verified: "Verified",
-        faculty: "Dr. Smith",
-      },
-    ],
-    EXTRACURRICULAR: [
-      {
-        id: 1,
-        activity: "Hackathon",
-        description: "Participated in XYZ Hackathon",
-        status: "Completed"
-      },
-    ],
-  });
 
   const handleAddItem = () => {
     setEditItem(null);
     setShowModal(true);
   };
 
-  const handleEditItem = (item: any) => {
+  const handleEditItem = (item: WorkItem) => {
     setEditItem(item);
     setShowModal(true);
   };
 
-  const handleDeleteItem = (id: number) => {
-    const newData = { ...workData };
-    (Object.keys(newData) as Array<keyof WorkData>).forEach((key) => {
-      newData[key] = (newData[key] as any[]).filter((item) => item.id !== id);
-    });
-    setWorkData(newData);
-  };
-
-  const handleSaveItem = (formData: any) => {
-    const newData = { ...workData };
-    const type = (formData.type.toUpperCase() + "S") as keyof WorkData;
-    const items = newData[type] as WorkItem[];
-
-    if (editItem) {
-      newData[type] = items.map((item) =>
-        item.id === editItem.id ? { ...item, ...formData } : item
-      );
-    } else {
-      const newId = Math.max(...(items as WorkItem[]).map((item) => item.id), 0) + 1;
-      newData[type] = [...items, { id: newId, ...formData }];
+  const handleDeleteItem = async (id: number) => {
+    try {
+      const type = selectedTab.slice(0, -1); // Remove 's' from the end to get singular form
+      const response = await profileService.deleteWorkItem(type, id);
+      
+      if (response.success) {
+        const newData = { ...workData };
+        newData[selectedTab] = workData[selectedTab].filter((item) => item.id !== id);
+        setWorkData(newData);
+        toast({
+          title: "Success",
+          description: `${type} deleted successfully.`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || `Failed to delete ${type.toLowerCase()}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while deleting the item",
+        variant: "destructive",
+      });
     }
-
-    setWorkData(newData);
-    setShowModal(false);
-    setEditItem(null);
   };
 
-  const handleSaveDetails = (formData: ProfileFormData) => {
-    setUserData({
-      ...userData,
-      about: formData.about,
-      socialLinks: {
-        github: formData.github,
-        linkedin: formData.linkedin,
-        portfolio: formData.portfolio,
-      },
-      achievements: formData.achievements.split("\n").filter((a) => a.trim()),
-      interests: formData.interests,
-    });
-    setShowEditDetails(false);
+  const handleSaveItem = async (formData: any) => {
+    try {
+      const type = (formData.type.toUpperCase() + "S") as keyof WorkData;
+      
+      if (editItem) {
+        // Update existing item
+        const response = await profileService.updateWorkItem(
+          formData.type, 
+          editItem.id, 
+          formData
+        );
+        
+        if (response.success && response.data) {
+          const newData = { ...workData };
+          newData[type] = workData[type].map((item) =>
+            item.id === editItem.id ? response.data! : item
+          );
+          setWorkData(newData);
+          toast({
+            title: "Success",
+            description: `${formData.type} updated successfully.`,
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: response.error || `Failed to update ${formData.type.toLowerCase()}`,
+            variant: "destructive",
+          });
+        }
+      } else {
+        // Create new item
+        const response = await profileService.addWorkItem(formData.type, formData);
+        
+        if (response.success && response.data) {
+          const newData = { ...workData };
+          newData[type] = [...workData[type], response.data];
+          setWorkData(newData);
+          toast({
+            title: "Success",
+            description: `${formData.type} added successfully.`,
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: response.error || `Failed to add ${formData.type.toLowerCase()}`,
+            variant: "destructive",
+          });
+        }
+      }
+      
+      setShowModal(false);
+      setEditItem(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while saving the item",
+        variant: "destructive",
+      });
+    }
   };
 
-  const isMobile = useIsMobile();
+  const handleSaveDetails = async (formData: UpdateProfileData) => {
+    try {
+      const response = await profileService.updateProfile(formData);
+      
+      if (response.success && response.data) {
+        setUserData(response.data);
+        setShowEditDetails(false);
+        toast({
+          title: "Success",
+          description: "Profile updated successfully.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to update profile",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while updating the profile",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateProfilePicture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      try {
+        const response = await profileService.updateProfilePicture(formData);
+        
+        if (response.success && response.data) {
+          setUserData({
+            ...userData,
+            avatar: response.data.avatarUrl
+          });
+          setShowEditProfile(false);
+          toast({
+            title: "Success",
+            description: "Profile picture updated successfully.",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: response.error || "Failed to update profile picture",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "An error occurred while updating the profile picture",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="spinner"></div>
+          <p className="mt-4 text-gray-600">Loading profile data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-16 md:pb-0">
@@ -339,11 +384,19 @@ export default function StudentProfile() {
             {/* Avatar Section */}
             <div className="relative">
               <Avatar className="h-[200px] w-[200px] sm:h-[250px] sm:w-[250px] lg:h-[300px] lg:w-[300px] rounded-full border-4 border-blue-300 shadow-xl overflow-hidden">
-                <img
-                  src="https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDI0LTAxL3Jhd3BpeGVsb2ZmaWNlMTJfcGhvdG9fb2ZfeW91bmdfaW5kaWFuX2dpcmxfaG9sZGluZ19zdHVkZW50X2JhY19hNDdmMzk1OS0zZDAyLTRiZWEtYTEzOS1lYzI0ZjdhNjEwZGFfMS5qcGc.jpg"
-                  alt="Profile"
-                  className="object-cover w-full h-full"
-                />
+                {userData.avatar ? (
+                  <img
+                    src={userData.avatar}
+                    alt="Profile"
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <img
+                    src="https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDI0LTAxL3Jhd3BpeGVsb2ZmaWNlMTJfcGhvdG9fb2ZfeW91bmdfaW5kaWFuX2dpcmxfaG9sZGluZ19zdHVkZW50X2JhY19hNDdmMzk1OS0zZDAyLTRiZWEtYTEzOS1lYzI0ZjdhNjEwZGFfMS5qcGc.jpg"
+                    alt="Profile"
+                    className="object-cover w-full h-full"
+                  />
+                )}
               </Avatar>
 
               {/* Edit Profile Button (Visible on Hover) */}
@@ -354,27 +407,6 @@ export default function StudentProfile() {
                 <FaEdit size={18} />
               </button>
             </div>
-
-            {/* Follow & Message Buttons */}
-            {/*<div className="absolute top-6 right-0 flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsFollowing(!isFollowing)}
-                className={`text-sm font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-300 ${
-                  isFollowing
-                    ? "bg-blue-100 hover:bg-blue-200"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {isFollowing ? "Following" : "Follow"}
-              </Button>
-              <Button
-                variant="secondary"
-                className="text-sm font-medium px-4 py-2 rounded-lg shadow-sm"
-              >
-                Message
-              </Button>
-            </div>*/}
 
             {/* Followers & Following Section */}
             <div className="mt-4 flex gap-4 text-gray-600 text-sm sm:text-base font-medium">
@@ -411,15 +443,15 @@ export default function StudentProfile() {
 
                 {/* Profile Info Section */}
                 <div className="space-y-2 mt-4">
-                  <ProfileInfo label="Branch" value={userData.branch} />
-                  <ProfileInfo label="Course" value={userData.course} />
-                  <ProfileInfo label="College" value={userData.college} />
-                  <ProfileInfo label="Semester" value={userData.semester} />
-                  <ProfileInfo
+                  <ProfileInfoItem label="Branch" value={userData.branch} />
+                  <ProfileInfoItem label="Course" value={userData.course} />
+                  <ProfileInfoItem label="College" value={userData.college} />
+                  <ProfileInfoItem label="Semester" value={userData.semester} />
+                  <ProfileInfoItem
                     label="Graduation Year"
                     value={userData.graduationYear}
                   />
-                  <ProfileInfo
+                  <ProfileInfoItem
                     label="Career Path"
                     value={userData.careerPath}
                   />
@@ -542,7 +574,14 @@ export default function StudentProfile() {
       {/* Activity Feed moved to bottom */}
       <div className="mt-8">
         <ActivityFeed
-          userData={userData1}
+          clubId={1} // Using a default value since we're in user profile context
+          userData={{
+            id: userData.id,
+            name: userData.name,
+            role: userData.careerPath,
+            avatar: userData.avatar || './defaultProfile.jpg',
+            followers: userData.followers,
+          }}
           posts={posts}
           onCreatePost={handleCreatePost}
           onEditPost={handleEditPost}
@@ -563,10 +602,14 @@ export default function StudentProfile() {
             <DialogTitle>Edit Profile Picture</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Input type="file" accept="image/*" />
+            <Input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleUpdateProfilePicture}
+            />
             <div className="flex justify-end">
               <Button onClick={() => setShowEditProfile(false)}>
-                Save Changes
+                Cancel
               </Button>
             </div>
           </div>
@@ -675,7 +718,16 @@ export default function StudentProfile() {
               />
             </div>
             <div className="flex justify-end">
-              <Button onClick={() => setShowEditDetails(false)}>
+              <Button 
+                onClick={() => {
+                  handleSaveDetails({
+                    about: userData.about,
+                    achievements: userData.achievements,
+                    interests: userData.interests,
+                    socialLinks: userData.socialLinks
+                  });
+                }}
+              >
                 Save Changes
               </Button>
             </div>
@@ -683,13 +735,12 @@ export default function StudentProfile() {
         </DialogContent>
       </Dialog>
 
-      {/* Other modals remain unchanged */}
       {isMobile && <MobileBottomNav role="student" />}
     </div>
   );
 }
 
-const ProfileInfo = ({ label, value }: { label: string; value: string }) => (
+const ProfileInfoItem = ({ label, value }: { label: string; value: string }) => (
   <div className="flex flex-col sm:flex-row sm:gap-4">
     <div className="font-semibold text-gray-700">{label}:</div>
     <div className="text-gray-800">{value}</div>

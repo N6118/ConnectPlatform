@@ -53,7 +53,7 @@ export const ClubCharts: React.FC<ClubChartsProps> = ({
                                 <YAxis />
                                 <Tooltip />
                                 <Legend />
-                                {Object.keys(membershipGrowthData[0])
+                                {membershipGrowthData.length > 0 && Object.keys(membershipGrowthData[0])
                                     .filter(key => key !== 'month' && selectedClubsFilter.includes(key))
                                     .map((club, index) => {
                                         const colors = ['#8884d8', '#82ca9d', '#ff7300', '#0088fe', '#9932CC', '#FF6347'];
