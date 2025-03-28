@@ -35,7 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { profileService, ProfileInfo, WorkData, WorkItem, UpdateProfileData } from "@/services/profile";
+import { profileService, ProfileInfo, WorkData, WorkItem, UpdateProfileData, UserProfileResponse } from "@/services/profile";
 import { Post } from "@/pages/types";
 
 export default function StudentProfile() {
@@ -86,10 +86,120 @@ export default function StudentProfile() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch profile info
-        const profileResponse = await profileService.getCurrentProfile();
+        // Get username from localStorage
+        const userDataString = localStorage.getItem('user');
+        if (!userDataString) {
+          throw new Error('User data not found in localStorage');
+        }
+        
+        const userData = JSON.parse(userDataString);
+        const username = userData.username;
+        
+        if (!username) {
+          throw new Error('Username not found in user data');
+        }
+        
+        // Fetch profile info using username
+        const profileResponse = await profileService.getProfileByUsername(username);
+        console.log('Profile response:', JSON.stringify(profileResponse));
+        
         if (profileResponse.success && profileResponse.data) {
-          setUserData(profileResponse.data);
+          const apiData = profileResponse.data.data; // Access data within the response
+          console.log('API Data:', JSON.stringify(apiData));
+          
+          // Transform API data to match ProfileInfo structure
+          const mappedUserData: Partial<ProfileInfo> = {
+            id: apiData.id !== undefined ? String(apiData.id) : "",
+            name: apiData.name || username || "User",
+            careerPath: apiData.headline || "",
+            avatar: apiData.profilePicture || undefined,
+            // Map student details
+            rollNo: apiData.studentDetails?.enrollmentNumber || "",
+            branch: apiData.studentDetails?.branch || "",
+            course: apiData.studentDetails?.course || "",
+            college: apiData.studentDetails?.college || "",
+            semester: apiData.studentDetails?.semester || "",
+            graduationYear: apiData.studentDetails?.graduationYear || "",
+            // Map other profile information
+            about: apiData.about || "",
+            achievements: apiData.achievement || [],
+            interests: apiData.interest || [],
+            // Map social links
+            socialLinks: {
+              github: apiData.socialLinks?.github || "",
+              linkedin: apiData.socialLinks?.linkedin || "",
+              portfolio: apiData.socialLinks?.portfolio || ""
+            },
+            // Default values for followers/following if not provided
+            followers: apiData.followers || 0,
+            following: apiData.following || 0
+          };
+          
+          // Update only the fields we received, keep defaults for the rest
+          setUserData(prevData => ({
+            ...prevData,
+            ...mappedUserData
+          }));
+          
+          // If posts are included in the response, set them
+          if (apiData.post && Array.isArray(apiData.post)) {
+            try {
+              console.log('Processing posts data:', JSON.stringify(apiData.post.slice(0, 1)));
+              
+              const mappedPosts = apiData.post.map((postData) => {
+                // Verify we have an id before proceeding
+                if (!postData || !postData.id) {
+                  console.warn("Received invalid post data:", postData);
+                  return null;
+                }
+                
+                // Handle media URL extraction safely
+                let imageUrl: string | undefined = undefined;
+                if (postData.media) {
+                  if (typeof postData.media === 'string') {
+                    imageUrl = postData.media;
+                  } else if (typeof postData.media === 'object' && postData.media !== null) {
+                    // @ts-ignore - Handle potential mismatch in API response structure
+                    imageUrl = postData.media.url || undefined;
+                  }
+                }
+                
+                // Create a post with required fields, using defaults for missing ones
+                return {
+                  id: postData.id,
+                  content: postData.content || "",
+                  createdAt: postData.createdAt ? new Date(postData.createdAt) : new Date(),
+                  tags: Array.isArray(postData.tags) ? postData.tags : [],
+                  likes: postData.likes || 0,
+                  comments: postData.comments || 0,
+                  visibility: postData.visibility || "PUBLIC",
+                  type: postData.type || "EVENT",
+                  // Required fields by Post interface, set with defaults if not in API
+                  reposts: 0,
+                  image: imageUrl,
+                  timestamp: postData.createdAt ? new Date(postData.createdAt) : new Date(),
+                  shares: 0,
+                  isEditable: true,
+                  author: {
+                    id: String(apiData.id) || "",
+                    name: postData.author?.name || apiData.name || username || "User",
+                    role: postData.author?.headline || apiData.headline || "",
+                    avatar: postData.author?.profilePicture || apiData.profilePicture || "./defaultProfile.jpg"
+                  }
+                } as Post;
+              }).filter((post): post is Post => post !== null); // Type guard to filter out null values
+              
+              console.log('Mapped posts:', mappedPosts.length);
+              setPosts(mappedPosts);
+            } catch (error) {
+              console.error("Error processing posts data:", error);
+              // Set empty posts array on error
+              setPosts([]);
+            }
+          } else {
+            // Reset posts if none are returned
+            setPosts([]);
+          }
         } else {
           setError(profileResponse.error || "Failed to load profile data");
           toast({
@@ -99,16 +209,16 @@ export default function StudentProfile() {
           });
         }
 
-        // Fetch work data
-        const workResponse = await profileService.getWorkData();
-        if (workResponse.success && workResponse.data) {
-          setWorkData(workResponse.data);
-        }
-
-        // Fetch posts
-        const postsResponse = await profileService.getPosts();
-        if (postsResponse.success && postsResponse.data) {
-          setPosts(postsResponse.data);
+        // For now, keeping these separate API calls
+        // but they might need to be updated or removed based on actual API structure
+        try {
+          const workResponse = await profileService.getWorkData();
+          if (workResponse.success && workResponse.data) {
+            setWorkData(workResponse.data);
+          }
+        } catch (error) {
+          console.log("Work data not available, using defaults");
+          // Use default empty data if API fails
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
@@ -127,7 +237,9 @@ export default function StudentProfile() {
   }, [toast]);
 
   const handleCreatePost = async (newPost: Post) => {
+    console.log("Profile: handleCreatePost called with:", JSON.stringify(newPost));
     try {
+      // For profile posts, we don't need clubId, so we call the profile service directly
       const response = await profileService.createPost(newPost);
       if (response.success && response.data) {
         setPosts([response.data, ...posts]);
@@ -143,6 +255,7 @@ export default function StudentProfile() {
         });
       }
     } catch (error) {
+      console.error("Error in handleCreatePost:", error);
       toast({
         title: "Error",
         description: "An error occurred while creating the post",
@@ -152,7 +265,9 @@ export default function StudentProfile() {
   };
 
   const handleEditPost = async (updatedPost: Post) => {
+    console.log("Profile: handleEditPost called with:", JSON.stringify(updatedPost));
     try {
+      // For profile posts, we use the profile service
       const response = await profileService.updatePost(updatedPost.id, updatedPost);
       if (response.success && response.data) {
         setPosts(posts.map((post) => (post.id === updatedPost.id ? response.data! : post)));
@@ -168,6 +283,7 @@ export default function StudentProfile() {
         });
       }
     } catch (error) {
+      console.error("Error in handleEditPost:", error);
       toast({
         title: "Error",
         description: "An error occurred while updating the post",
@@ -177,7 +293,9 @@ export default function StudentProfile() {
   };
 
   const handleDeletePost = async (postId: string) => {
+    console.log("Profile: handleDeletePost called with ID:", postId);
     try {
+      // For profile posts, we use the profile service
       const response = await profileService.deletePost(postId);
       if (response.success) {
         setPosts(posts.filter((post) => post.id !== postId));
@@ -193,6 +311,7 @@ export default function StudentProfile() {
         });
       }
     } catch (error) {
+      console.error("Error in handleDeletePost:", error);
       toast({
         title: "Error",
         description: "An error occurred while deleting the post",
@@ -463,7 +582,7 @@ export default function StudentProfile() {
                     <h3 className="text-lg font-semibold mb-2">Achievements</h3>
                     <ScrollArea className="w-full">
                       <div className="flex gap-2 pb-2">
-                        {userData.achievements.map((achievement, index) => (
+                        {userData.achievements?.map((achievement, index) => (
                           <Badge
                             key={index}
                             variant="secondary"
@@ -480,7 +599,7 @@ export default function StudentProfile() {
                     <h3 className="text-lg font-semibold mb-2">Interests</h3>
                     <ScrollArea className="w-full">
                       <div className="flex gap-2 pb-2">
-                        {userData.interests.map((interest, index) => (
+                        {userData.interests?.map((interest, index) => (
                           <Badge
                             key={index}
                             variant="outline"
@@ -573,20 +692,22 @@ export default function StudentProfile() {
 
       {/* Activity Feed moved to bottom */}
       <div className="mt-8">
-        <ActivityFeed
-          clubId={1} // Using a default value since we're in user profile context
-          userData={{
-            id: userData.id,
-            name: userData.name,
-            role: userData.careerPath,
-            avatar: userData.avatar || './defaultProfile.jpg',
-            followers: userData.followers,
-          }}
-          posts={posts}
-          onCreatePost={handleCreatePost}
-          onEditPost={handleEditPost}
-          onDeletePost={handleDeletePost}
-        />
+        {userData && (
+          <ActivityFeed
+            clubId={1} // Using a default value since we're in user profile context
+            userData={{
+              id: String(userData.id), // Ensure ID is a string
+              name: userData.name,
+              role: userData.careerPath,
+              avatar: userData.avatar || './defaultProfile.jpg',
+              followers: userData.followers,
+            }}
+            posts={posts || []}
+            onCreatePost={handleCreatePost}
+            onEditPost={handleEditPost}
+            onDeletePost={handleDeletePost}
+          />
+        )}
       </div>
 
       <WorkModal
@@ -686,7 +807,7 @@ export default function StudentProfile() {
                 Achievements (one per line)
               </label>
               <Textarea
-                value={userData.achievements.join("\n")}
+                value={userData.achievements?.join("\n") || ""}
                 onChange={(e) =>
                   setUserData({
                     ...userData,
@@ -704,7 +825,7 @@ export default function StudentProfile() {
                 Interests (comma-separated)
               </label>
               <Input
-                value={userData.interests.join(", ")}
+                value={userData.interests?.join(", ") || ""}
                 onChange={(e) =>
                   setUserData({
                     ...userData,

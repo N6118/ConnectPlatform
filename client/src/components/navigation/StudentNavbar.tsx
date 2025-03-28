@@ -10,6 +10,11 @@ import {
   FileText,
   MessageSquare,
   Group,
+  ChevronDown,
+  Briefcase,
+  UserCog,
+  X,
+  AlertCircle,
 } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 import {
@@ -22,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   {
@@ -54,19 +60,53 @@ const navItems = [
 export default function StudentNavbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [_, setLocation] = useLocation();
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+  const [searchType, setSearchType] = useState<"faculty" | "student" | null>(null);
+  const [showTypeError, setShowTypeError] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      setLocation(
-        `/search-results?q=${encodeURIComponent(searchQuery.trim())}`,
-      );
+    
+    if (!searchQuery.trim()) {
+      return;
+    }
+    
+    if (!searchType) {
+      setSearchDropdownOpen(true);
+      setShowTypeError(true);
+      return;
+    }
+    
+    // Reset error state
+    setShowTypeError(false);
+    
+    // Navigate to search results
+    setLocation(
+      `/search-results?q=${encodeURIComponent(searchQuery.trim())}&type=${searchType}`,
+    );
+  };
+
+  const handleSearchTypeSelect = (type: "faculty" | "student") => {
+    setSearchType(type);
+    setSearchDropdownOpen(false);
+    setShowTypeError(false);
+  };
+
+  const clearSearchType = () => {
+    setSearchType(null);
+  };
+
+  const handleInputFocus = () => {
+    if (!searchType) {
+      setSearchDropdownOpen(true);
     }
   };
 
   const handleLogout = async () => {
     try {
       await fetch("/api/logout", { method: "POST" });
+      // Clear user data from localStorage
+      localStorage.removeItem('user');
       setLocation("/login");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -94,13 +134,69 @@ export default function StudentNavbar() {
             <form onSubmit={handleSearch} className="w-full">
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search projects, clubs, resources..."
-                  className="w-full pl-10"
-                />
+                <div className="flex items-center">
+                  <Input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={handleInputFocus}
+                    placeholder={searchType ? "Search..." : "Select search type first..."}
+                    className={`w-full pl-10 ${searchType ? 'pr-24' : ''} ${
+                      showTypeError ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''
+                    }`}
+                  />
+                  
+                  {searchType && (
+                    <div className="absolute right-3 flex items-center">
+                      <Badge className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-800 hover:bg-blue-200">
+                        {searchType === "faculty" ? (
+                          <Briefcase className="h-3 w-3" />
+                        ) : (
+                          <User className="h-3 w-3" />
+                        )}
+                        <span className="text-xs">{searchType}</span>
+                        <button 
+                          type="button" 
+                          onClick={clearSearchType}
+                          className="ml-1 rounded-full hover:bg-blue-200"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+                
+                {showTypeError && !searchType && (
+                  <div className="absolute top-full mt-1 text-xs text-red-500 flex items-center">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    Please select a search type first
+                  </div>
+                )}
+                
+                {searchDropdownOpen && !searchType && (
+                  <div className="absolute w-full top-full mt-1 bg-background border rounded-md shadow-lg z-50">
+                    <div className="p-2">
+                      <h3 className="text-sm font-medium mb-2 px-2">Select search type:</h3>
+                      <button
+                        type="button"
+                        onClick={() => handleSearchTypeSelect("faculty")}
+                        className="flex items-center gap-2 w-full p-2 text-sm hover:bg-accent rounded"
+                      >
+                        <Briefcase className="h-4 w-4" />
+                        Faculty
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSearchTypeSelect("student")}
+                        className="flex items-center gap-2 w-full p-2 text-sm hover:bg-accent rounded"
+                      >
+                        <User className="h-4 w-4" />
+                        Student
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </form>
           </div>

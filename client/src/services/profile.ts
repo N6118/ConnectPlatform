@@ -28,6 +28,69 @@ export interface ProfileInfo {
 }
 
 /**
+ * Interface for user profile response from API
+ */
+export interface UserProfileResponse {
+  data: {
+    id: number;
+    username: string;
+    email: string;
+    name: string;
+    profilePicture: string | null;
+    headline: string;
+    role: string;
+    post: Array<{
+      id: string;
+      type: string;
+      visibility: string;
+      content: string;
+      createdAt: string;
+      likes: number;
+      comments: number;
+      isLikedByUser: boolean | null;
+      isBookmarked: boolean | null;
+      author: {
+        name: string | null;
+        profilePicture: string | null;
+        headline: string;
+      };
+      media: string | null;
+      tags: string[] | null;
+      commentList: any[] | null;
+    }> | null;
+    socialLinks: {
+      github: string;
+      linkedin: string;
+      portfolio: string;
+    };
+    studentDetails: {
+      enrollmentNumber: string;
+      branch: string;
+      course: string;
+      college: string;
+      semester: string;
+      graduationYear: string;
+      section: string;
+    };
+    facultyDetails?: {
+      employeeId: string;
+      department: string;
+      designation: string;
+      specialization: string;
+      qualification: string;
+    };
+    achievement: string[];
+    interest: string[];
+    about?: string;
+    followers?: number;
+    following?: number;
+    active: boolean;
+  };
+  message: string;
+  count: number;
+}
+
+/**
  * Interface for performance data
  */
 export interface PerformanceData {
@@ -121,6 +184,13 @@ export const profileService = {
    */
   getProfileById: async (userId: string): Promise<ApiResponse<ProfileInfo>> => {
     return api.get<ProfileInfo>(`profiles/${userId}`);
+  },
+
+  /**
+   * Get profile information by username
+   */
+  getProfileByUsername: async (username: string): Promise<ApiResponse<UserProfileResponse>> => {
+    return api.get<UserProfileResponse>(`user/${username}`);
   },
 
   /**

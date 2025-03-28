@@ -33,6 +33,70 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Post, Author } from "@/pages/types";
+import { PostData } from "@/services/post";
+
+// Helper function to convert PostData to Post
+const convertPostDataToPost = (postData: PostData, author: Author): Post => {
+  if (!postData) {
+    console.error("Invalid postData received:", postData);
+    // Return a fallback post object
+    return {
+      id: new Date().getTime().toString(),
+      content: "",
+      createdAt: new Date(),
+      timestamp: new Date(),
+      tags: [],
+      likes: 0,
+      comments: 0,
+      reposts: 0,
+      shares: 0,
+      isEditable: true,
+      author: {
+        ...author,
+        id: author?.id?.toString() || ""
+      },
+      type: "EVENT",
+      visibility: "PUBLIC"
+    };
+  }
+  
+  console.log("Converting PostData to Post:", JSON.stringify(postData));
+  
+  // Ensure the ID is converted to a string (critical fix)
+  let postId: string;
+  if (typeof postData.id === 'number') {
+    postId = postData.id.toString();
+  } else if (postData.id) {
+    postId = String(postData.id);
+  } else {
+    postId = new Date().getTime().toString();
+  }
+  
+  // Create proper author object
+  const authorObject: Author = {
+    id: author?.id?.toString() || "",
+    name: postData.authorName || author?.name || "Unknown User",
+    role: author?.role || "",
+    avatar: postData.authorAvatar || author?.avatar || "./defaultProfile.jpg"
+  };
+    
+  return {
+    id: postId,
+    content: postData.content || "",
+    createdAt: postData.createdAt ? new Date(postData.createdAt) : new Date(),
+    timestamp: postData.createdAt ? new Date(postData.createdAt) : new Date(),
+    tags: [], // API doesn't provide tags in PostData interface
+    likes: postData.likes || 0,
+    comments: postData.comments || 0,
+    reposts: 0,
+    shares: 0,
+    isEditable: true,
+    author: authorObject,
+    image: postData.media?.url,
+    type: postData.type || "EVENT",
+    visibility: "PUBLIC" // Default visibility as not provided in PostData
+  };
+};
 
 interface ActivityFeedProps {
   clubId: number;
@@ -48,29 +112,51 @@ interface ActivityFeedProps {
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onPostCreated: (post: Post) => void;
+  onPostCreated: (post: PostData) => void;
   userData: Author & { followers: number };
-  editingPost?: Post;
+  editingPost?: Post | null;
 }
 
 const createPost = async (clubId: number, post: Post) => {
-  const response = await fetch(`/api/clubs/${clubId}/posts`, {
+  console.log('Creating post with data:', JSON.stringify(post));
+  
+  // Make sure club ID is treated as a number
+  const clubIdNum = Number(clubId) || 1;
+  
+  // Ensure proper format for API request
+  const postData = {
+    ...post,
+    authorId: post.author?.id ? Number(post.author.id) || undefined : undefined
+  };
+  
+  const response = await fetch(`/api/clubs/${clubIdNum}/posts`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(post),
+    body: JSON.stringify(postData),
   });
   return response.json();
 };
 
 const updatePost = async (clubId: number, postId: string, post: Post) => {
-  const response = await fetch(`/api/clubs/${clubId}/posts/${postId}`, {
+  console.log('Updating post with data:', JSON.stringify(post));
+  
+  // Make sure club ID is treated as a number
+  const clubIdNum = Number(clubId) || 1;
+  
+  // Ensure proper format for API request
+  const postData = {
+    ...post,
+    authorId: post.author?.id ? Number(post.author.id) || undefined : undefined
+  };
+  
+  const response = await fetch(`/api/clubs/${clubIdNum}/posts/${postId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(post),
+    body: JSON.stringify(postData),
   });
   return response.json();
 };
@@ -82,6 +168,80 @@ const deletePost = async (clubId: number, postId: string) => {
   return response.json();
 };
 
+// Profile-ActivityFeed custom modal wrapper
+const PostModalWrapper = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  editingPost
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (post: Post) => void;
+  editingPost?: Post | null;
+}) => {
+  // Handle the conversion from PostData to Post and call the parent handler
+  const handlePostCreated = (postData: PostData) => {
+    try {
+      if (!postData) {
+        console.error("Received undefined postData in handlePostCreated");
+        return;
+      }
+      
+      console.log("PostModalWrapper received data:", JSON.stringify(postData));
+      
+      // Make sure we have a valid author, even if editingPost is null
+      const author = editingPost?.author || { 
+        id: "", 
+        name: "User", 
+        role: "", 
+        avatar: "" 
+      };
+      
+      // When editing a post, preserve the original ID
+      if (editingPost && editingPost.id) {
+        postData.id = parseInt(editingPost.id) || new Date().getTime();
+      }
+      
+      const post = convertPostDataToPost(postData, author);
+      
+      console.log('Converted post:', JSON.stringify(post));
+      
+      // Ensure the post has all required fields
+      const validatedPost: Post = {
+        ...post,
+        id: post.id || new Date().getTime().toString(),
+        content: post.content || "",
+        author: post.author || author,
+        tags: Array.isArray(post.tags) ? post.tags : [],
+        visibility: post.visibility || "PUBLIC",
+        createdAt: post.createdAt || new Date(),
+        timestamp: post.timestamp || new Date(),
+        likes: post.likes || 0,
+        comments: post.comments || 0,
+        reposts: post.reposts || 0,
+        shares: post.shares || 0,
+        type: post.type || "EVENT",
+        isEditable: true
+      };
+      
+      console.log('Final validated post:', JSON.stringify(validatedPost));
+      onSubmit(validatedPost);
+    } catch (error) {
+      console.error("Error processing post data:", error);
+    }
+  };
+
+  // CreatePostModal only accepts isOpen, onClose, and onPostCreated
+  return (
+    <CreatePostModal
+      isOpen={isOpen}
+      onClose={onClose}
+      onPostCreated={handlePostCreated}
+    />
+  );
+};
+
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
   clubId,
   userData,
@@ -90,26 +250,49 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   onEditPost,
   onDeletePost,
 }) => {
+  console.log("ActivityFeed userData:", JSON.stringify(userData));
+  console.log("ActivityFeed posts:", posts ? posts.length : 0);
+  
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   const handleCreatePost = async (newPost: Partial<Post>) => {
     try {
+      console.log("Attempting to create post:", JSON.stringify(newPost));
       const response = await createPost(clubId, newPost as Post);
-      onCreatePost(response.data);
-      setIsCreateModalOpen(false);
+      console.log("Create post response:", response);
+      
+      if (response && response.data) {
+        onCreatePost(response.data);
+        setIsCreateModalOpen(false);
+      } else {
+        console.error("Create post response has no data:", response);
+      }
     } catch (error) {
       console.error('Error creating post:', error);
     }
   };
 
   const handleEditPost = async (updatedPost: Partial<Post>) => {
-    if (!editingPost) return;
+    if (!editingPost) {
+      console.error("No editing post set");
+      return;
+    }
+    
     try {
+      console.log("Attempting to update post:", JSON.stringify(updatedPost));
+      console.log("Original post ID:", editingPost.id);
+      
       const response = await updatePost(clubId, editingPost.id, updatedPost as Post);
-      onEditPost(response.data);
-      setEditingPost(null);
+      console.log("Update post response:", response);
+      
+      if (response && response.data) {
+        onEditPost(response.data);
+        setEditingPost(null);
+      } else {
+        console.error("Update post response has no data:", response);
+      }
     } catch (error) {
       console.error('Error updating post:', error);
     }
@@ -141,7 +324,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               <span className="text-gray-600 font-medium">
-                {userData.followers.toLocaleString()} followers
+                {(userData?.followers || 0).toLocaleString()} followers
               </span>
             </div>
             <Button
@@ -155,25 +338,32 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         </div>
 
         <div className="space-y-6">
-          {posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onEdit={() => setEditingPost(post)}
-              onDelete={() => setDeletingPostId(post.id)}
-            />
-          ))}
+          {posts && posts.length > 0 ? (
+            posts.map((post) => (
+              post && post.id ? (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onEdit={() => setEditingPost(post)}
+                  onDelete={() => setDeletingPostId(post.id)}
+                />
+              ) : null
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No posts yet. Create your first post!
+            </div>
+          )}
         </div>
       </CardContent>
-      <CreatePostModal
+      <PostModalWrapper
         isOpen={isCreateModalOpen || !!editingPost}
         onClose={() => {
           setIsCreateModalOpen(false);
           setEditingPost(null);
         }}
-        onPostCreated={editingPost ? handleEditPost : handleCreatePost}
-        userData={userData}
-        editingPost={editingPost || undefined}
+        onSubmit={editingPost ? handleEditPost : handleCreatePost}
+        editingPost={editingPost}
       />
       <AlertDialog
         open={!!deletingPostId}
@@ -208,29 +398,59 @@ const PostCard: React.FC<{
 }> = ({ post, onEdit, onDelete }) => {
   const { toast } = useToast();
 
+  // Safety check for post data
+  if (!post || !post.author) {
+    console.error("Invalid post data:", post);
+    return null;
+  }
+
+  // Ensure author object has all required properties
+  const author = {
+    name: post.author.name || "User",
+    role: post.author.role || "",
+    avatar: post.author.avatar || "./defaultProfile.jpg"
+  };
+
+  // Format date safely
+  const formattedDate = (() => {
+    try {
+      return post.createdAt instanceof Date 
+        ? post.createdAt.toLocaleString() 
+        : new Date(post.createdAt as any).toLocaleString();
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return new Date().toLocaleString();
+    }
+  })();
+
   return (
     <Card className="p-6 hover:shadow-lg transition-shadow duration-200">
       <div className="flex items-start gap-4">
         <Avatar className="w-12 h-12 ring-2 ring-blue-100 ring-offset-2">
-          <AvatarImage src={post.author.avatar} alt={post.author.name} />
-          <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+          <AvatarImage src={author.avatar} alt={author.name} />
+          <AvatarFallback>{(author.name || "?")[0]}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <div className="flex justify-between items-start">
             <div>
               <h3 className="font-semibold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors">
-                {post.author.name}
+                {author.name}
               </h3>
               <p className="text-sm text-gray-500 font-medium">
-                {post.author.role}
+                {author.role}
               </p>
               <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
-                <span>{new Date(post.createdAt).toLocaleString()}</span>
+                <span>{formattedDate}</span>
+                {post.type && (
+                  <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
+                    {post.type}
+                  </span>
+                )}
               </div>
             </div>
-            <PostMenu onEdit={onEdit} onDelete={onDelete} />
+            {post.isEditable && <PostMenu onEdit={onEdit} onDelete={onDelete} />}
           </div>
-          <p className="mt-3 text-gray-700 leading-relaxed">{post.content}</p>
+          <p className="mt-3 text-gray-700 leading-relaxed whitespace-pre-line">{post.content || ""}</p>
           {post.image && (
             <div className="mt-3 rounded-lg overflow-hidden">
               <img
@@ -241,7 +461,7 @@ const PostCard: React.FC<{
             </div>
           )}
           <div className="mt-2 flex flex-wrap gap-2">
-            {post.tags.map((tag) => (
+            {Array.isArray(post.tags) && post.tags.length > 0 && post.tags.map((tag) => (
               <span
                 key={tag}
                 className="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs"
@@ -290,24 +510,26 @@ const PostMenu: React.FC<{ onEdit: () => void; onDelete: () => void }> = ({
 };
 
 const PostActions: React.FC<{ post: Post }> = ({ post }) => {
+  if (!post) return null;
+  
   return (
     <div className="mt-4 flex gap-6 pt-4 border-t">
       <button className="flex items-center gap-2 text-gray-500 hover:text-red-500 transition-colors">
         <Heart className="h-5 w-5" />
         <span className="text-sm font-medium">
-          {post.likes.toLocaleString()}
+          {(post.likes || 0).toLocaleString()}
         </span>
       </button>
       <button className="flex items-center gap-2 text-gray-500 hover:text-blue-500 transition-colors">
         <MessageCircle className="h-5 w-5" />
         <span className="text-sm font-medium">
-          {post.comments.toLocaleString()}
+          {(post.comments || 0).toLocaleString()}
         </span>
       </button>
       <button className="flex items-center gap-2 text-gray-500 hover:text-green-500 transition-colors">
         <Repeat2 className="h-5 w-5" />
         <span className="text-sm font-medium">
-          {post.reposts.toLocaleString()}
+          {(post.reposts || 0).toLocaleString()}
         </span>
       </button>
     </div>

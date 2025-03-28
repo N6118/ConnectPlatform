@@ -28,6 +28,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
     setIsSubmitting(true);
 
     try {
+      // Log what we're submitting
+      console.log('Submitting post with title:', title, 'content:', content, 'category:', category);
+      
       const postData: CreatePostData = {
         title,
         content,
@@ -36,7 +39,11 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
       };
 
       const response = await postService.createPost(postData);
+      console.log('Create post response:', response);
+      
       if (response.success && response.data) {
+        // Log the data before passing it to the parent
+        console.log('Post created successfully:', response.data);
         onPostCreated(response.data);
         onClose();
         // Reset form

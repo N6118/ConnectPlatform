@@ -18,7 +18,7 @@ export interface SearchResult {
 export interface Person extends SearchResult {
   type: 'person';
   department: string;
-  role: string;
+  role: 'faculty' | 'admin' | 'student' | 'researcher' | string;
   skills: string[];
 }
 
