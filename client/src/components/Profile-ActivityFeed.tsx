@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Post, Author } from "@/pages/types";
 import { PostData } from "@/services/post";
+import CreatePostButton from "@/components/CommonDashboard-components/CreatePostButton";
 
 // Helper function to convert PostData to Post
 const convertPostDataToPost = (postData: PostData, author: Author): Post => {
@@ -83,6 +84,7 @@ const convertPostDataToPost = (postData: PostData, author: Author): Post => {
   return {
     id: postId,
     content: postData.content || "",
+    title: postData.title,
     createdAt: postData.createdAt ? new Date(postData.createdAt) : new Date(),
     timestamp: postData.createdAt ? new Date(postData.createdAt) : new Date(),
     tags: [], // API doesn't provide tags in PostData interface
@@ -310,6 +312,26 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
   };
 
+  // Handle post creation from CreatePostButton
+  const handleCreatePostButtonSubmit = (postData: PostData) => {
+    try {
+      if (!postData) {
+        console.error("Received undefined postData from CreatePostButton");
+        return;
+      }
+      
+      console.log("Received post data from CreatePostButton:", JSON.stringify(postData));
+      
+      // Convert PostData to Post format
+      const post = convertPostDataToPost(postData, userData);
+      
+      // Use the existing handler for post creation
+      handleCreatePost(post);
+    } catch (error) {
+      console.error("Error processing post data from CreatePostButton:", error);
+    }
+  };
+
   return (
     <Card className="max-w-3xl mx-auto mt-8">
       <CardContent className="p-6">
@@ -327,14 +349,18 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 {(userData?.followers || 0).toLocaleString()} followers
               </span>
             </div>
-            <Button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              <PenSquare className="mr-2 h-4 w-4" />
-              Create post
-            </Button>
           </div>
+        </div>
+
+        <div className="mb-6">
+          <CreatePostButton 
+            onPostCreated={handleCreatePostButtonSubmit}
+            userData={{
+              name: userData.name,
+              role: userData.role,
+              avatar: userData.avatar || "https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDI0LTAxL3Jhd3BpeGVsb2ZmaWNlMTJfcGhvdG9fb2ZfeW91bmdfaW5kaWFuX2dpcmxfaG9sZGluZ19zdHVkZW50X2JhY19hNDdmMzk1OS0zZDAyLTRiZWEtYTEzOS1lYzI0ZjdhNjEwZGFfMS5qcGc.jpg"
+            }}
+          />
         </div>
 
         <div className="space-y-6">
@@ -450,6 +476,14 @@ const PostCard: React.FC<{
             </div>
             {post.isEditable && <PostMenu onEdit={onEdit} onDelete={onDelete} />}
           </div>
+          
+          {/* Display title if available */}
+          {post.title && (
+            <h4 className="mt-2 text-lg font-semibold text-gray-900">
+              {post.title}
+            </h4>
+          )}
+          
           <p className="mt-3 text-gray-700 leading-relaxed whitespace-pre-line">{post.content || ""}</p>
           {post.image && (
             <div className="mt-3 rounded-lg overflow-hidden">

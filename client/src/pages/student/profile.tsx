@@ -1,5 +1,5 @@
 import { FaEdit, FaGithub, FaLinkedin, FaGlobe } from "react-icons/fa";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import WorkList from "@/components/WorkList";
 import WorkModal from "@/components/WorkModal";
@@ -36,6 +36,7 @@ import StudentNavbar from "@/components/navigation/StudentNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { profileService, ProfileInfo, WorkData, WorkItem, UpdateProfileData, UserProfileResponse } from "@/services/profile";
+import { api } from "@/services/api";
 import { Post } from "@/pages/types";
 
 export default function StudentProfile() {
@@ -81,6 +82,8 @@ export default function StudentProfile() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
+  const aboutTextAreaRef = useRef<HTMLTextAreaElement>(null);
+
   // Fetch profile data
   useEffect(() => {
     const fetchData = async () => {
@@ -91,27 +94,27 @@ export default function StudentProfile() {
         if (!userDataString) {
           throw new Error('User data not found in localStorage');
         }
-        
+
         const userData = JSON.parse(userDataString);
         const username = userData.username;
-        
+
         if (!username) {
           throw new Error('Username not found in user data');
         }
-        
+
         // Fetch profile info using username
         const profileResponse = await profileService.getProfileByUsername(username);
         console.log('Profile response:', JSON.stringify(profileResponse));
-        
+
         if (profileResponse.success && profileResponse.data) {
-          const apiData = profileResponse.data.data; // Access data within the response
+          const apiData = profileResponse.data; // Access data within the response
           console.log('API Data:', JSON.stringify(apiData));
-          
+
           // Transform API data to match ProfileInfo structure
           const mappedUserData: Partial<ProfileInfo> = {
             id: apiData.id !== undefined ? String(apiData.id) : "",
             name: apiData.name || username || "User",
-            careerPath: apiData.headline || "",
+            headline: apiData.headline || "",
             avatar: apiData.profilePicture || undefined,
             // Map student details
             rollNo: apiData.studentDetails?.enrollmentNumber || "",
@@ -120,6 +123,8 @@ export default function StudentProfile() {
             college: apiData.studentDetails?.college || "",
             semester: apiData.studentDetails?.semester || "",
             graduationYear: apiData.studentDetails?.graduationYear || "",
+            // Add careerPath from headline since it seems to be missing
+            careerPath: apiData.headline || "",
             // Map other profile information
             about: apiData.about || "",
             achievements: apiData.achievement || [],
@@ -134,25 +139,25 @@ export default function StudentProfile() {
             followers: apiData.followers || 0,
             following: apiData.following || 0
           };
-          
+
           // Update only the fields we received, keep defaults for the rest
           setUserData(prevData => ({
             ...prevData,
             ...mappedUserData
           }));
-          
+
           // If posts are included in the response, set them
           if (apiData.post && Array.isArray(apiData.post)) {
             try {
               console.log('Processing posts data:', JSON.stringify(apiData.post.slice(0, 1)));
-              
+
               const mappedPosts = apiData.post.map((postData) => {
                 // Verify we have an id before proceeding
                 if (!postData || !postData.id) {
                   console.warn("Received invalid post data:", postData);
                   return null;
                 }
-                
+
                 // Handle media URL extraction safely
                 let imageUrl: string | undefined = undefined;
                 if (postData.media) {
@@ -163,7 +168,7 @@ export default function StudentProfile() {
                     imageUrl = postData.media.url || undefined;
                   }
                 }
-                
+
                 // Create a post with required fields, using defaults for missing ones
                 return {
                   id: postData.id,
@@ -188,7 +193,7 @@ export default function StudentProfile() {
                   }
                 } as Post;
               }).filter((post): post is Post => post !== null); // Type guard to filter out null values
-              
+
               console.log('Mapped posts:', mappedPosts.length);
               setPosts(mappedPosts);
             } catch (error) {
@@ -333,12 +338,35 @@ export default function StudentProfile() {
   const handleDeleteItem = async (id: number) => {
     try {
       const type = selectedTab.slice(0, -1); // Remove 's' from the end to get singular form
-      const response = await profileService.deleteWorkItem(type, id);
       
+      // Get username from localStorage
+      const userDataString = localStorage.getItem('user');
+      if (!userDataString) {
+        throw new Error('User data not found in localStorage');
+      }
+      const localUserData = JSON.parse(userDataString);
+      const username = localUserData.username;
+
+      if (!username) {
+        throw new Error('Username not found in user data');
+      }
+      
+      // For deletion, we'll send a special update with a 'delete' flag
+      const updateData = {
+        [type.toLowerCase()]: {
+          id,
+          _delete: true // Signal that this is a delete operation
+        }
+      };
+      
+      const response = await profileService.updateUserProfile(username, updateData);
+
       if (response.success) {
+        // Update the local state to reflect the deletion
         const newData = { ...workData };
         newData[selectedTab] = workData[selectedTab].filter((item) => item.id !== id);
         setWorkData(newData);
+        
         toast({
           title: "Success",
           description: `${type} deleted successfully.`,
@@ -351,9 +379,10 @@ export default function StudentProfile() {
         });
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
       toast({
         title: "Error",
-        description: "An error occurred while deleting the item",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -363,58 +392,65 @@ export default function StudentProfile() {
     try {
       const type = (formData.type.toUpperCase() + "S") as keyof WorkData;
       
-      if (editItem) {
-        // Update existing item
-        const response = await profileService.updateWorkItem(
-          formData.type, 
-          editItem.id, 
-          formData
-        );
-        
-        if (response.success && response.data) {
-          const newData = { ...workData };
-          newData[type] = workData[type].map((item) =>
-            item.id === editItem.id ? response.data! : item
-          );
-          setWorkData(newData);
-          toast({
-            title: "Success",
-            description: `${formData.type} updated successfully.`,
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: response.error || `Failed to update ${formData.type.toLowerCase()}`,
-            variant: "destructive",
-          });
-        }
-      } else {
-        // Create new item
-        const response = await profileService.addWorkItem(formData.type, formData);
-        
-        if (response.success && response.data) {
-          const newData = { ...workData };
-          newData[type] = [...workData[type], response.data];
-          setWorkData(newData);
-          toast({
-            title: "Success",
-            description: `${formData.type} added successfully.`,
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: response.error || `Failed to add ${formData.type.toLowerCase()}`,
-            variant: "destructive",
-          });
-        }
+      // Get username from localStorage
+      const userDataString = localStorage.getItem('user');
+      if (!userDataString) {
+        throw new Error('User data not found in localStorage');
+      }
+      const localUserData = JSON.parse(userDataString);
+      const username = localUserData.username;
+
+      if (!username) {
+        throw new Error('Username not found in user data');
       }
       
-      setShowModal(false);
-      setEditItem(null);
+      // Prepare the update data - wrap the form data in the appropriate structure
+      // based on the type of work item
+      const updateData = {
+        [formData.type.toLowerCase()]: {
+          ...(editItem ? { id: editItem.id } : {}),
+          ...formData
+        }
+      };
+      
+      // Use the PATCH endpoint for all updates
+      const response = await profileService.updateUserProfile(username, updateData);
+
+      if (response.success && response.data) {
+        // Handle the response based on whether we're updating or creating
+        // For now, we'll just refetch the work data to ensure consistency
+        try {
+          const workResponse = await profileService.getWorkData();
+          if (workResponse.success && workResponse.data) {
+            setWorkData(workResponse.data);
+            toast({
+              title: "Success",
+              description: editItem 
+                ? `${formData.type} updated successfully.`
+                : `${formData.type} added successfully.`,
+            });
+          }
+        } catch (error) {
+          console.warn("Failed to refresh work data after update");
+        }
+        
+        setShowModal(false);
+        setEditItem(null);
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || 
+            (editItem 
+              ? `Failed to update ${formData.type.toLowerCase()}`
+              : `Failed to add ${formData.type.toLowerCase()}`),
+          variant: "destructive",
+        });
+      }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
       toast({
         title: "Error",
-        description: "An error occurred while saving the item",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -422,16 +458,70 @@ export default function StudentProfile() {
 
   const handleSaveDetails = async (formData: UpdateProfileData) => {
     try {
-      const response = await profileService.updateProfile(formData);
+      // Get username from localStorage
+      const userDataString = localStorage.getItem('user');
+      if (!userDataString) {
+        throw new Error('User data not found in localStorage');
+      }
+      const localUserData = JSON.parse(userDataString);
+      const username = localUserData.username;
+
+      if (!username) {
+        throw new Error('Username not found in user data');
+      }
+
+      console.log('Updating profile with data:', formData);
+      console.log('About field value:', formData.about);
+      console.log('For username:', username);
       
+      const response = await profileService.updateUserProfile(username, formData);
+      console.log('Update profile response:', response);
+
       if (response.success && response.data) {
-        setUserData(response.data);
+        // Transform API response to match ProfileInfo structure
+        const apiData = response.data;
+        console.log('Raw API response data:', JSON.stringify(apiData, null, 2));
+        
+        // Check if about field was returned
+        if (apiData.about !== undefined) {
+          console.log('About field in response:', apiData.about);
+        } else {
+          console.log('About field missing in response, using form data value:', formData.about);
+        }
+        
+        const mappedUserData: Partial<ProfileInfo> = {
+          id: apiData.id !== undefined ? String(apiData.id) : userData.id,
+          name: apiData.name || userData.name,
+          // Prioritize data from API response, fall back to form data, then to current userData 
+          about: apiData.about !== undefined ? apiData.about : (formData.about || userData.about),
+          achievements: apiData.achievement || userData.achievements,
+          interests: apiData.interest || userData.interests,
+          socialLinks: {
+            github: apiData.socialLinks?.github || userData.socialLinks.github,
+            linkedin: apiData.socialLinks?.linkedin || userData.socialLinks.linkedin,
+            portfolio: apiData.socialLinks?.portfolio || userData.socialLinks.portfolio
+          }
+        };
+
+        console.log('Mapped user data:', mappedUserData);
+
+        // Update only the fields we received, keep defaults for the rest
+        setUserData(prevData => {
+          const newData = {
+            ...prevData,
+            ...mappedUserData
+          };
+          console.log('Final updated user data:', newData);
+          return newData;
+        });
+        
         setShowEditDetails(false);
         toast({
           title: "Success",
           description: "Profile updated successfully.",
         });
       } else {
+        console.error('Profile update failed:', response.error);
         toast({
           title: "Error",
           description: response.error || "Failed to update profile",
@@ -439,9 +529,11 @@ export default function StudentProfile() {
         });
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      console.error('Profile update error:', error);
       toast({
         title: "Error",
-        description: "An error occurred while updating the profile",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -452,21 +544,43 @@ export default function StudentProfile() {
       const file = e.target.files[0];
       const formData = new FormData();
       formData.append('avatar', file);
-      
+
       try {
-        const response = await profileService.updateProfilePicture(formData);
+        // Get username from localStorage
+        const userDataString = localStorage.getItem('user');
+        if (!userDataString) {
+          throw new Error('User data not found in localStorage');
+        }
+        const localUserData = JSON.parse(userDataString);
+        const username = localUserData.username;
+
+        if (!username) {
+          throw new Error('Username not found in user data');
+        }
+
+        console.log('Updating profile picture for:', username);
         
+        // Use the profileService method which now handles FormData correctly
+        const response = await profileService.updateUserProfile(username, formData);
+        console.log('Profile picture update response:', response);
+
         if (response.success && response.data) {
-          setUserData({
-            ...userData,
-            avatar: response.data.avatarUrl
-          });
+          // Update the avatar in the user data
+          const profilePicture = response.data.profilePicture;
+          if (profilePicture) {
+            setUserData(prevData => ({
+              ...prevData,
+              avatar: profilePicture
+            }));
+          }
+          
           setShowEditProfile(false);
           toast({
             title: "Success",
             description: "Profile picture updated successfully.",
           });
         } else {
+          console.error('Failed to update profile picture:', response.error);
           toast({
             title: "Error",
             description: response.error || "Failed to update profile picture",
@@ -474,9 +588,11 @@ export default function StudentProfile() {
           });
         }
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+        console.error('Profile picture update error:', error);
         toast({
           title: "Error",
-          description: "An error occurred while updating the profile picture",
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -723,9 +839,9 @@ export default function StudentProfile() {
             <DialogTitle>Edit Profile Picture</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Input 
-              type="file" 
-              accept="image/*" 
+            <Input
+              type="file"
+              accept="image/*"
               onChange={handleUpdateProfilePicture}
             />
             <div className="flex justify-end">
@@ -752,6 +868,7 @@ export default function StudentProfile() {
                 }
                 placeholder="Write something about yourself..."
                 rows={4}
+                ref={aboutTextAreaRef}
               />
             </div>
             <div>
@@ -839,14 +956,22 @@ export default function StudentProfile() {
               />
             </div>
             <div className="flex justify-end">
-              <Button 
+              <Button
                 onClick={() => {
-                  handleSaveDetails({
-                    about: userData.about,
-                    achievements: userData.achievements,
-                    interests: userData.interests,
+                  // Get the latest about value from the ref
+                  const latestAboutValue = aboutTextAreaRef.current?.value || userData.about;
+                  console.log('Current about text from ref:', latestAboutValue);
+                  
+                  // Format the data to match the API expectations for PATCH
+                  const updateData = {
+                    about: latestAboutValue, // Use the ref value for about
+                    achievement: userData.achievements,
+                    interest: userData.interests,
                     socialLinks: userData.socialLinks
-                  });
+                  };
+                  
+                  console.log('Sending update data:', JSON.stringify(updateData, null, 2));
+                  handleSaveDetails(updateData);
                 }}
               >
                 Save Changes
@@ -878,11 +1003,10 @@ const TabOption = ({
   onClick: () => void;
 }) => (
   <button
-    className={`pb-4 border-b-2 text-sm font-medium transition-colors ${
-      selected
-        ? "border-blue-600 text-blue-600"
-        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-    }`}
+    className={`pb-4 border-b-2 text-sm font-medium transition-colors ${selected
+      ? "border-blue-600 text-blue-600"
+      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+      }`}
     onClick={onClick}
   >
     {label}

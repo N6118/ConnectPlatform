@@ -16,6 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Event {
     id: number;
+    title: string;
     natureOfEvent: string;
     typeOfEvent: string;
     theme: string[];
@@ -24,18 +25,19 @@ interface Event {
         start: string;
         end: string;
     };
+    location: string;
+    registrationLink?: string;
     chiefGuest: string;
     otherSpeakers: string[];
     participantsCount: number;
     highlights: string;
-    papersReceived?: number;
-    papersAccepted?: number;
-    journalDetails?: string;
+    isCompleted?: boolean;
 }
 
 const sampleEvents: Event[] = [
     {
         id: 1,
+        title: "International Conference on AI and Machine Learning",
         natureOfEvent: "INTERNATIONAL",
         typeOfEvent: "CONFERENCE",
         theme: ["AI and Machine Learning", "Data Science"],
@@ -44,16 +46,17 @@ const sampleEvents: Event[] = [
             start: "2024-03-15",
             end: "2024-03-17"
         },
+        location: "Main Auditorium",
+        registrationLink: "https://example.com/register",
         chiefGuest: "Dr. John Smith",
         otherSpeakers: ["Dr. Sarah Johnson", "Prof. Michael Chen"],
         participantsCount: 250,
         highlights: "Best paper awards, Industry collaborations announced",
-        papersReceived: 150,
-        papersAccepted: 75,
-        journalDetails: "Special issue in IEEE Transactions"
+        isCompleted: true
     },
     {
         id: 2,
+        title: "National Workshop on Renewable Energy",
         natureOfEvent: "NATIONAL",
         typeOfEvent: "WORKSHOP",
         theme: ["Renewable Energy"],
@@ -62,10 +65,32 @@ const sampleEvents: Event[] = [
             start: "2024-04-10",
             end: "2024-04-12"
         },
+        location: "Engineering Block",
+        registrationLink: "https://example.com/renewable",
         chiefGuest: "Prof. David Wilson",
         otherSpeakers: ["Dr. Emma Davis"],
         participantsCount: 100,
-        highlights: "Hands-on sessions on solar panel installation"
+        highlights: "Hands-on sessions on solar panel installation",
+        isCompleted: true
+    },
+    {
+        id: 3,
+        title: "Web Development Workshop",
+        natureOfEvent: "CLUBS",
+        typeOfEvent: "WORKSHOP",
+        theme: ["Web Development"],
+        fundingAgency: "None",
+        dates: {
+            start: "2024-05-20",
+            end: "2024-05-22"
+        },
+        location: "Computer Lab 101",
+        registrationLink: "https://example.com/webdev",
+        chiefGuest: "Prof. James Brown",
+        otherSpeakers: ["Dr. Lisa Chen"],
+        participantsCount: 50,
+        highlights: "",
+        isCompleted: false
     }
 ];
 
@@ -234,22 +259,7 @@ const EventCard = ({ event, onEdit, onDelete, onView }: {
                                         <dd className="mt-1 text-gray-700">{event.highlights}</dd>
                                     </div>
                                     
-                                    {event.papersReceived && (
-                                        <div>
-                                            <dt className="text-sm font-medium text-gray-500">Papers Statistics</dt>
-                                            <dd className="mt-1 space-y-1">
-                                                <p className="text-gray-700">Received: {event.papersReceived}</p>
-                                                <p className="text-gray-700">Accepted: {event.papersAccepted}</p>
-                                            </dd>
-                                        </div>
-                                    )}
                                     
-                                    {event.journalDetails && (
-                                        <div>
-                                            <dt className="text-sm font-medium text-gray-500">Journal Details</dt>
-                                            <dd className="mt-1 text-gray-700">{event.journalDetails}</dd>
-                                        </div>
-                                    )}
                                 </dl>
                             </CardContent>
                         </motion.div>
@@ -271,6 +281,7 @@ export const EventManagement = () => {
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [filterType, setFilterType] = useState<string>("all");
     const [newEvent, setNewEvent] = useState<Partial<Event>>({
+        title: '',
         natureOfEvent: '',
         typeOfEvent: '',
         theme: [],
@@ -279,53 +290,55 @@ export const EventManagement = () => {
             start: '',
             end: ''
         },
+        location: '',
+        registrationLink: '',
         chiefGuest: '',
         otherSpeakers: [],
         participantsCount: 0,
         highlights: '',
-        papersReceived: 0,
-        papersAccepted: 0,
-        journalDetails: ''
+        isCompleted: false
     });
 
     const handleAddEvent = () => {
         const eventToAdd: Event = {
             id: events.length + 1,
+            title: newEvent.title || '',
             natureOfEvent: newEvent.natureOfEvent || '',
             typeOfEvent: newEvent.typeOfEvent || '',
             theme: newEvent.theme || [],
-            fundingAgency: newEvent.fundingAgency || '',
+            fundingAgency: newEvent.fundingAgency || 'None',
             dates: {
                 start: newEvent.dates?.start || '',
                 end: newEvent.dates?.end || ''
             },
+            location: newEvent.location || '',
+            registrationLink: newEvent.registrationLink,
             chiefGuest: newEvent.chiefGuest || '',
             otherSpeakers: newEvent.otherSpeakers || [],
             participantsCount: newEvent.participantsCount || 0,
             highlights: newEvent.highlights || '',
-            papersReceived: newEvent.papersReceived,
-            papersAccepted: newEvent.papersAccepted,
-            journalDetails: newEvent.journalDetails
+            isCompleted: newEvent.isCompleted || false
         };
 
         setEvents([...events, eventToAdd]);
         setIsAddDialogOpen(false);
         setNewEvent({
+            title: '',
             natureOfEvent: '',
             typeOfEvent: '',
             theme: [],
-            fundingAgency: '',
+            fundingAgency: 'None',
             dates: {
                 start: '',
                 end: ''
             },
+            location: '',
+            registrationLink: '',
             chiefGuest: '',
             otherSpeakers: [],
             participantsCount: 0,
             highlights: '',
-            papersReceived: 0,
-            papersAccepted: 0,
-            journalDetails: ''
+            isCompleted: false
         });
     };
 
@@ -530,10 +543,20 @@ export const EventManagement = () => {
                     </DialogHeader>
                     <div className="grid gap-6 py-6">
                         <div className="grid gap-2">
+                            <Label htmlFor="title" className="text-sm font-medium">Event Title</Label>
+                            <Input
+                                id="title"
+                                placeholder="Enter event title"
+                                className="focus:ring-2 focus:ring-primary/20"
+                                value={newEvent.title}
+                                onChange={(e) => handleInputChange('title', e.target.value)}
+                            />
+                        </div>
+                        <div className="grid gap-2">
                             <Label htmlFor="natureOfEvent" className="text-sm font-medium">Nature of Event</Label>
                             <Input
                                 id="natureOfEvent"
-                                placeholder="INTERNATIONAL/NATIONAL/STATE/INSTITUTIONAL"
+                                placeholder="INTERNATIONAL/NATIONAL/STATE/INSTITUTIONAL/CLUBS"
                                 className="focus:ring-2 focus:ring-primary/20"
                                 value={newEvent.natureOfEvent}
                                 onChange={(e) => handleInputChange('natureOfEvent', e.target.value)}
@@ -560,14 +583,49 @@ export const EventManagement = () => {
                             />
                         </div>
                         <div className="grid gap-2">
+                            <Label htmlFor="location" className="text-sm font-medium">Location</Label>
+                            <Input
+                                id="location"
+                                placeholder="Enter event location"
+                                className="focus:ring-2 focus:ring-primary/20"
+                                value={newEvent.location}
+                                onChange={(e) => handleInputChange('location', e.target.value)}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="registrationLink" className="text-sm font-medium">Registration Link (optional)</Label>
+                            <Input
+                                id="registrationLink"
+                                placeholder="https://example.com/register"
+                                className="focus:ring-2 focus:ring-primary/20"
+                                value={newEvent.registrationLink}
+                                onChange={(e) => handleInputChange('registrationLink', e.target.value)}
+                            />
+                        </div>
+                        <div className="grid gap-2">
                             <Label htmlFor="fundingAgency" className="text-sm font-medium">Funding Agency</Label>
                             <Input
                                 id="fundingAgency"
-                                placeholder="Enter funding agency"
+                                placeholder="Enter funding agency (or 'None')"
                                 className="focus:ring-2 focus:ring-primary/20"
                                 value={newEvent.fundingAgency}
                                 onChange={(e) => handleInputChange('fundingAgency', e.target.value)}
                             />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="isCompleted" className="text-sm font-medium">Event Status</Label>
+                            <Select 
+                                value={newEvent.isCompleted ? "completed" : "upcoming"} 
+                                onValueChange={(value) => handleInputChange('isCompleted', value === "completed")}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select event status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="upcoming">Upcoming</SelectItem>
+                                    <SelectItem value="completed">Completed</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
@@ -622,50 +680,18 @@ export const EventManagement = () => {
                                 onChange={(e) => handleInputChange('participantsCount', parseInt(e.target.value))}
                             />
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="highlights" className="text-sm font-medium">Highlights</Label>
-                            <Textarea
-                                id="highlights"
-                                placeholder="Enter event highlights"
-                                className="min-h-[100px] focus:ring-2 focus:ring-primary/20"
-                                value={newEvent.highlights}
-                                onChange={(e) => handleInputChange('highlights', e.target.value)}
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        {newEvent.isCompleted && (
                             <div className="grid gap-2">
-                                <Label htmlFor="papersReceived" className="text-sm font-medium">Papers Received</Label>
-                                <Input
-                                    id="papersReceived"
-                                    type="number"
-                                    placeholder="Number of papers"
-                                    className="focus:ring-2 focus:ring-primary/20"
-                                    value={newEvent.papersReceived}
-                                    onChange={(e) => handleInputChange('papersReceived', parseInt(e.target.value))}
+                                <Label htmlFor="highlights" className="text-sm font-medium">Highlights</Label>
+                                <Textarea
+                                    id="highlights"
+                                    placeholder="Enter event highlights"
+                                    className="min-h-[100px] focus:ring-2 focus:ring-primary/20"
+                                    value={newEvent.highlights}
+                                    onChange={(e) => handleInputChange('highlights', e.target.value)}
                                 />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="papersAccepted" className="text-sm font-medium">Papers Accepted</Label>
-                                <Input
-                                    id="papersAccepted"
-                                    type="number"
-                                    placeholder="Number of papers"
-                                    className="focus:ring-2 focus:ring-primary/20"
-                                    value={newEvent.papersAccepted}
-                                    onChange={(e) => handleInputChange('papersAccepted', parseInt(e.target.value))}
-                                />
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="journalDetails" className="text-sm font-medium">Journal Details</Label>
-                            <Textarea
-                                id="journalDetails"
-                                placeholder="Enter journal publication details"
-                                className="min-h-[100px] focus:ring-2 focus:ring-primary/20"
-                                value={newEvent.journalDetails}
-                                onChange={(e) => handleInputChange('journalDetails', e.target.value)}
-                            />
-                        </div>
+                        )}
                     </div>
                     <DialogFooter className="gap-2">
                         <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
@@ -743,19 +769,7 @@ export const EventManagement = () => {
                                 <h3 className="font-medium">Highlights</h3>
                                 <p className="text-sm text-gray-600">{selectedEvent.highlights}</p>
                             </div>
-                            {selectedEvent.papersReceived && (
-                                <div>
-                                    <h3 className="font-medium">Papers</h3>
-                                    <p className="text-sm text-gray-600">Received: {selectedEvent.papersReceived}</p>
-                                    <p className="text-sm text-gray-600">Accepted: {selectedEvent.papersAccepted}</p>
-                                </div>
-                            )}
-                            {selectedEvent.journalDetails && (
-                                <div>
-                                    <h3 className="font-medium">Journal Details</h3>
-                                    <p className="text-sm text-gray-600">{selectedEvent.journalDetails}</p>
-                                </div>
-                            )}
+
                         </div>
                     )}
                     <DialogFooter>
@@ -772,6 +786,16 @@ export const EventManagement = () => {
                     </DialogHeader>
                     {selectedEvent && (
                         <div className="grid gap-6 py-6">
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-title" className="text-sm font-medium">Event Title</Label>
+                                <Input
+                                    id="edit-title"
+                                    placeholder="Enter event title"
+                                    className="focus:ring-2 focus:ring-primary/20"
+                                    value={selectedEvent.title}
+                                    onChange={(e) => setSelectedEvent({ ...selectedEvent, title: e.target.value })}
+                                />
+                            </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="edit-natureOfEvent" className="text-sm font-medium">Nature of Event</Label>
                                 <Input
@@ -811,6 +835,21 @@ export const EventManagement = () => {
                                     value={selectedEvent.fundingAgency}
                                     onChange={(e) => setSelectedEvent({ ...selectedEvent, fundingAgency: e.target.value })}
                                 />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-isCompleted" className="text-sm font-medium">Event Status</Label>
+                                <Select 
+                                    value={selectedEvent.isCompleted ? "completed" : "upcoming"} 
+                                    onValueChange={(value) => setSelectedEvent({ ...selectedEvent, isCompleted: value === "completed" })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select event status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="upcoming">Upcoming</SelectItem>
+                                        <SelectItem value="completed">Completed</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
@@ -865,48 +904,36 @@ export const EventManagement = () => {
                                     onChange={(e) => setSelectedEvent({ ...selectedEvent, participantsCount: parseInt(e.target.value) })}
                                 />
                             </div>
+                            {selectedEvent.isCompleted && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="edit-highlights" className="text-sm font-medium">Highlights</Label>
+                                    <Textarea
+                                        id="edit-highlights"
+                                        placeholder="Enter event highlights"
+                                        className="min-h-[100px] focus:ring-2 focus:ring-primary/20"
+                                        value={selectedEvent.highlights}
+                                        onChange={(e) => setSelectedEvent({ ...selectedEvent, highlights: e.target.value })}
+                                    />
+                                </div>
+                            )}
                             <div className="grid gap-2">
-                                <Label htmlFor="edit-highlights" className="text-sm font-medium">Highlights</Label>
-                                <Textarea
-                                    id="edit-highlights"
-                                    placeholder="Enter event highlights"
-                                    className="min-h-[100px] focus:ring-2 focus:ring-primary/20"
-                                    value={selectedEvent.highlights}
-                                    onChange={(e) => setSelectedEvent({ ...selectedEvent, highlights: e.target.value })}
+                                <Label htmlFor="edit-location" className="text-sm font-medium">Location</Label>
+                                <Input
+                                    id="edit-location"
+                                    placeholder="Enter event location"
+                                    className="focus:ring-2 focus:ring-primary/20"
+                                    value={selectedEvent.location}
+                                    onChange={(e) => setSelectedEvent({ ...selectedEvent, location: e.target.value })}
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="edit-papersReceived" className="text-sm font-medium">Papers Received</Label>
-                                    <Input
-                                        id="edit-papersReceived"
-                                        type="number"
-                                        placeholder="Number of papers"
-                                        className="focus:ring-2 focus:ring-primary/20"
-                                        value={selectedEvent.papersReceived}
-                                        onChange={(e) => setSelectedEvent({ ...selectedEvent, papersReceived: parseInt(e.target.value) })}
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="edit-papersAccepted" className="text-sm font-medium">Papers Accepted</Label>
-                                    <Input
-                                        id="edit-papersAccepted"
-                                        type="number"
-                                        placeholder="Number of papers"
-                                        className="focus:ring-2 focus:ring-primary/20"
-                                        value={selectedEvent.papersAccepted}
-                                        onChange={(e) => setSelectedEvent({ ...selectedEvent, papersAccepted: parseInt(e.target.value) })}
-                                    />
-                                </div>
-                            </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="edit-journalDetails" className="text-sm font-medium">Journal Details</Label>
-                                <Textarea
-                                    id="edit-journalDetails"
-                                    placeholder="Enter journal publication details"
-                                    className="min-h-[100px] focus:ring-2 focus:ring-primary/20"
-                                    value={selectedEvent.journalDetails}
-                                    onChange={(e) => setSelectedEvent({ ...selectedEvent, journalDetails: e.target.value })}
+                                <Label htmlFor="edit-registrationLink" className="text-sm font-medium">Registration Link (optional)</Label>
+                                <Input
+                                    id="edit-registrationLink"
+                                    placeholder="https://example.com/register"
+                                    className="focus:ring-2 focus:ring-primary/20"
+                                    value={selectedEvent.registrationLink}
+                                    onChange={(e) => setSelectedEvent({ ...selectedEvent, registrationLink: e.target.value })}
                                 />
                             </div>
                         </div>

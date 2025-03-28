@@ -80,6 +80,7 @@ export interface Post {
   id: string;
   author: Author;
   content: string;
+  title?: string;  // Add title field as optional
   image?: string;
   tags: string[];
   visibility: string;

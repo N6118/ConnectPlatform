@@ -85,9 +85,17 @@ export async function buildRequest<T = any>(
       ),
     };
     
-    // For methods with body, stringify the body if it's not already a string
-    if (mergedConfig.body && typeof mergedConfig.body !== 'string') {
+    // For methods with body, stringify the body if it's not already a string and not FormData
+    if (mergedConfig.body && typeof mergedConfig.body !== 'string' && !(mergedConfig.body instanceof FormData)) {
       mergedConfig.body = JSON.stringify(mergedConfig.body);
+    }
+    
+    // If using FormData, let the browser set the Content-Type header
+    if (mergedConfig.body instanceof FormData) {
+      // Remove content-type to let browser set it with proper boundary
+      if (mergedConfig.headers && 'Content-Type' in mergedConfig.headers) {
+        delete mergedConfig.headers['Content-Type'];
+      }
     }
     
     // Remove useAuth from the final config as it's not a valid fetch option

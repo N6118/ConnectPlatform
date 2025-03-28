@@ -7,6 +7,7 @@ import { Post, Author } from '@/pages/types';
 export interface ProfileInfo {
   id: string;
   name: string;
+  headline?: string;
   rollNo: string;
   branch: string;
   course: string;
@@ -31,63 +32,59 @@ export interface ProfileInfo {
  * Interface for user profile response from API
  */
 export interface UserProfileResponse {
-  data: {
-    id: number;
-    username: string;
-    email: string;
-    name: string;
-    profilePicture: string | null;
-    headline: string;
-    role: string;
-    post: Array<{
-      id: string;
-      type: string;
-      visibility: string;
-      content: string;
-      createdAt: string;
-      likes: number;
-      comments: number;
-      isLikedByUser: boolean | null;
-      isBookmarked: boolean | null;
-      author: {
-        name: string | null;
-        profilePicture: string | null;
-        headline: string;
-      };
-      media: string | null;
-      tags: string[] | null;
-      commentList: any[] | null;
-    }> | null;
-    socialLinks: {
-      github: string;
-      linkedin: string;
-      portfolio: string;
+  id: number;
+  username: string;
+  email: string;
+  name: string;
+  profilePicture: string | null;
+  headline: string;
+  role: string;
+  post: Array<{
+    id: string;
+    type: string;
+    visibility: string;
+    content: string;
+    createdAt: string;
+    likes: number;
+    comments: number;
+    isLikedByUser: boolean | null;
+    isBookmarked: boolean | null;
+    author: {
+      name: string | null;
+      profilePicture: string | null;
+      headline: string;
     };
-    studentDetails: {
-      enrollmentNumber: string;
-      branch: string;
-      course: string;
-      college: string;
-      semester: string;
-      graduationYear: string;
-      section: string;
-    };
-    facultyDetails?: {
-      employeeId: string;
-      department: string;
-      designation: string;
-      specialization: string;
-      qualification: string;
-    };
-    achievement: string[];
-    interest: string[];
-    about?: string;
-    followers?: number;
-    following?: number;
-    active: boolean;
+    media: string | null;
+    tags: string[] | null;
+    commentList: any[] | null;
+  }> | null;
+  socialLinks: {
+    github: string;
+    linkedin: string;
+    portfolio: string;
   };
-  message: string;
-  count: number;
+  studentDetails: {
+    enrollmentNumber: string;
+    branch: string;
+    course: string;
+    college: string;
+    semester: string;
+    graduationYear: string;
+    section: string;
+  };
+  facultyDetails?: {
+    employeeId: string;
+    department: string;
+    designation: string;
+    specialization: string;
+    qualification: string;
+  };
+  achievement: string[];
+  interest: string[];
+  about?: string;
+  followers?: number;
+  following?: number;
+  active: boolean;
 }
 
 /**
@@ -155,8 +152,8 @@ export interface CreateWorkItemData {
  */
 export interface UpdateProfileData {
   about?: string;
-  achievements?: string[];
-  interests?: string[];
+  achievement?: string[];
+  interest?: string[];
   socialLinks?: {
     github?: string;
     linkedin?: string;
@@ -283,6 +280,20 @@ export const profileService = {
    */
   deletePost: async (postId: string): Promise<ApiResponse<void>> => {
     return api.delete(`posts/${postId}`);
+  },
+
+  /**
+   * Update user profile using PATCH endpoint
+   */
+  updateUserProfile: async (username: string, updateData: any): Promise<ApiResponse<UserProfileResponse>> => {
+    console.log(`PATCH request to user/${username} with data:`, JSON.stringify(updateData, null, 2));
+    
+    // Ensure the about field is correctly formatted if it exists
+    if (updateData.about !== undefined) {
+      console.log('About field present:', updateData.about);
+    }
+    
+    return api.patch<UserProfileResponse>(`user/${username}`, updateData);
   },
 };
 

@@ -2,15 +2,38 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Plus, Image, Link2 } from "lucide-react"
 import CreatePostModal from "./CreatePostModal"
+import { PostData } from "@/services/post"
 
-const CreatePostButton = () => {
+interface CreatePostButtonProps {
+  onPostCreated?: (post: PostData) => void;
+  userData?: {
+    name: string;
+    role: string;
+    avatar: string;
+  };
+}
+
+const CreatePostButton = ({ onPostCreated, userData: propUserData }: CreatePostButtonProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  // Mock user data without requiring authentication
-  const userData = {
+  // Use provided userData or fallback to default
+  const userData = propUserData || {
     name: "Guest User",
     role: "student",
     avatar: "https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDI0LTAxL3Jhd3BpeGVsb2ZmaWNlMTJfcGhvdG9fb2ZfeW91bmdfaW5kaWFuX2dpcmxfaG9sZGluZ19zdHVkZW50X2JhY19hNDdmMzk1OS0zZDAyLTRiZWEtYTEzOS1lYzI0ZjdhNjEwZGFfMS5qcGc.jpg"
+  }
+
+  const handlePostCreated = (post: PostData) => {
+    // Close the modal
+    setIsModalOpen(false)
+    
+    // Call the provided callback if it exists
+    if (onPostCreated) {
+      onPostCreated(post)
+    } else {
+      // Default behavior if no callback provided
+      console.log('New post created:', post)
+    }
   }
 
   return (
@@ -60,10 +83,7 @@ const CreatePostButton = () => {
       <CreatePostModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)}
-        onPostCreated={(post) => {
-          console.log('New post created:', post)
-        }}
-        userData={userData}
+        onPostCreated={handlePostCreated}
       />
     </div>
   )

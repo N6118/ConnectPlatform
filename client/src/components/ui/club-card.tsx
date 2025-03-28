@@ -12,13 +12,6 @@ export type Club = {
   banner: string;
   description: string;
   members: number;
-  rating: number;
-  achievements: {
-    id: number;
-    title: string;
-    description: string;
-    date: string;
-  }[];
   icon: LucideIcon;
   joined: boolean;
   memberCount: {
@@ -83,13 +76,11 @@ export function ClubCard({ club, onJoinToggle }: ClubCardProps) {
             </p>
           </div>
         </div>
-        <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <Users className="h-4 w-4" />
             {club.memberCount.total}
           </span>
-          <span>★ {club.rating.toFixed(1)}</span>
-          <span>{club.achievements.length} achievements</span>
         </div>
         <Button
           onClick={(e) => {

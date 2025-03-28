@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EventCarousel } from "@/components/ui/event-carousel";
 import { ClubCard } from "@/components/ui/club-card";
 import { Input } from "@/components/ui/input";
@@ -22,10 +22,13 @@ import {
   Gamepad2,
   Users,
   Trophy,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Club as BaseClub } from "@/components/ui/club-card";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
+import { clubService, ClubData } from "@/services/club";
+import { useToast } from "@/hooks/use-toast";
 
 // Extend the base Club type to include roles
 type Club = BaseClub & {
@@ -37,59 +40,168 @@ type Club = BaseClub & {
   tags?: string[];
 };
 
-const upcomingEvents = [
+// Type for events shared between clubs.tsx and EventManagement.tsx
+interface ClubEvent {
+  id: number;
+  natureOfEvent: string;
+  typeOfEvent: string;
+  theme: string[];
+  fundingAgency: string;
+  dates: {
+    start: string;
+    end: string;
+  };
+  chiefGuest: string;
+  otherSpeakers: string[];
+  participantsCount: number;
+  highlights: string;
+  isCompleted?: boolean;
+  clubId?: number;
+  clubName?: string;
+  location?: string;
+  banner?: string;
+  description?: string;
+  capacity?: number;
+  registeredUsers?: {
+    id: number;
+    username: string;
+    profilePicture?: string;
+  }[];
+  // For backward compatibility with EventCarousel
+  title?: string;
+  date?: string;
+  time?: string;
+}
+
+// Using same events format from event management to maintain sync
+const upcomingEvents: ClubEvent[] = [
   {
     id: 1,
+    natureOfEvent: "CLUBS",
+    typeOfEvent: "WORKSHOP",
+    theme: ["AI and Machine Learning", "Deep Learning"],
+    fundingAgency: "None",
+    dates: {
+      start: "2024-03-15",
+      end: "2024-03-15"
+    },
+    chiefGuest: "Dr. John Smith",
+    otherSpeakers: ["Dr. Sarah Johnson"],
+    participantsCount: 30,
+    highlights: "",
+    isCompleted: false,
+    clubId: 1,
+    clubName: "AI Club",
+    location: "Tech Lab 101",
+    banner: "https://images.unsplash.com/photo-1591453089816-0fbb971b454c?auto=format&fit=crop&q=80&w=800",
+    description: "Learn the fundamentals of deep learning in this hands-on workshop.",
+    capacity: 30,
+    // For backward compatibility
     title: "AI Workshop: Deep Learning Basics",
     date: "2024-03-15",
     time: "14:00",
-    location: "Tech Lab 101",
-    clubId: 1,
-    clubName: "AI Club",
-    banner:
-      "https://images.unsplash.com/photo-1591453089816-0fbb971b454c?auto=format&fit=crop&q=80&w=800",
-    description:
-      "Learn the fundamentals of deep learning in this hands-on workshop.",
-    capacity: 30,
     registeredUsers: [
       {
         id: 1,
         username: "john_doe",
         profilePicture: "https://example.com/profile1.jpg"
       }
-      // ... more registered users
     ]
   },
   {
     id: 2,
-    title: "Robotics Competition Prep",
-    date: "2024-03-18",
-    time: "15:30",
-    location: "Engineering Workshop",
+    natureOfEvent: "CLUBS",
+    typeOfEvent: "WORKSHOP",
+    theme: ["Robotics", "Engineering"],
+    fundingAgency: "None",
+    dates: {
+      start: "2024-03-18",
+      end: "2024-03-18"
+    },
+    chiefGuest: "Prof. David Wilson",
+    otherSpeakers: ["Dr. Emma Davis"],
+    participantsCount: 0,
+    highlights: "",
+    isCompleted: false,
     clubId: 2,
     clubName: "Robotics Club",
-    banner:
-      "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?auto=format&fit=crop&q=80&w=800",
-    description:
-      "Prepare for the upcoming robotics competition with our expert team.",
+    location: "Engineering Workshop",
+    banner: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?auto=format&fit=crop&q=80&w=800",
+    description: "Prepare for the upcoming robotics competition with our expert team.",
     capacity: 20,
+    // For backward compatibility
+    title: "Robotics Competition Prep",
+    date: "2024-03-18",
+    time: "15:30"
   },
   {
     id: 3,
-    title: "Hackathon Kickoff",
-    date: "2024-03-20",
-    time: "09:00",
-    location: "Innovation Hub",
+    natureOfEvent: "CLUBS",
+    typeOfEvent: "HACKATHON",
+    theme: ["Coding", "Innovation"],
+    fundingAgency: "None",
+    dates: {
+      start: "2024-03-20",
+      end: "2024-03-21"
+    },
+    chiefGuest: "Henry Lee",
+    otherSpeakers: ["Jack Wilson", "Kelly Zhang"],
+    participantsCount: 0,
+    highlights: "",
+    isCompleted: false,
     clubId: 3,
     clubName: "Coding Club",
-    banner:
-      "https://images.unsplash.com/photo-1627398242454-45a1465c2479?auto=format&fit=crop&q=80&w=800",
+    location: "Innovation Hub",
+    banner: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?auto=format&fit=crop&q=80&w=800",
     description: "Join us for an exciting 24-hour coding challenge!",
     capacity: 50,
-  },
+    // For backward compatibility
+    title: "Hackathon Kickoff",
+    date: "2024-03-20",
+    time: "09:00"
+  }
 ];
 
-const clubs: Club[] = [
+// Mapping of club names to their respective icons
+const clubIconMap: Record<string, any> = {
+  "AI Club": Brain,
+  "Robotics Club": Rocket,
+  "Coding Club": Code,
+  "Gaming Club": Gamepad2,
+  // Add more mappings as needed
+};
+
+// Function to convert ClubData from backend to frontend Club type
+const mapClubDataToClub = (clubData: ClubData): Club => {
+  const clubName = clubData.name;
+  const icon = clubIconMap[clubName] || Users;
+  const totalMembers = clubData.members?.length || 0;
+  const leaders = clubData.officeBearers?.length || 0;
+
+  return {
+    id: clubData.id,
+    name: clubName,
+    banner: `https://media.istockphoto.com/id/1455935808/photo/technical-college-students-exchanging-ideas.jpg?s=612x612&w=0&k=20&c=dBX_083kTILhRsHblEf89cpabyz7cuXA-UYLLPyxvP0=`,
+    description: clubData.description,
+    members: totalMembers,
+    icon,
+    joined: false,
+    memberCount: {
+      total: totalMembers,
+      leaders,
+      members: totalMembers - leaders,
+    },
+    roles: clubData.officeBearers?.map(bearer => ({
+      name: bearer.role,
+      member: bearer.name,
+      permissions: bearer.details ? [bearer.details] : undefined,
+    })) || [],
+    tags: [clubData.department.toLowerCase()]
+  };
+};
+
+// Fallback clubs for development/testing
+const fallbackClubs: Club[] = [
   {
     id: 1,
     name: "AI Club",
@@ -98,21 +210,6 @@ const clubs: Club[] = [
     description:
       "Explore cutting-edge AI and machine learning projects with hands-on experience.",
     members: 128,
-    rating: 4.8,
-    achievements: [
-      {
-        id: 1,
-        title: "Best Technical Club 2023",
-        description: "Awarded for outstanding technical contributions",
-        date: "2023-12-01"
-      },
-      {
-        id: 2,
-        title: "Innovation Award",
-        description: "For pioneering AI research initiatives",
-        date: "2023-10-15"
-      }
-    ],
     icon: Brain,
     joined: false,
     memberCount: {
@@ -136,21 +233,6 @@ const clubs: Club[] = [
     description:
       "Build amazing robots and compete in international robotics competitions.",
     members: 95,
-    rating: 4.9,
-    achievements: [
-      {
-        id: 1,
-        title: "International Robotics Champion",
-        description: "First place in IRO 2023",
-        date: "2023-11-15"
-      },
-      {
-        id: 2,
-        title: "Best Engineering Design",
-        description: "National Robotics Competition",
-        date: "2023-09-20"
-      }
-    ],
     icon: Rocket,
     joined: false,
     memberCount: {
@@ -172,21 +254,6 @@ const clubs: Club[] = [
     description:
       "Level up your programming skills through exciting challenges and projects.",
     members: 156,
-    rating: 4.7,
-    achievements: [
-      {
-        id: 1,
-        title: "Hackathon Winners",
-        description: "First place in University Hackathon",
-        date: "2023-12-10"
-      },
-      {
-        id: 2,
-        title: "Best Software Project",
-        description: "Annual Tech Exhibition",
-        date: "2023-08-30"
-      }
-    ],
     icon: Code,
     joined: false,
     memberCount: {
@@ -210,21 +277,6 @@ const clubs: Club[] = [
     description:
       "Join competitive gaming tournaments and casual gaming sessions.",
     members: 89,
-    rating: 4.6,
-    achievements: [
-      {
-        id: 1,
-        title: "ESports Tournament Victory",
-        description: "Inter-University Gaming Championship",
-        date: "2023-11-30"
-      },
-      {
-        id: 2,
-        title: "Community Building Award",
-        description: "Excellence in Gaming Community",
-        date: "2023-07-15"
-      }
-    ],
     icon: Gamepad2,
     joined: false,
     memberCount: {
@@ -241,11 +293,47 @@ const clubs: Club[] = [
 ];
 
 export default function StudentClubs() {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [showJoinedOnly, setShowJoinedOnly] = useState(false);
-  const [sortBy, setSortBy] = useState("popular");
-  const [clubsList, setClubsList] = useState(clubs);
+  const [clubsList, setClubsList] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
+
+  // Fetch clubs from backend
+  useEffect(() => {
+    const fetchClubs = async () => {
+      setLoading(true);
+      try {
+        const response = await clubService.getAllClubs();
+        if (response.success && response.data) {
+          // Map ClubData to Club type
+          const transformedClubs = response.data.map(mapClubDataToClub);
+          setClubsList(transformedClubs);
+        } else {
+          toast({
+            title: "Error",
+            description: response.error || "Failed to fetch clubs",
+            variant: "destructive",
+          });
+          // Use fallback clubs if API call fails
+          setClubsList(fallbackClubs);
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred while fetching clubs",
+          variant: "destructive",
+        });
+        // Use fallback clubs if API call fails
+        setClubsList(fallbackClubs);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClubs();
+  }, [toast]);
 
   const handleJoinToggle = (clubId: number) => {
     setClubsList((prevClubs) =>
@@ -260,24 +348,11 @@ export default function StudentClubs() {
     );
   };
 
-  const filteredClubs = clubsList
-    .filter(
-      (club) =>
-        club.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        (showJoinedOnly ? club.joined : true),
-    )
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "popular":
-          return b.members - a.members;
-        case "rating":
-          return b.rating - a.rating;
-        case "achievements":
-          return b.achievements.length - a.achievements.length;
-        default:
-          return 0;
-      }
-    });
+  const filteredClubs = clubsList.filter(
+    (club) =>
+      club.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      (showJoinedOnly ? club.joined : true),
+  );
 
   return (
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
@@ -324,13 +399,6 @@ export default function StudentClubs() {
                       0,
                     )}
                   </Badge>
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <Trophy className="h-3 w-3" />
-                    {clubsList.reduce(
-                      (acc, club) => acc + club.achievements.length,
-                      0,
-                    )}
-                  </Badge>
                 </div>
               </div>
 
@@ -345,19 +413,6 @@ export default function StudentClubs() {
                     className="pl-10"
                   />
                 </div>
-
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="popular">Most Popular</SelectItem>
-                    <SelectItem value="rating">Highest Rated</SelectItem>
-                    <SelectItem value="achievements">
-                      Most Achievements
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
 
                 <Button
                   onClick={() => setShowJoinedOnly(!showJoinedOnly)}
@@ -376,7 +431,17 @@ export default function StudentClubs() {
               </div>
             </div>
 
-            {filteredClubs.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-12 bg-card rounded-xl shadow-sm">
+                <Loader2 className="h-12 w-12 text-primary mx-auto mb-4 animate-spin" />
+                <h3 className="text-xl font-semibold text-foreground mb-2">
+                  Loading clubs...
+                </h3>
+                <p className="text-muted-foreground">
+                  Please wait while we fetch club information
+                </p>
+              </div>
+            ) : filteredClubs.length === 0 ? (
               <div className="text-center py-12 bg-card rounded-xl shadow-sm">
                 <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-foreground mb-2">
