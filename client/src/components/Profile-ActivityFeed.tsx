@@ -35,6 +35,7 @@ import {
 import { Post, Author } from "@/pages/types";
 import { PostData } from "@/services/post";
 import CreatePostButton from "@/components/CommonDashboard-components/CreatePostButton";
+import { api } from "@/services/api";
 
 // Helper function to convert PostData to Post
 const convertPostDataToPost = (postData: PostData, author: Author): Post => {
@@ -131,21 +132,11 @@ const createPost = async (clubId: number, post: Post) => {
     authorId: post.author?.id ? Number(post.author.id) || undefined : undefined
   };
   
-  const response = await fetch(`/api/clubs/${clubIdNum}/posts`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(postData),
-  });
-  return response.json();
+  return api.post(`clubs/${clubIdNum}/posts`, postData);
 };
 
 const updatePost = async (clubId: number, postId: string, post: Post) => {
   console.log('Updating post with data:', JSON.stringify(post));
-  
-  // Make sure club ID is treated as a number
-  const clubIdNum = Number(clubId) || 1;
   
   // Ensure proper format for API request
   const postData = {
@@ -153,21 +144,11 @@ const updatePost = async (clubId: number, postId: string, post: Post) => {
     authorId: post.author?.id ? Number(post.author.id) || undefined : undefined
   };
   
-  const response = await fetch(`/api/clubs/${clubIdNum}/posts/${postId}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(postData),
-  });
-  return response.json();
+  return api.patch(`posts/${postId}`, postData);
 };
 
 const deletePost = async (clubId: number, postId: string) => {
-  const response = await fetch(`/api/clubs/${clubId}/posts/${postId}`, {
-    method: 'DELETE',
-  });
-  return response.json();
+  return api.delete(`post/${postId}`);
 };
 
 // Profile-ActivityFeed custom modal wrapper

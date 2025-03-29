@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminNavbar from "@/components/navigation/AdminNavbar";
 import AdminMobileBottomNav from "@/components/navigation/AdminMobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -13,27 +13,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { eventService, Event, CreateEventData } from "@/services/event";
 
-interface Event {
-    id: number;
-    title: string;
-    natureOfEvent: string;
-    typeOfEvent: string;
-    theme: string[];
-    fundingAgency: string;
-    dates: {
-        start: string;
-        end: string;
-    };
-    location: string;
-    registrationLink?: string;
-    chiefGuest: string;
-    otherSpeakers: string[];
-    participantsCount: number;
-    highlights: string;
-    isCompleted?: boolean;
-}
-
+/**
+ * Sample events data to use as fallback if API fails
+ */
 const sampleEvents: Event[] = [
     {
         id: 1,
@@ -273,14 +257,19 @@ const EventCard = ({ event, onEdit, onDelete, onView }: {
 export const EventManagement = () => {
     const isMobile = useIsMobile();
     const [searchQuery, setSearchQuery] = useState('');
-    const [events, setEvents] = useState<Event[]>(sampleEvents);
+    const [events, setEvents] = useState<Event[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [filterType, setFilterType] = useState<string>("all");
-    const [newEvent, setNewEvent] = useState<Partial<Event>>({
+    const [isLoading, setIsLoading] = useState(true);
+    const [eventStats, setEventStats] = useState({
+        totalEvents: 0,
+        totalParticipants: 0
+    });
+    const [newEvent, setNewEvent] = useState<Partial<CreateEventData>>({
         title: '',
         natureOfEvent: '',
         typeOfEvent: '',
@@ -299,35 +288,92 @@ export const EventManagement = () => {
         isCompleted: false
     });
 
-    const handleAddEvent = () => {
-        const eventToAdd: Event = {
-            id: events.length + 1,
-            title: newEvent.title || '',
-            natureOfEvent: newEvent.natureOfEvent || '',
-            typeOfEvent: newEvent.typeOfEvent || '',
-            theme: newEvent.theme || [],
-            fundingAgency: newEvent.fundingAgency || 'None',
-            dates: {
-                start: newEvent.dates?.start || '',
-                end: newEvent.dates?.end || ''
-            },
-            location: newEvent.location || '',
-            registrationLink: newEvent.registrationLink,
-            chiefGuest: newEvent.chiefGuest || '',
-            otherSpeakers: newEvent.otherSpeakers || [],
-            participantsCount: newEvent.participantsCount || 0,
-            highlights: newEvent.highlights || '',
-            isCompleted: newEvent.isCompleted || false
-        };
+    // Load events on component mount
+    useEffect(() => {
+        fetchEvents();
+        fetchEventStatistics();
+    }, []);
 
-        setEvents([...events, eventToAdd]);
-        setIsAddDialogOpen(false);
+    const fetchEvents = async () => {
+        setIsLoading(true);
+        try {
+            const response = await eventService.getAllEvents();
+            if (response.success && response.data) {
+                setEvents(response.data);
+            } else {
+                // Set sample data if API fails
+                setEvents(sampleEvents);
+            }
+        } catch (error) {
+            console.error("Error fetching events:", error);
+            // Set sample data if API fails
+            setEvents(sampleEvents);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchEventStatistics = async () => {
+        try {
+            const response = await eventService.getEventStatistics();
+            if (response.success && response.data) {
+                setEventStats({
+                    totalEvents: response.data.totalEvents,
+                    totalParticipants: response.data.totalParticipants
+                });
+            } else {
+                // Use calculated stats from available events if API fails
+                const totalEvents = events.length;
+                const totalParticipants = events.reduce((acc, event) => acc + event.participantsCount, 0);
+                setEventStats({ totalEvents, totalParticipants });
+            }
+        } catch (error) {
+            console.error("Error fetching event statistics:", error);
+            // Use calculated stats from available events if API fails
+            const totalEvents = events.length;
+            const totalParticipants = events.reduce((acc, event) => acc + event.participantsCount, 0);
+            setEventStats({ totalEvents, totalParticipants });
+        }
+    };
+
+    const handleAddEvent = async () => {
+        try {
+            const eventToAdd: CreateEventData = {
+                title: newEvent.title || '',
+                natureOfEvent: newEvent.natureOfEvent || '',
+                typeOfEvent: newEvent.typeOfEvent || '',
+                theme: newEvent.theme || [],
+                fundingAgency: newEvent.fundingAgency || 'None',
+                dates: {
+                    start: newEvent.dates?.start || '',
+                    end: newEvent.dates?.end || ''
+                },
+                location: newEvent.location || '',
+                registrationLink: newEvent.registrationLink,
+                chiefGuest: newEvent.chiefGuest || '',
+                otherSpeakers: newEvent.otherSpeakers || [],
+                participantsCount: newEvent.participantsCount || 0,
+                highlights: newEvent.highlights || '',
+                isCompleted: newEvent.isCompleted || false
+            };
+
+            const response = await eventService.createEvent(eventToAdd);
+            
+            if (response.success && response.data) {
+                setEvents([...events, response.data]);
+                setIsAddDialogOpen(false);
+                fetchEventStatistics();
+            }
+        } catch (error) {
+            console.error("Error creating event:", error);
+        }
+
         setNewEvent({
             title: '',
             natureOfEvent: '',
             typeOfEvent: '',
             theme: [],
-            fundingAgency: 'None',
+            fundingAgency: '',
             dates: {
                 start: '',
                 end: ''
@@ -347,13 +393,22 @@ export const EventManagement = () => {
         setIsEditDialogOpen(true);
     };
 
-    const handleEditSubmit = () => {
+    const handleEditSubmit = async () => {
         if (selectedEvent) {
-            setEvents(events.map(event => 
-                event.id === selectedEvent.id ? selectedEvent : event
-            ));
-            setIsEditDialogOpen(false);
-            setSelectedEvent(null);
+            try {
+                const response = await eventService.updateEvent(selectedEvent.id, selectedEvent);
+                
+                if (response.success && response.data) {
+                    setEvents(events.map(event => 
+                        event.id === selectedEvent.id ? response.data : event
+                    ) as Event[]);
+                    setIsEditDialogOpen(false);
+                    setSelectedEvent(null);
+                    fetchEventStatistics();
+                }
+            } catch (error) {
+                console.error("Error updating event:", error);
+            }
         }
     };
 
@@ -362,11 +417,20 @@ export const EventManagement = () => {
         setIsDeleteDialogOpen(true);
     };
 
-    const handleDeleteConfirm = () => {
+    const handleDeleteConfirm = async () => {
         if (selectedEvent) {
-            setEvents(events.filter(event => event.id !== selectedEvent.id));
-            setIsDeleteDialogOpen(false);
-            setSelectedEvent(null);
+            try {
+                const response = await eventService.deleteEvent(selectedEvent.id);
+                
+                if (response.success) {
+                    setEvents(events.filter(event => event.id !== selectedEvent.id));
+                    setIsDeleteDialogOpen(false);
+                    setSelectedEvent(null);
+                    fetchEventStatistics();
+                }
+            } catch (error) {
+                console.error("Error deleting event:", error);
+            }
         }
     };
 
@@ -402,6 +466,36 @@ export const EventManagement = () => {
         }
     };
 
+    const handleSearch = async () => {
+        setIsLoading(true);
+        try {
+            const searchParams = {
+                searchTerm: searchQuery,
+                typeOfEvent: filterType !== "all" ? filterType : undefined
+            };
+            
+            const response = await eventService.searchEvents(searchParams);
+            
+            if (response.success && response.data) {
+                setEvents(response.data);
+            }
+        } catch (error) {
+            console.error("Error searching events:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Apply filters when searchQuery or filterType changes
+    useEffect(() => {
+        if (searchQuery || filterType !== "all") {
+            handleSearch();
+        } else {
+            fetchEvents();
+        }
+    }, [searchQuery, filterType]);
+
+    // Function to filter events for the UI display
     const filteredEvents = events.filter(event => {
         const matchesSearch = 
             event.typeOfEvent.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -444,7 +538,7 @@ export const EventManagement = () => {
                                             <Calendar className="h-4 w-4" />
                                             Total Events
                                         </p>
-                                        <h3 className="text-4xl font-bold mt-2 group-hover:scale-110 transition-transform">{events.length}</h3>
+                                        <h3 className="text-4xl font-bold mt-2 group-hover:scale-110 transition-transform">{eventStats.totalEvents}</h3>
                                         <p className="text-sm opacity-80 mt-1">Active events</p>
                                     </div>
                                     <div className="bg-white/10 p-3 rounded-full">
@@ -465,7 +559,7 @@ export const EventManagement = () => {
                                             Total Participants
                                         </p>
                                         <h3 className="text-4xl font-bold mt-2 group-hover:scale-110 transition-transform">
-                                            {events.reduce((acc, event) => acc + event.participantsCount, 0)}
+                                            {eventStats.totalParticipants}
                                         </h3>
                                         <p className="text-sm opacity-80 mt-1">Across all events</p>
                                     </div>
@@ -476,8 +570,6 @@ export const EventManagement = () => {
                             </CardContent>
                         </Card>
                     </motion.div>
-
-                    
                 </motion.div>
 
                 {/* Main Content */}
