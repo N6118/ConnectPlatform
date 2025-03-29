@@ -26,6 +26,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
+import { projectService, CreateProjectData } from "@/services/project";
+import { Project as ApiProject } from "@/components/ui/project-card1";
 
 interface ProjectStats {
   totalApplicants: number;
@@ -33,7 +35,10 @@ interface ProjectStats {
   completionPercentage: number;
 }
 
+// Local Project interface that includes our specific fields
+// while being compatible with some of the ApiProject fields
 interface Project {
+  id?: number;
   title: string;
   description: string;
   tag: string;
@@ -94,82 +99,7 @@ interface ProjectData {
 }
 
 export default function StudentMySpace() {
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      title: "AI Research Project",
-      description: "Exploring applications of AI in education",
-      tag: "AI",
-      status: "In Progress",
-      level: "Medium",
-      duration: "3 months",
-      mentor: "Dr. Smith",
-      prerequisites: "Basic ML knowledge",
-      techStack: "Python, TensorFlow",
-      skills: "Machine Learning, Data Analysis",
-      maxTeamSize: "4",
-      isOpenForApplications: true,
-      stats: {
-        totalApplicants: 2,
-        acceptedApplicants: 1,
-        completionPercentage: 50,
-      },
-      team: [
-        { name: "John Doe", role: "Team Member" },
-        { name: "Jane Smith", role: "Team Member" },
-      ],
-      tasks: [
-        { title: "Research", assignedTo: "John Doe", deadline: "2024-06-30", status: "Pending" },
-        { title: "Data Analysis", assignedTo: "Jane Smith", deadline: "2024-06-15", status: "Completed" },
-      ],
-      resources: [
-        { name: "AI Research Paper", type: "Document", url: "https://example.com/ai-research-paper.pdf" },
-        { name: "AI Research Dataset", type: "Dataset", url: "https://example.com/ai-research-dataset.csv" },
-      ],
-      applicants: [
-        {
-          id: "1",
-          name: "John Doe",
-          email: "john@example.com",
-          status: "pending",
-          appliedDate: "2024-03-15",
-          experience: "2 years of ML experience, worked on NLP projects",
-        },
-        {
-          id: "2",
-          name: "Jane Smith",
-          email: "jane@example.com",
-          status: "accepted",
-          appliedDate: "2024-03-14",
-          experience: "ML researcher, published papers in computer vision",
-          notes: "Strong candidate with relevant research experience",
-        },
-      ],
-    },
-    {
-      title: "Web Development",
-      description: "Building a Student collaboration platform",
-      tag: "Web",
-      status: "Not Started",
-      level: "Easy",
-      duration: "2 months",
-      mentor: "Prof. Johnson",
-      prerequisites: "HTML, CSS, JS",
-      techStack: "React, Node.js",
-      skills: "Frontend Development, API Integration",
-      maxTeamSize: "3",
-      isOpenForApplications: true,
-      stats: {
-        totalApplicants: 0,
-        acceptedApplicants: 0,
-        completionPercentage: 0,
-      },
-      team: [],
-      tasks: [],
-      resources: [],
-      applicants: [],
-    },
-  ]);
-
+  const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showModal, setShowModal] = useState(false);
@@ -180,6 +110,10 @@ export default function StudentMySpace() {
     show: boolean;
     projectTitle: string;
   }>({ show: false, projectTitle: "" });
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const isMobile = useIsMobile();
 
   const handleEditProject = (projectTitle: string) => {
     const project = projects.find((p) => p.title === projectTitle);
@@ -253,93 +187,133 @@ export default function StudentMySpace() {
 
   const handleSaveProject = async (data: ProjectData) => {
     try {
-      const response = await fetch('http://localhost:8080/api/project/createProject', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          projectName: data.title,
-          projectDescription: data.description,
-          ownerId: 1, // Default owner ID
-          prerequisites: data.prerequisites,
-          facultyMentor: 0, // Default mentor ID
-          verificationFaculty: 0, // Default verification faculty ID
-          techStack: data.techStack.split(',').map(tech => tech.trim()),
-          tags: data.tag.split(',').map(tag => tag.trim()),
-          projectDurationMonths: parseInt(data.duration),
-          projectLevel: data.level.toUpperCase(),
-          projectStatus: data.status.toUpperCase().replace(' ', '_'),
-          projectRepo: '' // Optional field
-        }),
-      });
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        "http://localhost:8000/api/project/createProject",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            projectName: data.title,
+            projectDescription: data.description,
+            ownerId: 1, // Default owner ID
+            prerequisites: data.prerequisites,
+            facultyMentor: 0, // Default mentor ID
+            verificationFaculty: 0, // Default verification faculty ID
+            techStack: data.techStack.split(",").map((tech) => tech.trim()),
+            tags: data.tag.split(",").map((tag) => tag.trim()),
+            projectDurationMonths: parseInt(data.duration),
+            projectLevel: data.level.toUpperCase(),
+            projectStatus: data.status.toUpperCase().replace(" ", "_"),
+            projectRepo: "", // Optional field
+            projectApplications: [],
+            projectTeamMembers: [],
+            projectVerifications: [],
+          }),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to create project');
+        throw new Error("Failed to create project");
       }
 
       const result = await response.json();
-      
+
       if (editingProject) {
         setProjects(
           projects.map((p) =>
-            p.title === editingProject.title
-              ? { ...p, ...data }
-              : p,
-          ),
+            p.title === editingProject.title ? { ...p, ...data } : p
+          )
         );
       } else {
-        setProjects([
-          ...projects,
-          {
-            ...data,
-            team: [],
-            tasks: [],
-            resources: [],
-            applicants: [],
-          },
-        ]);
+        // Refresh projects list
+        fetchProjects();
       }
       setShowModal(false);
       setEditingProject(null);
     } catch (error) {
-      console.error('Error creating project:', error);
+      console.error("Error creating project:", error);
       // You might want to show an error message to the user here
     }
   };
 
-  const filteredProjects = projects.filter((project) => {
-    const matchesSearch = project.title
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || project.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Convert API projects to the local Project format
+  const mapApiProjectsToLocalFormat = (apiProjects: ApiProject[]): Project[] => {
+    return apiProjects.map(apiProject => ({
+      id: apiProject.id,
+      title: apiProject.name,
+      description: apiProject.description,
+      tag: apiProject.tags.join(', '),
+      status: apiProject.status === 'Ongoing' ? 'In Progress' : 'Completed',
+      level: apiProject.projectLevel === 'EASY' ? 'Easy' : 
+             apiProject.projectLevel === 'MEDIUM' ? 'Medium' : 'Difficult',
+      duration: apiProject.projectDurationMonths?.toString() || '1',
+      mentor: apiProject.mentor || '',
+      prerequisites: apiProject.prerequisites?.join(', ') || '',
+      techStack: apiProject.techStack.join(', '),
+      skills: '',
+      maxTeamSize: '4',
+      isOpenForApplications: true,
+      team: [],
+      tasks: [],
+      resources: [],
+      applicants: []
+    }));
+  };
 
-  const isMobile = useIsMobile();
-
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const response = await projectService.getAllProjects();
+      if (response.success && response.data) {
+        const mappedProjects = mapApiProjectsToLocalFormat(response.data);
+        setProjects(mappedProjects);
+      } else {
+        console.error('Failed to fetch projects:', response.error);
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    fetchProjects();
+  }, []);
+
+  useEffect(() => {
+    const searchProjects = async () => {
       try {
-        const response = await fetch(
-          `/api/project/search?page=${page}&size=${pageSize}&searchTerm=${searchTerm}&status=${statusFilter}`
-        );
-        if (!response.ok) {
-          throw new Error('Failed to fetch projects');
+        setLoading(true);
+        const response = await projectService.searchProjects({
+          searchTerm,
+          status: statusFilter !== 'all' ? statusFilter : undefined,
+          page,
+        });
+        
+        if (response.success && response.data) {
+          const mappedProjects = mapApiProjectsToLocalFormat(response.data);
+          setProjects(mappedProjects);
+        } else {
+          console.error('Failed to search projects:', response.error);
         }
-        const data = await response.json();
-        setProjects(data.data);
       } catch (error) {
-        console.error('Error fetching projects:', error);
+        console.error('Error searching projects:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchProjects();
+    if (searchTerm || statusFilter !== 'all') {
+      searchProjects();
+    }
   }, [page, pageSize, searchTerm, statusFilter]);
+
+  const filteredProjects = projects;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
@@ -389,28 +363,34 @@ export default function StudentMySpace() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
-              <ProjectCard
-                key={project.title}
-                project={project}
-                userType="student"
-                onEdit={() => handleEditProject(project.title)}
-                onDelete={() => handleDeleteConfirmation(project.title)}
-                onViewApplicants={() => handleViewApplicants(project.title)}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center py-8">Loading projects...</div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProjects.map((project) => (
+                  <ProjectCard
+                    key={project.id?.toString() || project.title}
+                    project={project}
+                    userType="student"
+                    onEdit={() => handleEditProject(project.title)}
+                    onDelete={() => handleDeleteConfirmation(project.title)}
+                    onViewApplicants={() => handleViewApplicants(project.title)}
+                  />
+                ))}
+              </div>
 
-          {filteredProjects.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="text-center text-gray-500 mt-8"
-            >
-              No projects found. Click "Add Project" to get started!
-            </motion.div>
+              {filteredProjects.length === 0 && !loading && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-center text-gray-500 mt-8"
+                >
+                  No projects found. Click "Add Project" to get started!
+                </motion.div>
+              )}
+            </>
           )}
         </motion.div>
 

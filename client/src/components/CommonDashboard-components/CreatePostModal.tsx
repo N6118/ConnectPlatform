@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,19 +9,42 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { postService, PostData, CreatePostData } from "@/services/post";
+import { Post } from "@/pages/types";
+
+// Extended interface that includes id for editing posts
+interface EditPostData extends CreatePostData {
+  id?: string | number;
+}
 
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPostCreated: (post: PostData) => void;
+  editingPost?: Post | null;
 }
 
-const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPostCreated }) => {
+const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPostCreated, editingPost }) => {
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<string>("");
   const [imageUrl, setImageUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Populate form with editing post data when available
+  useEffect(() => {
+    if (editingPost) {
+      setContent(editingPost.content || "");
+      setTitle(editingPost.title || "");
+      setCategory(editingPost.type || "");
+      setImageUrl(editingPost.image || "");
+    } else {
+      // Reset form when not editing
+      setContent("");
+      setTitle("");
+      setCategory("");
+      setImageUrl("");
+    }
+  }, [editingPost]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,19 +54,38 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
       // Log what we're submitting
       console.log('Submitting post with title:', title, 'content:', content, 'category:', category);
       
-      const postData: CreatePostData = {
+      const postData: EditPostData = {
         title,
         content,
         type: category,
         media: imageUrl ? { type: "image", url: imageUrl } : undefined,
       };
+      
+      // If editing, preserve the post ID
+      if (editingPost) {
+        postData.id = editingPost.id;
+      }
 
-      const response = await postService.createPost(postData);
-      console.log('Create post response:', response);
+      let response;
+      if (editingPost) {
+        console.log('Updating existing post:', postData);
+        console.log('Post ID before update:', postData.id, 'Type:', typeof postData.id);
+        
+        // Directly use the original ID without conversion
+        const postId = editingPost.id;
+        console.log('Using original post ID for update:', postId);
+        
+        response = await postService.updatePost(postId, postData);
+      } else {
+        console.log('Creating new post:', postData);
+        response = await postService.createPost(postData);
+      }
+      
+      console.log('Post response:', response);
       
       if (response.success && response.data) {
         // Log the data before passing it to the parent
-        console.log('Post created successfully:', response.data);
+        console.log('Post operation successful:', response.data);
         onPostCreated(response.data);
         onClose();
         // Reset form
@@ -53,7 +95,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
         setImageUrl("");
       }
     } catch (error) {
-      console.error('Failed to create post:', error);
+      console.error('Failed to handle post operation:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -77,7 +119,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">Create New Post</h2>
+          <h2 className="text-2xl font-bold">
+            {editingPost ? "Edit Post" : "Create New Post"}
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
@@ -158,7 +202,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
               type="submit"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Creating..." : "Create Post"}
+              {isSubmitting 
+                ? (editingPost ? "Updating..." : "Creating...") 
+                : (editingPost ? "Update Post" : "Create Post")}
             </Button>
           </div>
         </form>

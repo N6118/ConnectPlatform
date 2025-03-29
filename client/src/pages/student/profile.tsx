@@ -150,6 +150,25 @@ export default function StudentProfile() {
           if (apiData.post && Array.isArray(apiData.post)) {
             try {
               console.log('Processing posts data:', JSON.stringify(apiData.post.slice(0, 1)));
+              
+              // DEBUG: Examine the first post structure to find any ID fields
+              if (apiData.post.length > 0) {
+                const samplePost = apiData.post[0] as any; // Type assertion to avoid TS errors
+                console.log('POST DATA STRUCTURE EXAMINATION:');
+                console.log('Post keys:', Object.keys(samplePost));
+                console.log('id:', samplePost.id, 'type:', typeof samplePost.id);
+                
+                // Check for other possible ID fields using optional chaining for safety
+                if (samplePost?._id !== undefined) console.log('_id:', samplePost._id, 'type:', typeof samplePost._id);
+                if (samplePost?.postId !== undefined) console.log('postId:', samplePost.postId, 'type:', typeof samplePost.postId);
+                
+                // Log any numeric properties that might be IDs
+                Object.entries(samplePost).forEach(([key, value]) => {
+                  if (key.includes('id') || key.includes('Id') || key.includes('ID')) {
+                    console.log(`Potential ID field - ${key}:`, value, 'type:', typeof value);
+                  }
+                });
+              }
 
               const mappedPosts = apiData.post.map((postData) => {
                 // Verify we have an id before proceeding

@@ -137,6 +137,7 @@ const createPost = async (clubId: number, post: Post) => {
 
 const updatePost = async (clubId: number, postId: string, post: Post) => {
   console.log('Updating post with data:', JSON.stringify(post));
+  console.log('Post ID for update:', postId, 'Type:', typeof postId);
   
   // Ensure proper format for API request
   const postData = {
@@ -144,6 +145,13 @@ const updatePost = async (clubId: number, postId: string, post: Post) => {
     authorId: post.author?.id ? Number(post.author.id) || undefined : undefined
   };
   
+  // Make sure we have a valid ID string
+  if (!postId) {
+    console.error('Missing post ID for update');
+    throw new Error('Missing post ID');
+  }
+  
+  // Use PATCH method for updating posts
   return api.patch(`posts/${postId}`, postData);
 };
 
@@ -163,6 +171,11 @@ const PostModalWrapper = ({
   onSubmit: (post: Post) => void;
   editingPost?: Post | null;
 }) => {
+  // Create a modified version of PostData that allows string IDs for internal use
+  interface EditablePostData extends Omit<PostData, 'id'> {
+    id?: string | number;
+  }
+
   // Handle the conversion from PostData to Post and call the parent handler
   const handlePostCreated = (postData: PostData) => {
     try {
@@ -181,14 +194,19 @@ const PostModalWrapper = ({
         avatar: "" 
       };
       
-      // When editing a post, preserve the original ID
+      // Create a local copy that we can modify with the correct ID type
+      const editablePostData = { ...postData } as EditablePostData;
+      
+      // When editing a post, preserve the original ID exactly as is - don't convert it
       if (editingPost && editingPost.id) {
-        postData.id = parseInt(editingPost.id) || new Date().getTime();
+        console.log("Preserving original post ID:", editingPost.id);
+        // Keep the ID in its original form
+        editablePostData.id = editingPost.id;
       }
       
-      const post = convertPostDataToPost(postData, author);
+      const post = convertPostDataToPost(editablePostData as PostData, author);
       
-      console.log('Converted post:', JSON.stringify(post));
+      console.log('Converted post with ID:', post.id);
       
       // Ensure the post has all required fields
       const validatedPost: Post = {
@@ -208,7 +226,7 @@ const PostModalWrapper = ({
         isEditable: true
       };
       
-      console.log('Final validated post:', JSON.stringify(validatedPost));
+      console.log('Final validated post with ID:', validatedPost.id);
       onSubmit(validatedPost);
     } catch (error) {
       console.error("Error processing post data:", error);
@@ -221,6 +239,7 @@ const PostModalWrapper = ({
       isOpen={isOpen}
       onClose={onClose}
       onPostCreated={handlePostCreated}
+      editingPost={editingPost}
     />
   );
 };
@@ -267,7 +286,23 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       console.log("Attempting to update post:", JSON.stringify(updatedPost));
       console.log("Original post ID:", editingPost.id);
       
-      const response = await updatePost(clubId, editingPost.id, updatedPost as Post);
+      // Try to find the proper ID for the API request
+      // We should use the exact string ID provided by the server
+      const getPostId = () => {
+        // Use a type assertion to access potentially missing properties
+        const post = editingPost as any;
+        
+        // First, use the original ID as-is - DON'T try to convert to numeric
+        // This is likely what the server expects
+        console.log("Original post ID for update:", post.id);
+        return String(post.id);
+      };
+      
+      // Get the ID for the API request
+      const postId = getPostId();
+      console.log("Using post ID for update:", postId);
+      
+      const response = await updatePost(clubId, postId, updatedPost as Post);
       console.log("Update post response:", response);
       
       if (response && response.data) {

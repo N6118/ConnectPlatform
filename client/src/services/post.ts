@@ -141,8 +141,9 @@ export const postService = {
   /**
    * Update a post
    */
-  updatePost: async (id: number, postData: Partial<CreatePostData>): Promise<ApiResponse<PostData>> => {
-    const response = await api.put<PostData>(`posts/${id}`, postData);
+  updatePost: async (id: string | number, postData: Partial<CreatePostData>): Promise<ApiResponse<PostData>> => {
+    console.log(`Updating post with ID ${id} using endpoint: posts/${id} with PATCH method`);
+    const response = await api.patch<PostData>(`posts/${id}`, postData);
     
     if (response.success && response.data) {
       return {
