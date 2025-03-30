@@ -30,21 +30,73 @@ export interface ClubData {
   name: string;
   description: string;
   department: string;
-  officeBearers: {
+  banner?: string;
+  logo?: string;
+  tags?: string[];
+  createdBy?: {
+    username: string;
+    name: string;
+    profilePicture: string | null;
+    headline: string;
+    studentDetails?: {
+      enrollmentNumber: string;
+      branch: string;
+      course: string;
+      college: string;
+      semester: string;
+      graduationYear: string;
+      section: string;
+    };
+    facultyDetails?: {
+      employeeId: string;
+      department: string;
+      designation: string;
+      specialization: string;
+      qualification: string;
+    };
+    role: string;
+  };
+  advisor?: {
+    username: string;
+    name: string;
+    profilePicture: string | null;
+    headline: string;
+    role: string;
+    studentDetails?: {
+      enrollmentNumber: string;
+      branch: string;
+      course: string;
+      college: string;
+      semester: string;
+      graduationYear: string;
+      section: string;
+    };
+    facultyDetails?: {
+      employeeId: string;
+      department: string;
+      designation: string;
+      specialization: string;
+      qualification: string;
+    };
+  };
+  officeBearers?: {
     name: string;
     role: string;
     details: string;
   }[];
-  members: {
+  members?: {
+    clubId: number;
+    clubName: string;
     rollNo: string;
-    name: string;
+    role: string;
+    userName: string;
   }[];
-  otherDetails: string;
-  planOfAction: {
+  otherDetails?: string;
+  planOfAction?: {
     summary: string;
     budget: number;
   };
-  events: {
+  events?: {
     name: string;
     description: string;
     date: string;
@@ -52,11 +104,14 @@ export interface ClubData {
     awards: string;
     remarks: string;
   }[];
-  achievements: ClubAchievement[];
-  advisor: string;
-  clubHead: string;
+  achievements?: ClubAchievement[];
+  clubHead?: string;
   createdAt: string;
   updatedAt: string;
+  userMember?: boolean;
+  userRole?: string | null;
+  canEdit?: boolean;
+  active?: boolean;
 }
 
 /**
@@ -119,6 +174,40 @@ export interface ClubEventData {
 export interface MembershipData {
   month: string;
   [key: string]: string | number;
+}
+
+/**
+ * Interface for club membership data
+ */
+export interface ClubMembershipData {
+  clubId: number;
+  userId?: number;
+  username?: string;
+  rollNo?: string;
+  role?: string;
+  status?: string;
+}
+
+/**
+ * Interface for club event data
+ */
+export interface ClubEvent {
+  id?: number;
+  title: string;
+  description: string;
+  date: string;
+  type: string;
+  location: string;
+  registrationLink?: string;
+  natureOfEvent?: string;
+  theme?: string[];
+  fundingAgency?: string;
+  chiefGuest?: string;
+  otherSpeakers?: string[];
+  participantsCount?: number;
+  isCompleted?: boolean;
+  isPublic?: boolean;
+  clubId: number;
 }
 
 /**
@@ -446,5 +535,81 @@ export const clubService = {
    */
   deleteAchievement: async (clubId: number, achievementId: number): Promise<ApiResponse<void>> => {
     return api.delete(`clubs/${clubId}/achievements/${achievementId}`);
+  },
+
+  /**
+   * Join a club (add member)
+   */
+  joinClub: async (membershipData: ClubMembershipData): Promise<ApiResponse<any>> => {
+    return api.post('clubs/members', membershipData);
+  },
+
+  /**
+   * Leave a club (remove member)
+   */
+  leaveClub: async (membershipData: ClubMembershipData): Promise<ApiResponse<any>> => {
+    return api.delete('clubs/members', { body: membershipData });
+  },
+
+  /**
+   * Update club membership
+   */
+  updateMembership: async (membershipData: ClubMembershipData): Promise<ApiResponse<any>> => {
+    return api.patch('clubs/members', membershipData);
+  },
+
+  /**
+   * Get club events
+   */
+  getClubEvents: async (clubId: number): Promise<ApiResponse<ClubEvent[]>> => {
+    const response = await api.get<ClubEvent[]>(`events?clubId=${clubId}`);
+    
+    if (response.success && response.data) {
+      return response;
+    }
+    
+    return {
+      success: false,
+      error: response.error || 'Failed to get club events',
+    };
+  },
+
+  /**
+   * Create a new club event
+   */
+  createClubEvent: async (eventData: ClubEvent): Promise<ApiResponse<ClubEvent>> => {
+    const response = await api.post<ClubEvent>('events', eventData);
+    
+    if (response.success && response.data) {
+      return response;
+    }
+    
+    return {
+      success: false,
+      error: response.error || 'Failed to create club event',
+    };
+  },
+
+  /**
+   * Update a club event
+   */
+  updateClubEvent: async (eventId: number, eventData: Partial<ClubEvent>): Promise<ApiResponse<ClubEvent>> => {
+    const response = await api.patch<ClubEvent>(`events/${eventId}`, eventData);
+    
+    if (response.success && response.data) {
+      return response;
+    }
+    
+    return {
+      success: false,
+      error: response.error || 'Failed to update club event',
+    };
+  },
+
+  /**
+   * Delete a club event
+   */
+  deleteClubEvent: async (eventId: number): Promise<ApiResponse<void>> => {
+    return api.delete(`events/${eventId}`);
   },
 }; 

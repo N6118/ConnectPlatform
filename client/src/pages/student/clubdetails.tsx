@@ -1,6 +1,6 @@
 import { useParams, Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Trophy, Users, CalendarDays, MessageCircle, ThumbsUp, Share2, Calendar, Trash2, Edit2, ExternalLink, MoreHorizontal, Repeat2, Heart } from "lucide-react";
+import { ArrowLeft, Plus, Trophy, Users, CalendarDays, MessageCircle, ThumbsUp, Share2, Calendar, Trash2, Edit2, ExternalLink, MoreHorizontal, Repeat2, Heart, UserMinus, UserPlus } from "lucide-react";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import { clubService, ClubData, ClubAchievement as ApiClubAchievement } from "@/services/club";
+import { clubService, ClubData, ClubAchievement as ApiClubAchievement, ClubMembershipData, ClubEvent } from "@/services/club";
 
 type EventType = "Hackathon" | "Workshop" | "Meeting" | "Competition" | "Other";
 
@@ -123,57 +123,46 @@ const createEmptyClub = (id: number): Club => ({
 });
 
 // Convert API club data to the format needed for the UI
-const convertApiClubToUiClub = (clubData: ClubData): Club => {
+const convertApiClubToUiClub = (clubData: any): Club => {
+  console.log('Club data received:', clubData);
+  
+  // Handle case where API returns data in a nested structure
+  const actualClubData = clubData.data || clubData;
+  
+  // Extract members and ensure they're not undefined
+  const clubMembers: any[] = actualClubData.members || [];
+  
+  console.log('Club members:', clubMembers);
+  
   return {
-    id: clubData.id,
-    name: clubData.name,
-    banner: "https://media.istockphoto.com/id/1455935808/photo/technical-college-students-exchanging-ideas.jpg?s=612x612&w=0&k=20&c=dBX_083kTILhRsHblEf89cpabyz7cuXA-UYLLPyxvP0=", 
-    logo: `https://ui-avatars.com/api/?name=${encodeURIComponent(clubData.name)}`,
-    description: clubData.description,
-    department: clubData.department,
-    planOfAction: clubData.planOfAction,
+    id: actualClubData.id,
+    name: actualClubData.name,
+    banner: actualClubData.banner || "https://media.istockphoto.com/id/1455935808/photo/technical-college-students-exchanging-ideas.jpg?s=612x612&w=0&k=20&c=dBX_083kTILhRsHblEf89cpabyz7cuXA-UYLLPyxvP0=", 
+    logo: actualClubData.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(actualClubData.name)}`,
+    description: actualClubData.description || "",
+    department: actualClubData.department || "",
+    planOfAction: actualClubData.planOfAction || {},
     memberCount: {
-      total: clubData.members?.length || 0,
-      leaders: clubData.officeBearers?.length || 0,
-      members: (clubData.members?.length || 0) - (clubData.officeBearers?.length || 0)
+      total: clubMembers.length,
+      leaders: clubMembers.filter((member: any) => member.role !== "MEMBER").length,
+      members: clubMembers.filter((member: any) => member.role === "MEMBER").length
     },
-    upcomingEvents: clubData.events?.map(event => ({
-      id: Math.random().toString(36).substring(2),
-      title: event.name,
-      description: event.description,
-      date: event.date,
-      type: "Workshop" as EventType, // Default type
-      location: "Campus",
-      remarks: event.remarks,
-      outcomes: event.outcomes
-    })) || [],
+    upcomingEvents: [],
     activityFeed: [],
-    achievements: clubData.achievements?.map(achievement => ({
+    achievements: (actualClubData.achievements || []).map((achievement: any) => ({
       id: achievement.id.toString(),
-      name: achievement.title,
-      description: achievement.description,
-      date: achievement.date,
+      name: achievement.title || "",
+      description: achievement.description || "",
+      date: achievement.date || "",
       icon: "trophy" as const,
-    })) || [],
-    members: [
-      // Add office bearers as members
-      ...(clubData.officeBearers?.map((bearer, index) => ({
-        id: `officer-${index}`,
-        name: bearer.name,
-        role: bearer.role,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(bearer.name)}`,
-        joinDate: clubData.createdAt
-      })) || []),
-      
-      // Add members
-      ...(clubData.members?.map((member, index) => ({
-        id: `member-${index}`,
-        name: member.name,
-        role: "Member",
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}`,
-        joinDate: clubData.createdAt
-      })) || [])
-    ]
+    })),
+    members: clubMembers.map((member: any, index: number) => ({
+      id: `member-${index}`,
+      name: member.userName || member.rollNo || `Member ${index + 1}`, // Use userName instead of rollNo as primary
+      role: member.role || "MEMBER",
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(member.userName || member.rollNo || `Member ${index + 1}`)}`,
+      joinDate: actualClubData.createdAt || new Date().toISOString()
+    }))
   };
 };
 
@@ -225,12 +214,32 @@ export default function StudentClubDetail() {
   const [loading, setLoading] = useState(true);
   // Add error state
   const [error, setError] = useState<string | null>(null);
+  const [isJoined, setIsJoined] = useState(false);
+  const [membershipStatus, setMembershipStatus] = useState<string | null>(null);
+  const [membershipLoading, setMembershipLoading] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [showMemberActionModal, setShowMemberActionModal] = useState(false);
+  // Add state to track userRole from API
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const sections = [
     { name: "Activities", icon: CalendarDays },
     { name: "Achievements", icon: Trophy },
     { name: "Members", icon: Users },
   ];
+
+  // Function to get current user from localStorage
+  const getCurrentUser = () => {
+    try {
+      const userDataString = localStorage.getItem('user');
+      if (!userDataString) return null;
+      
+      return JSON.parse(userDataString);
+    } catch (error) {
+      console.error('Error parsing user data from localStorage:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const loadClubData = async () => {
@@ -251,9 +260,73 @@ export default function StudentClubDetail() {
         
         console.log('Club API response:', clubResponse);
         
+        // Get user membership status from API response
+        if (clubResponse.data.userMember !== undefined) {
+          setIsJoined(clubResponse.data.userMember);
+          setMembershipStatus(clubResponse.data.userMember ? "active" : null);
+        }
+        
+        // Get user role from API response
+        if (clubResponse.data.userRole !== undefined) {
+          setUserRole(clubResponse.data.userRole);
+        }
+        
         // Convert to UI format
         const uiClub = convertApiClubToUiClub(clubResponse.data);
         setClub(uiClub);
+        
+        // Load club events from the API
+        try {
+          const eventsResponse = await clubService.getClubEvents(clubId);
+          if (eventsResponse.success && eventsResponse.data && eventsResponse.data.length > 0) {
+            console.log('Events API response:', eventsResponse);
+            
+            // Map API events to UI events format
+            const uiEvents: Event[] = eventsResponse.data.map(event => {
+              // Convert ISO date to YYYY-MM-DD format for UI
+              let displayDate = '';
+              try {
+                if (event.date) {
+                  const dateObj = new Date(event.date);
+                  displayDate = dateObj.toISOString().split('T')[0];
+                } else {
+                  displayDate = new Date().toISOString().split('T')[0];
+                }
+              } catch (err) {
+                console.warn('Error parsing date:', event.date, err);
+                displayDate = new Date().toISOString().split('T')[0];
+              }
+              
+              return {
+                id: event.id?.toString() || Math.random().toString(36).substring(2),
+                title: event.title || "",
+                description: event.description || "",
+                date: displayDate,
+                type: (event.type || "WORKSHOP") as EventType,
+                location: event.location || "Campus",
+                registrationLink: event.registrationLink,
+                natureOfEvent: event.natureOfEvent,
+                theme: event.theme,
+                fundingAgency: event.fundingAgency,
+                chiefGuest: event.chiefGuest,
+                otherSpeakers: event.otherSpeakers,
+                participantsCount: event.participantsCount,
+                isCompleted: event.isCompleted
+              };
+            });
+            
+            // Update club with events
+            setClub(prevClub => {
+              if (!prevClub) return uiClub;
+              return {
+                ...prevClub,
+                upcomingEvents: uiEvents
+              };
+            });
+          }
+        } catch (eventsError) {
+          console.warn('Error fetching club events:', eventsError);
+        }
         
         // Fetch achievements (if needed - they should already be in the club data)
         if (!uiClub.achievements || uiClub.achievements.length === 0) {
@@ -281,7 +354,7 @@ export default function StudentClubDetail() {
             author: {
               id: "1",
               name: uiClub.members[0]?.name || "Club Member",
-              role: uiClub.members[0]?.role || "Member",
+              role: uiClub.members[0]?.role || "MEMBER",
               avatar: uiClub.members[0]?.avatar || uiClub.logo,
             },
             content: `Welcome to the ${uiClub.name}! Join us for exciting events and activities.`,
@@ -325,6 +398,231 @@ export default function StudentClubDetail() {
 
     loadClubData();
   }, [clubId, toast]);
+
+  // Join club handler
+  const handleJoinClub = async () => {
+    if (!clubId) return;
+    
+    setMembershipLoading(true);
+    
+    try {
+      const currentUser = getCurrentUser();
+      
+      if (!currentUser || !currentUser.username) {
+        throw new Error("User information not available. Please log in again.");
+      }
+      
+      // Get student enrollment number to use as rollNo
+      const rollNo = currentUser.studentDetails?.enrollmentNumber;
+      
+      if (!rollNo) {
+        throw new Error("Enrollment number not found. Please update your profile.");
+      }
+      
+      const membershipData: ClubMembershipData = {
+        clubId: clubId,
+        // Don't include userId as requested
+        username: currentUser.username,
+        rollNo: rollNo,
+        role: "MEMBER",
+        status: "pending" // Or "active" depending on your business logic
+      };
+      
+      const response = await clubService.joinClub(membershipData);
+      
+      if (response.success) {
+        setIsJoined(true);
+        setMembershipStatus("pending"); // Or "active" depending on your business logic
+        
+        // Add current user to members list
+        const newMember: Member = {
+          id: Math.random().toString(36).substr(2, 9),
+          name: currentUser.name || "Current User",
+          role: "MEMBER",
+          avatar: currentUser.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || "User")}`,
+          joinDate: new Date().toISOString(),
+        };
+        
+        setClub(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            members: [...prev.members, newMember],
+            memberCount: {
+              ...prev.memberCount,
+              total: prev.memberCount.total + 1,
+              members: prev.memberCount.members + 1
+            }
+          };
+        });
+        
+        toast({
+          title: "Club Joined",
+          description: "Your request to join the club has been submitted.",
+        });
+      } else {
+        throw new Error(response.error || "Failed to join club");
+      }
+    } catch (error) {
+      console.error('Error joining club:', error);
+      toast({
+        title: "Error",
+        description: "Failed to join the club. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setMembershipLoading(false);
+    }
+  };
+
+  // Leave club handler
+  const handleLeaveClub = async () => {
+    if (!clubId) return;
+    
+    setMembershipLoading(true);
+    
+    try {
+      const currentUser = getCurrentUser();
+      
+      if (!currentUser || !currentUser.username) {
+        throw new Error("User information not available. Please log in again.");
+      }
+      
+      // Get student enrollment number to use as rollNo
+      const rollNo = currentUser.studentDetails?.enrollmentNumber;
+      
+      if (!rollNo) {
+        throw new Error("Enrollment number not found. Please update your profile.");
+      }
+      
+      const membershipData: ClubMembershipData = {
+        clubId: clubId,
+        // Don't include userId as requested
+        username: currentUser.username,
+        rollNo: rollNo
+      };
+      
+      const response = await clubService.leaveClub(membershipData);
+      
+      if (response.success) {
+        setIsJoined(false);
+        setMembershipStatus(null);
+        
+        // Remove current user from members list
+        setClub(prev => {
+          if (!prev) return null;
+          
+          // Filter out current user
+          const updatedMembers = prev.members.filter(
+            member => member.name !== currentUser.name
+          );
+          
+          return {
+            ...prev,
+            members: updatedMembers,
+            memberCount: {
+              ...prev.memberCount,
+              total: prev.memberCount.total - 1,
+              members: prev.memberCount.members - 1
+            }
+          };
+        });
+        
+        toast({
+          title: "Club Left",
+          description: "You have successfully left the club.",
+        });
+      } else {
+        throw new Error(response.error || "Failed to leave club");
+      }
+    } catch (error) {
+      console.error('Error leaving club:', error);
+      toast({
+        title: "Error",
+        description: "Failed to leave the club. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setMembershipLoading(false);
+    }
+  };
+
+  // Update member role handler
+  const handleUpdateMemberRole = async (member: Member, newRole: string) => {
+    if (!clubId) return;
+    
+    try {
+      const currentUser = getCurrentUser();
+      
+      if (!currentUser || !currentUser.username) {
+        throw new Error("User information not available. Please log in again.");
+      }
+      
+      // Get admin's roll number for authentication
+      const rollNo = currentUser.studentDetails?.enrollmentNumber;
+      
+      if (!rollNo) {
+        throw new Error("Enrollment number not found. Please update your profile.");
+      }
+      
+      // Use the member's name as username without modifying it
+      const username = member.name;
+      
+      const membershipData: ClubMembershipData = {
+        clubId: clubId,
+        username: username, // Use member's name directly
+        rollNo: rollNo,
+        role: newRole // Make sure role is set correctly
+      };
+      
+      console.log("Updating member role with data:", membershipData);
+      
+      // Explicitly call updateMembership method
+      const response = await clubService.updateMembership(membershipData);
+      
+      if (response.success) {
+        // Update member in the local state
+        setClub(prev => {
+          if (!prev) return null;
+          
+          const updatedMembers = prev.members.map(m => 
+            m.id === member.id ? { ...m, role: newRole } : m
+          );
+          
+          // Recalculate leaders and members count
+          const leaders = updatedMembers.filter(m => m.role !== "MEMBER").length;
+          const regularMembers = updatedMembers.length - leaders;
+          
+          return {
+            ...prev,
+            members: updatedMembers,
+            memberCount: {
+              total: updatedMembers.length,
+              leaders,
+              members: regularMembers
+            }
+          };
+        });
+        
+        toast({
+          title: "Member Role Updated",
+          description: `${member.name}'s role has been updated to ${newRole}.`,
+        });
+      } else {
+        throw new Error(response.error || "Failed to update member role");
+      }
+    } catch (error) {
+      console.error('Error updating member role:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update member role. Please try again.",
+        variant: "destructive",
+      });
+    }
+    
+    setShowMemberActionModal(false);
+    setSelectedMember(null);
+  };
 
   // Add error handling for invalid club ID
   if (!clubId) {
@@ -428,28 +726,140 @@ export default function StudentClubDetail() {
     setShowAchievementModal(false);
   };
 
-  const handleAddMember = (name: string, role: string) => {
-    const newMember: Member = {
-      id: Math.random().toString(36).substr(2, 9),
-      name,
-      role,
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`,
-      joinDate: new Date().toISOString(),
-    };
-    setClub((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        members: [...prev.members, newMember],
+  const handleAddMember = async (name: string, role: string, rollNo: string) => {
+    if (!clubId) return;
+    
+    try {
+      const currentUser = getCurrentUser();
+      
+      if (!currentUser || !currentUser.username) {
+        throw new Error("User information not available. Please log in again.");
+      }
+      
+      // Create username from the entered name
+      const username = name.replace(/\s+/g, '.').toLowerCase();
+      
+      // Use the entered name and created username for API call
+      const membershipData: ClubMembershipData = {
+        clubId: clubId,
+        // Don't include userId as requested
+        username: username, // Use created username from entered name
+        rollNo: rollNo,
+        role: role
       };
-    });
-    setShowMemberModal(false);
-    toast({
-      title: "Member added",
-      description: "New member has been added successfully.",
-    });
+      
+      const response = await clubService.joinClub(membershipData);
+      
+      if (response.success) {
+        setClub((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            members: [...prev.members, {
+              id: Math.random().toString(36).substr(2, 9),
+              name,
+              role,
+              avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`,
+              joinDate: new Date().toISOString(),
+            }],
+            memberCount: {
+              total: prev.memberCount.total + 1,
+              leaders: role !== "MEMBER" ? prev.memberCount.leaders + 1 : prev.memberCount.leaders,
+              members: role === "MEMBER" ? prev.memberCount.members + 1 : prev.memberCount.members,
+            }
+          };
+        });
+        
+        setShowMemberModal(false);
+        toast({
+          title: "Member added",
+          description: "New member has been added successfully.",
+        });
+      } else {
+        throw new Error(response.error || "Failed to add member");
+      }
+    } catch (error) {
+      console.error('Error adding member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add member. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
+  const handleRemoveMember = async (member: Member) => {
+    if (!clubId) return;
+    
+    try {
+      const currentUser = getCurrentUser();
+      
+      if (!currentUser || !currentUser.username) {
+        throw new Error("User information not available. Please log in again.");
+      }
+      
+      // Get student enrollment number to use as rollNo
+      const rollNo = currentUser.studentDetails?.enrollmentNumber;
+      
+      if (!rollNo) {
+        throw new Error("Enrollment number not found. Please update your profile.");
+      }
+      
+      // Generate username from member's name
+      const username = member.name.replace(/\s+/g, '.').toLowerCase();
+      
+      const membershipData: ClubMembershipData = {
+        clubId: clubId,
+        // Don't include userId
+        username: username, // Use member's username
+        rollNo: rollNo // Use authenticated user's rollNo for authorization
+      };
+      
+      const response = await clubService.leaveClub(membershipData);
+      
+      if (response.success) {
+        // Remove member from local state
+        setClub((prev) => {
+          if (!prev) return null;
+          
+          const updatedMembers = prev.members.filter(m => m.id !== member.id);
+          
+          // Recalculate leaders and members count
+          const leaders = updatedMembers.filter(m => m.role !== "MEMBER").length;
+          const regularMembers = updatedMembers.length - leaders;
+          
+          return {
+            ...prev,
+            members: updatedMembers,
+            memberCount: {
+              total: updatedMembers.length,
+              leaders,
+              members: regularMembers
+            }
+          };
+        });
+        
+        toast({
+          title: "Member removed",
+          description: `${member.name} has been removed from the club.`,
+        });
+      } else {
+        throw new Error(response.error || "Failed to remove member");
+      }
+    } catch (error) {
+      console.error('Error removing member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove member. Please try again.",
+        variant: "destructive",
+      });
+    }
+    
+    setShowMemberActionModal(false);
+    setSelectedMember(null);
+  };
+
+  // Event registration handler
   const handleEventRegistration = (eventId: string) => {
     toast({
       title: "Registration successful",
@@ -495,54 +905,100 @@ export default function StudentClubDetail() {
     });
   };
 
-  const handleAddEvent = () => {
-    const eventToAdd: Event = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: newEvent.title || "",
-      description: newEvent.description || "",
-      date: newEvent.date || new Date().toISOString().split('T')[0],
-      type: newEvent.type as EventType || "Workshop",
-      location: newEvent.location || "",
-      registrationLink: newEvent.registrationLink,
-      natureOfEvent: newEvent.natureOfEvent || "CLUBS",
-      theme: newEvent.theme || [],
-      fundingAgency: newEvent.fundingAgency || "None",
-      chiefGuest: newEvent.chiefGuest || "",
-      otherSpeakers: newEvent.otherSpeakers || [],
-      participantsCount: newEvent.participantsCount || 0,
-      isCompleted: newEvent.isCompleted || false
-    };
-
-    setClub((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        upcomingEvents: [...prev.upcomingEvents, eventToAdd],
+  const handleAddEvent = async () => {
+    if (!clubId) return;
+    
+    try {
+      // Format the date as ISO string with time component
+      const formattedDate = newEvent.date 
+        ? new Date(newEvent.date).toISOString() 
+        : new Date().toISOString();
+      
+      // Format the event data to match the API requirements
+      const eventData: ClubEvent = {
+        title: newEvent.title || "",
+        description: newEvent.description || "",
+        date: formattedDate, // Use full ISO date format
+        type: newEvent.type?.toUpperCase() || "WORKSHOP",
+        location: newEvent.location || "",
+        registrationLink: newEvent.registrationLink,
+        natureOfEvent: newEvent.natureOfEvent || "CLUBS",
+        theme: newEvent.theme || [],
+        fundingAgency: newEvent.fundingAgency || "None",
+        chiefGuest: newEvent.chiefGuest || "",
+        otherSpeakers: newEvent.otherSpeakers || [],
+        participantsCount: newEvent.participantsCount || 0,
+        isCompleted: newEvent.isCompleted || false,
+        isPublic: true, // Default to public
+        clubId: clubId
       };
-    });
-
-    setShowEventModal(false);
-    setNewEvent({
-      id: "",
-      title: "",
-      description: "",
-      date: "",
-      type: "Workshop",
-      location: "",
-      registrationLink: "",
-      natureOfEvent: "CLUBS",
-      theme: [],
-      fundingAgency: "None",
-      chiefGuest: "",
-      otherSpeakers: [],
-      participantsCount: 0,
-      isCompleted: false
-    });
-
-    toast({
-      title: "Event created",
-      description: "The event has been successfully created.",
-    });
+      
+      console.log("Creating event with data:", eventData);
+      
+      // Call the API to create the event
+      const response = await clubService.createClubEvent(eventData);
+      
+      if (response.success && response.data) {
+        // Create a local UI version of the event
+        const newUIEvent: Event = {
+          id: response.data.id?.toString() || Math.random().toString(36).substr(2, 9),
+          title: eventData.title,
+          description: eventData.description,
+          date: newEvent.date || new Date().toISOString().split('T')[0], // Keep original date format for UI
+          type: eventData.type as EventType,
+          location: eventData.location,
+          registrationLink: eventData.registrationLink,
+          natureOfEvent: eventData.natureOfEvent,
+          theme: eventData.theme,
+          fundingAgency: eventData.fundingAgency,
+          chiefGuest: eventData.chiefGuest,
+          otherSpeakers: eventData.otherSpeakers,
+          participantsCount: eventData.participantsCount,
+          isCompleted: eventData.isCompleted
+        };
+        
+        // Update the club state with the new event
+        setClub((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            upcomingEvents: [...prev.upcomingEvents, newUIEvent],
+          };
+        });
+        
+        setShowEventModal(false);
+        setNewEvent({
+          id: "",
+          title: "",
+          description: "",
+          date: "",
+          type: "Workshop",
+          location: "",
+          registrationLink: "",
+          natureOfEvent: "CLUBS",
+          theme: [],
+          fundingAgency: "None",
+          chiefGuest: "",
+          otherSpeakers: [],
+          participantsCount: 0,
+          isCompleted: false
+        });
+        
+        toast({
+          title: "Event created",
+          description: "The event has been successfully created.",
+        });
+      } else {
+        throw new Error(response.error || "Failed to create event");
+      }
+    } catch (error) {
+      console.error('Error creating event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create event. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleInputChange = (field: string, value: any) => {
@@ -569,21 +1025,70 @@ export default function StudentClubDetail() {
     setShowEditEventModal(true);
   };
 
-  const handleEditEventSubmit = () => {
-    if (selectedEvent) {
-      setClub((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          upcomingEvents: prev.upcomingEvents.map((event) => 
-            event.id === selectedEvent.id ? selectedEvent : event
-          ),
-        };
-      });
-      setShowEditEventModal(false);
+  const handleEditEventSubmit = async () => {
+    if (!selectedEvent || !clubId) return;
+    
+    try {
+      // Format the date as ISO string with time component
+      const formattedDate = selectedEvent.date 
+        ? new Date(selectedEvent.date).toISOString() 
+        : new Date().toISOString();
+      
+      // Format the event data to match the API requirements
+      const eventData: Partial<ClubEvent> = {
+        title: selectedEvent.title,
+        description: selectedEvent.description,
+        date: formattedDate, // Use full ISO date format
+        type: selectedEvent.type.toUpperCase(),
+        location: selectedEvent.location,
+        registrationLink: selectedEvent.registrationLink,
+        natureOfEvent: selectedEvent.natureOfEvent,
+        theme: selectedEvent.theme,
+        fundingAgency: selectedEvent.fundingAgency,
+        chiefGuest: selectedEvent.chiefGuest,
+        otherSpeakers: selectedEvent.otherSpeakers,
+        participantsCount: selectedEvent.participantsCount,
+        isCompleted: selectedEvent.isCompleted
+      };
+      
+      console.log("Updating event with data:", eventData);
+      
+      // Get the numeric ID from the string ID
+      const eventId = parseInt(selectedEvent.id) || 0;
+      
+      if (eventId === 0) {
+        throw new Error("Invalid event ID");
+      }
+      
+      // Call the API to update the event
+      const response = await clubService.updateClubEvent(eventId, eventData);
+      
+      if (response.success) {
+        // Update the local state
+        setClub((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            upcomingEvents: prev.upcomingEvents.map((event) => 
+              event.id === selectedEvent.id ? selectedEvent : event
+            ),
+          };
+        });
+        
+        setShowEditEventModal(false);
+        toast({
+          title: "Event updated",
+          description: "The event has been successfully updated.",
+        });
+      } else {
+        throw new Error(response.error || "Failed to update event");
+      }
+    } catch (error) {
+      console.error('Error updating event:', error);
       toast({
-        title: "Event updated",
-        description: "The event has been successfully updated.",
+        title: "Error",
+        description: "Failed to update event. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -593,19 +1098,44 @@ export default function StudentClubDetail() {
     setShowDeleteEventModal(true);
   };
 
-  const handleDeleteEventConfirm = () => {
-    if (selectedEvent) {
-      setClub((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          upcomingEvents: prev.upcomingEvents.filter((event) => event.id !== selectedEvent.id),
-        };
-      });
-      setShowDeleteEventModal(false);
+  const handleDeleteEventConfirm = async () => {
+    if (!selectedEvent || !clubId) return;
+    
+    try {
+      // Get the numeric ID from the string ID
+      const eventId = parseInt(selectedEvent.id) || 0;
+      
+      if (eventId === 0) {
+        throw new Error("Invalid event ID");
+      }
+      
+      // Call the API to delete the event
+      const response = await clubService.deleteClubEvent(eventId);
+      
+      if (response.success) {
+        // Update the local state
+        setClub((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            upcomingEvents: prev.upcomingEvents.filter((event) => event.id !== selectedEvent.id),
+          };
+        });
+        
+        setShowDeleteEventModal(false);
+        toast({
+          title: "Event deleted",
+          description: "The event has been successfully deleted.",
+        });
+      } else {
+        throw new Error(response.error || "Failed to delete event");
+      }
+    } catch (error) {
+      console.error('Error deleting event:', error);
       toast({
-        title: "Event deleted",
-        description: "The event has been successfully deleted.",
+        title: "Error",
+        description: "Failed to delete event. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -810,6 +1340,33 @@ export default function StudentClubDetail() {
                         {member.role}
                       </Badge>
                     </div>
+                    <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedMember(member);
+                              setShowMemberActionModal(true);
+                            }}
+                          >
+                            <Edit2 className="h-4 w-4 mr-2" />
+                            Change Role
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-500 focus:text-red-500"
+                            onClick={() => handleRemoveMember(member)}
+                          >
+                            <UserMinus className="h-4 w-4 mr-2" />
+                            Remove
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -878,13 +1435,30 @@ export default function StudentClubDetail() {
                 <AvatarImage src={club?.logo} alt={club?.name} />
                 <AvatarFallback>{club?.name?.slice(0, 2)}</AvatarFallback>
               </Avatar>
-              <div className="text-center sm:text-left">
+              <div className="text-center sm:text-left flex-1">
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
                   {club?.name}
                 </h1>
                 <p className="text-sm sm:text-base text-white/90 max-w-2xl">
                   {club?.description}
                 </p>
+              </div>
+              <div className="flex sm:self-end">
+                <Button
+                  variant={isJoined ? "outline" : "default"} 
+                  className={`gap-2 ${isJoined ? 'bg-background/20 hover:bg-background/30 text-white' : ''}`}
+                  onClick={isJoined ? handleLeaveClub : handleJoinClub}
+                  disabled={membershipLoading}
+                >
+                  {membershipLoading ? (
+                    <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : isJoined ? (
+                    <UserMinus className="h-4 w-4" />
+                  ) : (
+                    <UserPlus className="h-4 w-4" />
+                  )}
+                  {isJoined ? 'Leave Club' : 'Join Club'}
+                </Button>
               </div>
             </div>
           </div>
@@ -1072,14 +1646,34 @@ export default function StudentClubDetail() {
             <DialogTitle>Add New Achievement</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-4">
-            <Input placeholder="Achievement Title" />
-            <Textarea placeholder="Achievement Description" />
+            <div className="grid gap-2">
+              <Label htmlFor="achievement-title">Achievement Title</Label>
+              <Input id="achievement-title" placeholder="Achievement Title" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="achievement-description">Description</Label>
+              <Textarea id="achievement-description" placeholder="Achievement Description" />
+            </div>
             <div className="flex justify-end">
               <Button
                 onClick={() => {
-                  const title = document.querySelector("input")?.value || "";
-                  const description =
-                    document.querySelector("textarea")?.value || "";
+                  const titleInput = document.getElementById("achievement-title") as HTMLInputElement;
+                  const descriptionInput = document.getElementById("achievement-description") as HTMLTextAreaElement;
+                  
+                  const title = titleInput?.value || "";
+                  const description = descriptionInput?.value || "";
+                  
+                  console.log("Adding achievement:", { title, description });
+                  
+                  if (!title) {
+                    toast({
+                      title: "Error",
+                      description: "Title is required",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  
                   handleAddAchievement(title, description);
                 }}
               >
@@ -1096,26 +1690,49 @@ export default function StudentClubDetail() {
             <DialogTitle>Add New Member</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-4">
-            <Input placeholder="Member Name" />
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="president">President</SelectItem>
-                <SelectItem value="vice-president">Vice President</SelectItem>
-                <SelectItem value="secretary">Secretary</SelectItem>
-                <SelectItem value="treasurer">Treasurer</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="grid gap-2">
+              <Label htmlFor="member-name">Member Name</Label>
+              <Input id="member-name" placeholder="Member Name" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="roll-number">Roll Number</Label>
+              <Input id="roll-number" placeholder="Roll Number" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="member-role">Role</Label>
+              <Select defaultValue="MEMBER">
+                <SelectTrigger id="member-role">
+                  <SelectValue placeholder="Select Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="MEMBER">Member</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex justify-end">
               <Button
                 onClick={() => {
-                  const name = document.querySelector("input")?.value || "";
-                  const role =
-                    document.querySelector("select")?.value || "Member";
-                  handleAddMember(name, role);
+                  const nameInput = document.getElementById("member-name") as HTMLInputElement;
+                  const rollNumberInput = document.getElementById("roll-number") as HTMLInputElement;
+                  const roleSelect = document.getElementById("member-role") as HTMLSelectElement;
+                  
+                  const name = nameInput?.value || "";
+                  const rollNo = rollNumberInput?.value || "";
+                  const role = roleSelect?.value || "MEMBER";
+                  
+                  console.log("Adding member:", { name, rollNo, role });
+                  
+                  if (!name || !rollNo) {
+                    toast({
+                      title: "Error",
+                      description: "Name and roll number are required",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  
+                  handleAddMember(name, role, rollNo);
                 }}
               >
                 Add Member
@@ -1295,6 +1912,48 @@ export default function StudentClubDetail() {
               Delete
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Member Action Modal */}
+      <Dialog open={showMemberActionModal} onOpenChange={setShowMemberActionModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Manage Member</DialogTitle>
+            <DialogDescription>
+              Update {selectedMember?.name}'s role or remove them from the club.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Current Role: {selectedMember?.role}</Label>
+              <Select 
+                defaultValue={selectedMember?.role}
+                onValueChange={(value) => {
+                  if (selectedMember) {
+                    handleUpdateMemberRole(selectedMember, value);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="MEMBER">Member</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="destructive" 
+              onClick={() => selectedMember && handleRemoveMember(selectedMember)}
+            >
+              <UserMinus className="h-4 w-4 mr-2" />
+              Remove from Club
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

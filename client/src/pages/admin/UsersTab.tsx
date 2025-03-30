@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminNavbar from '@/components/navigation/AdminNavbar';
 import AdminMobileBottomNav from "@/components/navigation/AdminMobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -40,31 +40,68 @@ import { UserActivityChart } from '@/components/UserActivityChart';
 import { UserApproval } from '../../components/UserApproval';
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { api } from '@/services/api';
+import { profileService } from '@/services/profile';
+import { useToast } from "@/hooks/use-toast";
+import { Textarea } from '@/components/ui/textarea';
 
 // Types for different user roles
-interface BaseUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
+interface SocialLinks {
+  github: string;
+  linkedin: string;
+  portfolio: string;
+}
+
+interface StudentDetails {
+  enrollmentNumber: string;
+  branch: string;
+  course: string;
+  college: string;
+  semester: string;
+  graduationYear: string;
+  section: string;
+}
+
+interface FacultyDetails {
+  employeeId: string;
   department: string;
+  designation: string;
+  specialization: string;
+  qualification: string;
 }
 
-interface AdminUser extends BaseUser {
-  role: 'admin';
-}
-
-interface FacultyUser extends BaseUser {
-  role: 'faculty';
-}
-
-interface StudentUser extends BaseUser {
-  role: 'student';
+interface ClubMembership {
+  clubId: number;
+  clubName: string;
   rollNo: string;
-  year: number;
+  role: string;
+  userName: string;
 }
 
-type User = AdminUser | FacultyUser | StudentUser;
+interface User {
+  id: number;
+  username: string;
+  about: string;
+  email: string;
+  name: string;
+  profilePicture: string | null;
+  headline: string;
+  role: string;
+  post: any;
+  socialLinks: SocialLinks;
+  studentDetails?: StudentDetails;
+  facultyDetails?: FacultyDetails;
+  achievement: string[];
+  interest: string[];
+  clubMemberships: ClubMembership[];
+  active: boolean;
+}
+
+interface ApiResponse {
+  data: User[];
+  message: string;
+  count: number;
+}
 
 // Available departments
 const departments = [
@@ -77,44 +114,73 @@ const departments = [
   'Mechanical Engineering'
 ];
 
-// Sample data
-const sampleUsers: User[] = [
-  { id: '1', name: 'John Smith', email: 'john@admin.edu', role: 'admin', department: 'Computer Science' },
-  { id: '2', name: 'Sarah Chen', email: 'sarah@admin.edu', role: 'admin', department: 'Physics' },
-  { id: '3', name: 'Dr. James Wilson', email: 'james@faculty.edu', role: 'faculty', department: 'Computer Science' },
-  { id: '4', name: 'Dr. Emily Brown', email: 'emily@faculty.edu', role: 'faculty', department: 'Physics' },
-  { id: '5', name: 'Alice Johnson', email: 'alice@student.edu', role: 'student', department: 'Computer Science', rollNo: 'CS2021001', year: 3 },
-  { id: '6', name: 'Bob Wilson', email: 'bob@student.edu', role: 'student', department: 'Physics', rollNo: 'PH2021002', year: 2 },
-];
-
-// Analytics data
-const departmentData = [
-  { name: 'Computer Science', value: 45 },
-  { name: 'Physics', value: 30 },
-  { name: 'Electrical Engineering', value: 18 },
-  { name: 'Mechanical Engineering', value: 22 },
-];
-
-const yearWiseData = [
-  { year: '1st Year', students: 150 },
-  { year: '2nd Year', students: 120 },
-  { year: '3rd Year', students: 100 },
-  { year: '4th Year', students: 90 },
-];
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
-
 export const UsersTab = () => {
   const isMobile = useIsMobile();
-  const [users, setUsers] = useState<User[]>(sampleUsers);
+  const { toast } = useToast();
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedRole, setSelectedRole] = useState<'admin' | 'faculty' | 'student'>('admin');
+  const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'FACULTY' | 'STUDENT'>('ADMIN');
   const [searchQuery, setSearchQuery] = useState('');
+  const [editFormData, setEditFormData] = useState<any>({});
+  const [createFormData, setCreateFormData] = useState<any>({
+    name: '',
+    email: '',
+    username: '',
+    password: '',
+    role: '',
+    about: '',
+    headline: '',
+    socialLinks: {
+      github: '',
+      linkedin: '',
+      portfolio: ''
+    }
+  });
+  
+  // Fetch users on component mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  // Add animation variants
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get('search/users');
+      console.log('API Response:', response);
+      
+      if (response.success) {
+        // Extract actual data from nested response
+        if (response.data && Array.isArray(response.data.data)) {
+          console.log('Users data array found:', response.data.data);
+          setUsers(response.data.data);
+        } else if (Array.isArray(response.data)) {
+          console.log('Users array found directly:', response.data);
+          setUsers(response.data);
+        } else {
+          console.warn('Unexpected response format:', response.data);
+          setUsers([]);
+        }
+      } else {
+        throw new Error(response.error || 'Failed to fetch users');
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch users',
+        variant: 'destructive',
+      });
+      setUsers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -133,14 +199,120 @@ export const UsersTab = () => {
     }
   };
 
-  const handleDeleteUser = (userId: string) => {
-    setUsers(users.filter(user => user.id !== userId));
+  const handleDeleteUser = async (username: string) => {
+    try {
+      // Ensure the path matches the exact endpoint structure
+      const response = await api.delete(`user/deleteUser/${username}`);
+      console.log('Delete response:', response); // Debug - remove after confirming
+      
+      if (response.success) {
+        toast({
+          title: 'Success',
+          description: 'User deleted successfully',
+        });
+        fetchUsers(); // Refresh the user list
+      } else {
+        throw new Error(response.error || 'Failed to delete user');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete user',
+        variant: 'destructive',
+      });
+    }
     setIsDeleteDialogOpen(false);
   };
 
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
+    setEditFormData({
+      name: user.name,
+      email: user.email,
+      about: user.about,
+      headline: user.headline,
+      socialLinks: {
+        github: user.socialLinks.github || '',
+        linkedin: user.socialLinks.linkedin || '',
+        portfolio: user.socialLinks.portfolio || '',
+      },
+      // Include role-specific details if they exist
+      ...(user.role === 'STUDENT' && user.studentDetails ? {
+        enrollmentNumber: user.studentDetails.enrollmentNumber,
+        branch: user.studentDetails.branch,
+        course: user.studentDetails.course,
+        college: user.studentDetails.college,
+        semester: user.studentDetails.semester,
+        graduationYear: user.studentDetails.graduationYear,
+        section: user.studentDetails.section,
+      } : {}),
+      ...(user.role === 'FACULTY' && user.facultyDetails ? {
+        employeeId: user.facultyDetails.employeeId,
+        department: user.facultyDetails.department,
+        designation: user.facultyDetails.designation,
+        specialization: user.facultyDetails.specialization,
+        qualification: user.facultyDetails.qualification,
+      } : {}),
+    });
     setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      const updatedUser = {
+        name: editFormData.name,
+        email: editFormData.email,
+        about: editFormData.about,
+        headline: editFormData.headline,
+        socialLinks: editFormData.socialLinks,
+        // Add role-specific details based on user role
+        ...(selectedUser.role === 'STUDENT' ? {
+          studentDetails: {
+            enrollmentNumber: editFormData.enrollmentNumber,
+            branch: editFormData.branch,
+            course: editFormData.course,
+            college: editFormData.college,
+            semester: editFormData.semester,
+            graduationYear: editFormData.graduationYear,
+            section: editFormData.section,
+          }
+        } : {}),
+        ...(selectedUser.role === 'FACULTY' ? {
+          facultyDetails: {
+            employeeId: editFormData.employeeId,
+            department: editFormData.department,
+            designation: editFormData.designation,
+            specialization: editFormData.specialization,
+            qualification: editFormData.qualification,
+          }
+        } : {}),
+      };
+
+      // Use direct api.patch instead of profileService to ensure we have the right endpoint
+      const response = await api.patch(`user/${selectedUser.username}`, updatedUser);
+      console.log('Update response:', response); // Debug - remove after confirming
+      
+      if (response.success) {
+        toast({
+          title: 'Success',
+          description: 'User updated successfully',
+        });
+        fetchUsers(); // Refresh the user list
+        setIsEditModalOpen(false);
+      } else {
+        throw new Error(response.error || 'Failed to update user');
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update user',
+        variant: 'destructive',
+      });
+    }
   };
 
   const confirmDelete = (user: User) => {
@@ -148,19 +320,221 @@ export const UsersTab = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const filteredUsers = (role: 'admin' | 'faculty' | 'student') => {
-    return users
-      .filter(user => user.role === role)
-      .filter(user => 
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (user.role === 'student' && (user as StudentUser).rollNo.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    
+    // Handle nested properties (socialLinks)
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setEditFormData({
+        ...editFormData,
+        [parent]: {
+          ...editFormData[parent],
+          [child]: value
+        }
+      });
+    } else {
+      setEditFormData({
+        ...editFormData,
+        [name]: value
+      });
+    }
   };
 
-  const UserTable = ({ role }: { role: 'admin' | 'faculty' | 'student' }) => {
+  const handleCreateInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    
+    // Handle nested properties
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setCreateFormData({
+        ...createFormData,
+        [parent]: {
+          ...createFormData[parent],
+          [child]: value
+        }
+      });
+    } else {
+      setCreateFormData({
+        ...createFormData,
+        [name]: value
+      });
+    }
+  };
+
+  const handleCreateUser = async () => {
+    try {
+      // Set role from the selected tab
+      const userData = {
+        ...createFormData,
+        role: selectedRole,
+        // Add role-specific details
+        ...(selectedRole === 'STUDENT' ? {
+          studentDetails: {
+            enrollmentNumber: createFormData.enrollmentNumber || '',
+            branch: createFormData.branch || '',
+            course: createFormData.course || '',
+            college: createFormData.college || '',
+            semester: createFormData.semester || '',
+            graduationYear: createFormData.graduationYear || '',
+            section: createFormData.section || ''
+          }
+        } : {}),
+        ...(selectedRole === 'FACULTY' ? {
+          facultyDetails: {
+            employeeId: createFormData.employeeId || '',
+            department: createFormData.department || '',
+            designation: createFormData.designation || '',
+            specialization: createFormData.specialization || '',
+            qualification: createFormData.qualification || ''
+          }
+        } : {})
+      };
+
+      console.log('Creating new user:', userData);
+      
+      const response = await api.post('user/register', userData);
+      console.log('Create response:', response);
+      
+      if (response.success) {
+        toast({
+          title: 'Success',
+          description: 'User created successfully',
+        });
+        fetchUsers(); // Refresh the user list
+        setIsCreateModalOpen(false);
+        // Reset form
+        setCreateFormData({
+          name: '',
+          email: '',
+          username: '',
+          password: '',
+          role: '',
+          about: '',
+          headline: '',
+          socialLinks: {
+            github: '',
+            linkedin: '',
+            portfolio: ''
+          }
+        });
+      } else {
+        throw new Error(response.error || 'Failed to create user');
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create user',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Add a function to get normalized role from user
+  const getNormalizedRole = (user: User): 'ADMIN' | 'FACULTY' | 'STUDENT' | string => {
+    if (!user.role) return '';
+    return user.role.toUpperCase() as 'ADMIN' | 'FACULTY' | 'STUDENT';
+  };
+
+  // Update the filteredUsers function to handle any role format
+  const filteredUsers = (role: 'ADMIN' | 'FACULTY' | 'STUDENT') => {
+    if (!users || users.length === 0) {
+      return [];
+    }
+    
+    console.log(`Filtering for role: ${role}, Total users:`, users.length);
+    
+    // First check if any users exist with this role, without case sensitivity
+    const roleUsers = users.filter(user => {
+      const normalizedRole = getNormalizedRole(user);
+      const matchesRole = normalizedRole === role;
+      
+      if (matchesRole) {
+        console.log(`User with matching role: ${user.username}, role: ${user.role}, normalized: ${normalizedRole}`);
+      }
+      return matchesRole;
+    });
+    
+    console.log(`Found ${roleUsers.length} users with role ${role}`);
+    
+    // Then apply the search filter
+    const filtered = roleUsers.filter(user => 
+      !searchQuery || // If no search query, include all
+      user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.studentDetails?.enrollmentNumber?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (user.facultyDetails?.department?.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+      
+    console.log(`After search filter, found ${filtered.length} users with role ${role}`);
+    return filtered;
+  };
+
+  // Prepare analytics data based on actual user data
+  const getDepartmentData = () => {
+    const departmentCounts: Record<string, number> = {};
+    
+    if (!users || users.length === 0) {
+      return [];
+    }
+    
+    users.forEach(user => {
+      let department = '';
+      
+      if (user.role === 'STUDENT' && user.studentDetails) {
+        department = user.studentDetails.branch;
+      } else if (user.role === 'FACULTY' && user.facultyDetails) {
+        department = user.facultyDetails.department;
+      }
+      
+      if (department) {
+        departmentCounts[department] = (departmentCounts[department] || 0) + 1;
+      }
+    });
+    
+    return Object.entries(departmentCounts).map(([name, value]) => ({ name, value }));
+  };
+
+  const getYearWiseData = () => {
+    const yearCounts: Record<string, number> = {};
+    
+    if (!users || users.length === 0) {
+      return [];
+    }
+    
+    users.forEach(user => {
+      if (user.role === 'STUDENT' && user.studentDetails?.graduationYear) {
+        const year = user.studentDetails.graduationYear;
+        yearCounts[year] = (yearCounts[year] || 0) + 1;
+      }
+    });
+    
+    return Object.entries(yearCounts)
+      .map(([year, students]) => ({ year, students }))
+      .sort((a, b) => parseInt(a.year) - parseInt(b.year));
+  };
+
+  // Only compute analytics data when not loading
+  const departmentData = !isLoading ? getDepartmentData() : [];
+  const yearWiseData = !isLoading ? getYearWiseData() : [];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
+
+  // Add helper functions to count users by normalized role
+  const countUsersByRole = (role: 'ADMIN' | 'FACULTY' | 'STUDENT') => {
+    if (!users) return 0;
+    return users.filter(user => getNormalizedRole(user) === role).length;
+  };
+
+  const UserTable = ({ role }: { role: 'ADMIN' | 'FACULTY' | 'STUDENT' }) => {
     const filtered = filteredUsers(role);
+    console.log(`UserTable for role ${role}, filtered users count: ${filtered.length}`);
+
+    // Log the first user in detail to understand structure
+    if (filtered.length > 0) {
+      console.log('Sample user structure:', JSON.stringify(filtered[0], null, 2));
+    }
 
     return (
       <div>
@@ -168,7 +542,7 @@ export const UsersTab = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={`Search ${role}s...`}
+              placeholder={`Search ${role.toLowerCase()}s...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -182,116 +556,291 @@ export const UsersTab = () => {
             className="flex items-center gap-2"
           >
             <UserPlus className="h-4 w-4" />
-            <span>Add {role}</span>
+            <span>Add {role.toLowerCase()}</span>
           </Button>
         </div>
 
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-10">
+            <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+            <p className="mt-2 text-sm text-muted-foreground">Loading users...</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-10 text-gray-500">
-            No {role}s found
+            No {role.toLowerCase()}s found
           </div>
         ) : (
           <div className="space-y-4">
-            {filtered.map((user) => (
-              <Card key={user.id} className="overflow-hidden group hover:shadow-lg transition-all duration-200 border border-transparent hover:border-primary/20">
-                <CardHeader 
-                  className="p-4 bg-gray-50/50 cursor-pointer hover:bg-gray-100/80 transition-colors" 
-                >
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1">
-                      <CardTitle className="text-base font-medium group-hover:text-primary transition-colors">{user.name}</CardTitle>
-                      <div className="text-sm text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <span>{user.email}</span>
-                          <span>•</span>
-                          <Badge variant="outline" className="text-xs">{user.department}</Badge>
-                        </span>
-                        {user.role === 'student' && (
-                          <>
+            {filtered.map((user) => {
+              // Get the normalized role for this user
+              const normalizedRole = getNormalizedRole(user);
+              return (
+                <Card key={user.id} className="overflow-hidden group hover:shadow-lg transition-all duration-200 border border-transparent hover:border-primary/20">
+                  <CardHeader 
+                    className="p-4 bg-gray-50/50 cursor-pointer hover:bg-gray-100/80 transition-colors" 
+                  >
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <CardTitle className="text-base font-medium group-hover:text-primary transition-colors">
+                          {user.name || 'Unknown Name'}
+                        </CardTitle>
+                        <div className="text-sm text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
+                          <span className="flex items-center gap-1">
+                            <span>{user.email || 'No email'}</span>
                             <span>•</span>
-                            <Badge variant="secondary" className="text-xs">
-                              {(user as StudentUser).rollNo}
-                            </Badge>
+                            <Badge variant="outline" className="text-xs">@{user.username || 'unknown'}</Badge>
                             <span>•</span>
-                            <Badge variant="secondary" className="text-xs">
-                              Year {(user as StudentUser).year}
-                            </Badge>
-                          </>
-                        )}
+                            <Badge variant="outline" className="text-xs">{user.role}</Badge>
+                          </span>
+                          {/* Only show student details if they exist */}
+                          {normalizedRole === 'STUDENT' && user.studentDetails && (
+                            <>
+                              <span>•</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {user.studentDetails.enrollmentNumber || 'No enrollment #'}
+                              </Badge>
+                              <span>•</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {user.studentDetails.branch || 'No branch'}
+                              </Badge>
+                            </>
+                          )}
+                          {/* Only show faculty details if they exist */}
+                          {normalizedRole === 'FACULTY' && user.facultyDetails && (
+                            <>
+                              <span>•</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {user.facultyDetails.designation || 'No designation'}
+                              </Badge>
+                              <span>•</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {user.facultyDetails.department || 'No department'}
+                              </Badge>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleEditUser(user)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => confirmDelete(user)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleEditUser(user)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => confirmDelete(user)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
+                  </CardHeader>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
     );
   };
 
-  const CreateUserForm = ({ role }: { role: 'admin' | 'faculty' | 'student' }) => (
+  const CreateUserForm = ({ role }: { role: 'ADMIN' | 'FACULTY' | 'STUDENT' }) => (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" placeholder="Enter full name" />
+        <Label htmlFor="username">Username</Label>
+        <Input 
+          id="username" 
+          name="username"
+          placeholder="Enter username" 
+          value={createFormData.username}
+          onChange={handleCreateInputChange}
+        />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" placeholder="Enter email address" />
+        <Label htmlFor="password">Password</Label>
+        <Input 
+          id="password" 
+          name="password"
+          type="password" 
+          placeholder="Enter password" 
+          value={createFormData.password}
+          onChange={handleCreateInputChange}
+        />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="department">Department</Label>
-        <Select>
-          <SelectTrigger>
-            <SelectValue placeholder="Select department" />
-          </SelectTrigger>
-          <SelectContent>
-            {departments.map(dept => (
-              <SelectItem key={dept} value={dept.toLowerCase().replace(/\s+/g, '-')}>
-                {dept}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label htmlFor="create-name">Name</Label>
+        <Input 
+          id="create-name" 
+          name="name"
+          placeholder="Enter full name" 
+          value={createFormData.name}
+          onChange={handleCreateInputChange}
+        />
       </div>
-      {role === 'student' && (
+      <div className="grid gap-2">
+        <Label htmlFor="create-email">Email</Label>
+        <Input 
+          id="create-email" 
+          name="email"
+          type="email" 
+          placeholder="Enter email address" 
+          value={createFormData.email}
+          onChange={handleCreateInputChange}
+        />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="create-headline">Headline</Label>
+        <Input 
+          id="create-headline" 
+          name="headline"
+          placeholder="Enter headline" 
+          value={createFormData.headline}
+          onChange={handleCreateInputChange}
+        />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="create-about">About</Label>
+        <Textarea 
+          id="create-about" 
+          name="about"
+          placeholder="Enter about information"
+          rows={3}
+          value={createFormData.about}
+          onChange={handleCreateInputChange}
+        />
+      </div>
+      
+      {role === 'STUDENT' && (
         <>
           <div className="grid gap-2">
-            <Label htmlFor="rollNo">Roll Number</Label>
-            <Input id="rollNo" placeholder="Enter roll number" />
+            <Label htmlFor="enrollmentNumber">Enrollment Number</Label>
+            <Input 
+              id="enrollmentNumber" 
+              name="enrollmentNumber"
+              placeholder="Enter enrollment number" 
+              value={createFormData.enrollmentNumber || ''}
+              onChange={handleCreateInputChange}
+            />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="year">Year</Label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Select year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1st Year</SelectItem>
-                <SelectItem value="2">2nd Year</SelectItem>
-                <SelectItem value="3">3rd Year</SelectItem>
-                <SelectItem value="4">4th Year</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="branch">Branch</Label>
+            <Input 
+              id="branch" 
+              name="branch"
+              placeholder="Enter branch" 
+              value={createFormData.branch || ''}
+              onChange={handleCreateInputChange}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="course">Course</Label>
+            <Input 
+              id="course" 
+              name="course"
+              placeholder="Enter course" 
+              value={createFormData.course || ''}
+              onChange={handleCreateInputChange}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="college">College</Label>
+            <Input 
+              id="college" 
+              name="college"
+              placeholder="Enter college name" 
+              value={createFormData.college || ''}
+              onChange={handleCreateInputChange}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="semester">Semester</Label>
+            <Input 
+              id="semester" 
+              name="semester"
+              placeholder="Enter current semester" 
+              value={createFormData.semester || ''}
+              onChange={handleCreateInputChange}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="graduationYear">Graduation Year</Label>
+            <Input 
+              id="graduationYear" 
+              name="graduationYear"
+              placeholder="Enter graduation year" 
+              value={createFormData.graduationYear || ''}
+              onChange={handleCreateInputChange}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="section">Section</Label>
+            <Input 
+              id="section" 
+              name="section"
+              placeholder="Enter section" 
+              value={createFormData.section || ''}
+              onChange={handleCreateInputChange}
+            />
+          </div>
+        </>
+      )}
+      
+      {role === 'FACULTY' && (
+        <>
+          <div className="grid gap-2">
+            <Label htmlFor="employeeId">Employee ID</Label>
+            <Input 
+              id="employeeId" 
+              name="employeeId"
+              placeholder="Enter employee ID" 
+              value={createFormData.employeeId || ''}
+              onChange={handleCreateInputChange}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="department">Department</Label>
+            <Input 
+              id="department" 
+              name="department"
+              placeholder="Enter department" 
+              value={createFormData.department || ''}
+              onChange={handleCreateInputChange}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="designation">Designation</Label>
+            <Input 
+              id="designation" 
+              name="designation"
+              placeholder="Enter designation" 
+              value={createFormData.designation || ''}
+              onChange={handleCreateInputChange}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="specialization">Specialization</Label>
+            <Input 
+              id="specialization" 
+              name="specialization"
+              placeholder="Enter specialization" 
+              value={createFormData.specialization || ''}
+              onChange={handleCreateInputChange}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="qualification">Qualification</Label>
+            <Input 
+              id="qualification" 
+              name="qualification"
+              placeholder="Enter qualification" 
+              value={createFormData.qualification || ''}
+              onChange={handleCreateInputChange}
+            />
           </div>
         </>
       )}
@@ -328,8 +877,7 @@ export const UsersTab = () => {
                       <Users className="h-4 w-4" />
                       Total Users
                     </p>
-                    <h3 className="text-3xl font-bold mt-2">{users.length}</h3>
-                    <p className="text-sm opacity-80 mt-1">Last 30 days: +5</p>
+                    <h3 className="text-3xl font-bold mt-2">{users?.length || 0}</h3>
                   </div>
                   <div className="p-3 bg-white/10 rounded-full">
                     <Users className="h-6 w-6" />
@@ -348,8 +896,7 @@ export const UsersTab = () => {
                       <UserCog className="h-4 w-4" />
                       Administrators
                     </p>
-                    <h3 className="text-3xl font-bold mt-2">{users.filter(u => u.role === 'admin').length}</h3>
-                    <p className="text-sm opacity-80 mt-1">Last 30 days: +1</p>
+                    <h3 className="text-3xl font-bold mt-2">{countUsersByRole('ADMIN')}</h3>
                   </div>
                   <div className="p-3 bg-white/10 rounded-full">
                     <UserCog className="h-6 w-6" />
@@ -368,8 +915,7 @@ export const UsersTab = () => {
                       <Building2 className="h-4 w-4" />
                       Faculty Members
                     </p>
-                    <h3 className="text-3xl font-bold mt-2">{users.filter(u => u.role === 'faculty').length}</h3>
-                    <p className="text-sm opacity-80 mt-1">Last 30 days: +2</p>
+                    <h3 className="text-3xl font-bold mt-2">{countUsersByRole('FACULTY')}</h3>
                   </div>
                   <div className="p-3 bg-white/10 rounded-full">
                     <Building2 className="h-6 w-6" />
@@ -388,8 +934,7 @@ export const UsersTab = () => {
                       <GraduationCap className="h-4 w-4" />
                       Students
                     </p>
-                    <h3 className="text-3xl font-bold mt-2">{users.filter(u => u.role === 'student').length}</h3>
-                    <p className="text-sm opacity-80 mt-1">Last 30 days: +3</p>
+                    <h3 className="text-3xl font-bold mt-2">{countUsersByRole('STUDENT')}</h3>
                   </div>
                   <div className="p-3 bg-white/10 rounded-full">
                     <GraduationCap className="h-6 w-6" />
@@ -449,7 +994,7 @@ export const UsersTab = () => {
             <Card className="hover:shadow-lg transition-all duration-300">
               <CardHeader className="border-b">
                 <CardTitle className="text-xl font-semibold">Student Year Distribution</CardTitle>
-                <CardDescription>Students across different years</CardDescription>
+                <CardDescription>Students by graduation year</CardDescription>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="h-[300px]">
@@ -479,35 +1024,35 @@ export const UsersTab = () => {
         <motion.div variants={itemVariants}>
           <Card className="hover:shadow-lg transition-all duration-300">
             <CardContent className="pt-6">
-              <Tabs defaultValue="admin" className="w-full">
+              <Tabs defaultValue="ADMIN" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 mb-6">
                   <TabsTrigger 
-                    value="admin" 
+                    value="ADMIN" 
                     className="flex-1 min-w-[100px] md:flex-none data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
                   >
                     Administrators
                   </TabsTrigger>
                   <TabsTrigger 
-                    value="faculty" 
+                    value="FACULTY" 
                     className="flex-1 min-w-[100px] md:flex-none data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
                   >
                     Faculty
                   </TabsTrigger>
                   <TabsTrigger 
-                    value="student" 
+                    value="STUDENT" 
                     className="flex-1 min-w-[100px] md:flex-none data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
                   >
                     Students
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent value="admin" className="mt-6">
-                  <UserTable role="admin" />
+                <TabsContent value="ADMIN" className="mt-6">
+                  <UserTable role="ADMIN" />
                 </TabsContent>
-                <TabsContent value="faculty" className="mt-6">
-                  <UserTable role="faculty" />
+                <TabsContent value="FACULTY" className="mt-6">
+                  <UserTable role="FACULTY" />
                 </TabsContent>
-                <TabsContent value="student" className="mt-6">
-                  <UserTable role="student" />
+                <TabsContent value="STUDENT" className="mt-6">
+                  <UserTable role="STUDENT" />
                 </TabsContent>
               </Tabs>
             </CardContent>
@@ -528,66 +1073,223 @@ export const UsersTab = () => {
               <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={() => setIsCreateModalOpen(false)}>Create {selectedRole}</Button>
+              <Button onClick={handleCreateUser}>Create {selectedRole.toLowerCase()}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         {/* Edit User Modal */}
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit User</DialogTitle>
               <DialogDescription>
-                Modify user information. All fields are required.
+                Modify user information for {selectedUser?.username}
               </DialogDescription>
             </DialogHeader>
             {selectedUser && (
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-name">Name</Label>
-                  <Input id="edit-name" defaultValue={selectedUser.name} />
+                  <Label htmlFor="name">Name</Label>
+                  <Input 
+                    id="name" 
+                    name="name"
+                    value={editFormData.name || ''}
+                    onChange={handleInputChange}
+                  />
                 </div>
+                
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-email">Email</Label>
-                  <Input id="edit-email" type="email" defaultValue={selectedUser.email} />
+                  <Label htmlFor="email">Email</Label>
+                  <Input 
+                    id="email" 
+                    name="email"
+                    type="email" 
+                    value={editFormData.email || ''}
+                    onChange={handleInputChange}
+                  />
                 </div>
+                
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-department">Department</Label>
-                  <Select defaultValue={selectedUser.department.toLowerCase().replace(/\s+/g, '-')}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map(dept => (
-                        <SelectItem key={dept} value={dept.toLowerCase().replace(/\s+/g, '-')}>
-                          {dept}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="headline">Headline</Label>
+                  <Input 
+                    id="headline" 
+                    name="headline"
+                    value={editFormData.headline || ''}
+                    onChange={handleInputChange}
+                  />
                 </div>
-                {selectedUser.role === 'student' && (
-                  <>
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-rollno">Roll Number</Label>
-                      <Input id="edit-rollno" defaultValue={(selectedUser as StudentUser).rollNo} />
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="about">About</Label>
+                  <Textarea 
+                    id="about" 
+                    name="about"
+                    rows={3}
+                    value={editFormData.about || ''}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label>Social Links</Label>
+                  <div className="space-y-2">
+                    <Input 
+                      id="github" 
+                      name="socialLinks.github"
+                      placeholder="GitHub URL"
+                      value={editFormData.socialLinks?.github || ''}
+                      onChange={handleInputChange}
+                    />
+                    <Input 
+                      id="linkedin" 
+                      name="socialLinks.linkedin"
+                      placeholder="LinkedIn URL"
+                      value={editFormData.socialLinks?.linkedin || ''}
+                      onChange={handleInputChange}
+                    />
+                    <Input 
+                      id="portfolio" 
+                      name="socialLinks.portfolio"
+                      placeholder="Portfolio URL"
+                      value={editFormData.socialLinks?.portfolio || ''}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
+                
+                {selectedUser.role === 'STUDENT' && (
+                  <div className="grid gap-4">
+                    <h3 className="text-sm font-medium">Student Details</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="grid gap-2">
+                        <Label htmlFor="enrollmentNumber">Enrollment Number</Label>
+                        <Input 
+                          id="enrollmentNumber" 
+                          name="enrollmentNumber"
+                          value={editFormData.enrollmentNumber || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="branch">Branch</Label>
+                        <Input 
+                          id="branch" 
+                          name="branch"
+                          value={editFormData.branch || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="course">Course</Label>
+                        <Input 
+                          id="course" 
+                          name="course"
+                          value={editFormData.course || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="college">College</Label>
+                        <Input 
+                          id="college" 
+                          name="college"
+                          value={editFormData.college || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="semester">Semester</Label>
+                        <Input 
+                          id="semester" 
+                          name="semester"
+                          value={editFormData.semester || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="graduationYear">Graduation Year</Label>
+                        <Input 
+                          id="graduationYear" 
+                          name="graduationYear"
+                          value={editFormData.graduationYear || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="section">Section</Label>
+                        <Input 
+                          id="section" 
+                          name="section"
+                          value={editFormData.section || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-year">Year</Label>
-                      <Select defaultValue={(selectedUser as StudentUser).year.toString()}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">1st Year</SelectItem>
-                          <SelectItem value="2">2nd Year</SelectItem>
-                          <SelectItem value="3">3rd Year</SelectItem>
-                          <SelectItem value="4">4th Year</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  </div>
+                )}
+                
+                {selectedUser.role === 'FACULTY' && (
+                  <div className="grid gap-4">
+                    <h3 className="text-sm font-medium">Faculty Details</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="grid gap-2">
+                        <Label htmlFor="employeeId">Employee ID</Label>
+                        <Input 
+                          id="employeeId" 
+                          name="employeeId"
+                          value={editFormData.employeeId || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="department">Department</Label>
+                        <Input 
+                          id="department" 
+                          name="department"
+                          value={editFormData.department || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="designation">Designation</Label>
+                        <Input 
+                          id="designation" 
+                          name="designation"
+                          value={editFormData.designation || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="specialization">Specialization</Label>
+                        <Input 
+                          id="specialization" 
+                          name="specialization"
+                          value={editFormData.specialization || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2 col-span-2">
+                        <Label htmlFor="qualification">Qualification</Label>
+                        <Input 
+                          id="qualification" 
+                          name="qualification"
+                          value={editFormData.qualification || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             )}
@@ -595,7 +1297,7 @@ export const UsersTab = () => {
               <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={() => setIsEditModalOpen(false)}>Save Changes</Button>
+              <Button onClick={handleSaveEdit}>Save Changes</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -608,7 +1310,7 @@ export const UsersTab = () => {
               <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete the user
                 {selectedUser && (
-                  <span className="font-medium"> {selectedUser.name}</span>
+                  <span className="font-medium"> {selectedUser.name} (@{selectedUser.username})</span>
                 )} and remove their data from the system.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -616,7 +1318,7 @@ export const UsersTab = () => {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                onClick={() => selectedUser && handleDeleteUser(selectedUser.id)}
+                onClick={() => selectedUser && handleDeleteUser(selectedUser.username)}
               >
                 Delete
               </AlertDialogAction>

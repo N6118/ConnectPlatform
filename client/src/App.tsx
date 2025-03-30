@@ -20,7 +20,8 @@ import SettingsTab from "@/pages/admin/SettingsTab";
 import UsersTab from "@/pages/admin/UsersTab";
 import EventManagement from './pages/admin/EventManagement';
 import { Route as WouterRoute } from "wouter";
-
+import ChatbotPage from "@/pages/admin/ChatbotPage";
+import ChatbotButton from "@/components/ChatbotButton";
 
 // Faculty pages
 import FacultyDashboard from "@/pages/faculty/dashboard";
@@ -109,7 +110,10 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>
+    {children}
+    <ChatbotButton />
+  </AuthContext.Provider>;
 }
 
 function PrivateRoute({
@@ -177,6 +181,11 @@ function Router() {
         path="/admin/settings"
         component={() => <Route component={SettingsTab} roles={["admin"]} />}
       />
+      <Route
+        path="/admin/chat"
+        component={() => <Route component={ChatbotPage} roles={["admin"]} />}
+      />
+
       {/* Faculty Routes */}
       <Route
         path="/faculty"
@@ -285,11 +294,14 @@ function App() {
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
           <Router />
+          <ChatbotButton />
           <Toaster />
         </QueryClientProvider>
       </AuthProvider>
     </ThemeProvider>
   );
 }
+
+
 
 export default App;

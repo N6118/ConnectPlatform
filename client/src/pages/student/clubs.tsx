@@ -29,6 +29,8 @@ import type { Club as BaseClub } from "@/components/ui/club-card";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
 import { clubService, ClubData } from "@/services/club";
 import { useToast } from "@/hooks/use-toast";
+import { api, ApiResponse } from "@/services/api";
+import { eventService, Event as ServiceEvent } from "@/services/event";
 
 // Extend the base Club type to include roles
 type Club = BaseClub & {
@@ -73,94 +75,61 @@ interface ClubEvent {
   time?: string;
 }
 
-// Using same events format from event management to maintain sync
-const upcomingEvents: ClubEvent[] = [
-  {
-    id: 1,
-    natureOfEvent: "CLUBS",
-    typeOfEvent: "WORKSHOP",
-    theme: ["AI and Machine Learning", "Deep Learning"],
-    fundingAgency: "None",
+// API Event interface based on server response
+interface ApiEvent {
+  id: number;
+  title: string;
+  description: string;
+  date: string;
+  type: string;
+  location: string;
+  registrationLink: string | null;
+  natureOfEvent: string;
+  theme: string[] | null;
+  fundingAgency: string;
+  chiefGuest: string;
+  otherSpeakers: string[] | null;
+  participantsCount: number;
+  isCompleted: boolean;
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
+  club: any | null;
+}
+
+// Function to convert API events to our ClubEvent format
+const mapApiEventToClubEvent = (apiEvent: ApiEvent): ClubEvent => {
+  // Extract date and time from the ISO string
+  const dateObj = new Date(apiEvent.date);
+  const formattedDate = dateObj.toISOString().split('T')[0];
+  const formattedTime = dateObj.toTimeString().slice(0, 5);
+  
+  return {
+    id: apiEvent.id,
+    title: apiEvent.title || "Event Title",  // Ensure title is not empty
+    description: apiEvent.description || "No description available",
+    natureOfEvent: apiEvent.natureOfEvent || "CLUBS",
+    typeOfEvent: apiEvent.type,
+    theme: apiEvent.theme || [],
+    fundingAgency: apiEvent.fundingAgency || "None",
     dates: {
-      start: "2024-03-15",
-      end: "2024-03-15"
+      start: formattedDate,
+      end: formattedDate,
     },
-    chiefGuest: "Dr. John Smith",
-    otherSpeakers: ["Dr. Sarah Johnson"],
-    participantsCount: 30,
+    chiefGuest: apiEvent.chiefGuest || "",
+    otherSpeakers: apiEvent.otherSpeakers || [],
+    participantsCount: apiEvent.participantsCount,
     highlights: "",
-    isCompleted: false,
-    clubId: 1,
-    clubName: "AI Club",
-    location: "Tech Lab 101",
+    isCompleted: apiEvent.isCompleted,
+    location: apiEvent.location || "Campus",  // Ensure location is not empty
+    // Critical fields for EventCarousel
+    date: formattedDate,
+    time: formattedTime,
+    // Generate a placeholder banner if none exists
     banner: "https://images.unsplash.com/photo-1591453089816-0fbb971b454c?auto=format&fit=crop&q=80&w=800",
-    description: "Learn the fundamentals of deep learning in this hands-on workshop.",
-    capacity: 30,
-    // For backward compatibility
-    title: "AI Workshop: Deep Learning Basics",
-    date: "2024-03-15",
-    time: "14:00",
-    registeredUsers: [
-      {
-        id: 1,
-        username: "john_doe",
-        profilePicture: "https://example.com/profile1.jpg"
-      }
-    ]
-  },
-  {
-    id: 2,
-    natureOfEvent: "CLUBS",
-    typeOfEvent: "WORKSHOP",
-    theme: ["Robotics", "Engineering"],
-    fundingAgency: "None",
-    dates: {
-      start: "2024-03-18",
-      end: "2024-03-18"
-    },
-    chiefGuest: "Prof. David Wilson",
-    otherSpeakers: ["Dr. Emma Davis"],
-    participantsCount: 0,
-    highlights: "",
-    isCompleted: false,
-    clubId: 2,
-    clubName: "Robotics Club",
-    location: "Engineering Workshop",
-    banner: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?auto=format&fit=crop&q=80&w=800",
-    description: "Prepare for the upcoming robotics competition with our expert team.",
-    capacity: 20,
-    // For backward compatibility
-    title: "Robotics Competition Prep",
-    date: "2024-03-18",
-    time: "15:30"
-  },
-  {
-    id: 3,
-    natureOfEvent: "CLUBS",
-    typeOfEvent: "HACKATHON",
-    theme: ["Coding", "Innovation"],
-    fundingAgency: "None",
-    dates: {
-      start: "2024-03-20",
-      end: "2024-03-21"
-    },
-    chiefGuest: "Henry Lee",
-    otherSpeakers: ["Jack Wilson", "Kelly Zhang"],
-    participantsCount: 0,
-    highlights: "",
-    isCompleted: false,
-    clubId: 3,
-    clubName: "Coding Club",
-    location: "Innovation Hub",
-    banner: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?auto=format&fit=crop&q=80&w=800",
-    description: "Join us for an exciting 24-hour coding challenge!",
-    capacity: 50,
-    // For backward compatibility
-    title: "Hackathon Kickoff",
-    date: "2024-03-20",
-    time: "09:00"
-  }
-];
+    clubName: apiEvent.club?.name || "Club Event"
+  };
+};
 
 // Mapping of club names to their respective icons
 const clubIconMap: Record<string, any> = {
@@ -292,13 +261,138 @@ const fallbackClubs: Club[] = [
   },
 ];
 
+// Fallback events in case the API call fails
+const fallbackEvents: ClubEvent[] = [
+  {
+    id: 1,
+    natureOfEvent: "CLUBS",
+    typeOfEvent: "WORKSHOP",
+    theme: ["AI and Machine Learning", "Deep Learning"],
+    fundingAgency: "None",
+    dates: {
+      start: "2024-03-15",
+      end: "2024-03-15"
+    },
+    chiefGuest: "Dr. John Smith",
+    otherSpeakers: ["Dr. Sarah Johnson"],
+    participantsCount: 30,
+    highlights: "",
+    isCompleted: false,
+    clubId: 1,
+    clubName: "AI Club",
+    location: "Tech Lab 101",
+    banner: "https://images.unsplash.com/photo-1591453089816-0fbb971b454c?auto=format&fit=crop&q=80&w=800",
+    description: "Learn the fundamentals of deep learning in this hands-on workshop.",
+    capacity: 30,
+    // For backward compatibility
+    title: "AI Workshop: Deep Learning Basics",
+    date: "2024-03-15",
+    time: "14:00",
+    registeredUsers: [
+      {
+        id: 1,
+        username: "john_doe",
+        profilePicture: "https://example.com/profile1.jpg"
+      }
+    ]
+  },
+  {
+    id: 2,
+    natureOfEvent: "CLUBS",
+    typeOfEvent: "WORKSHOP",
+    theme: ["Robotics", "Engineering"],
+    fundingAgency: "None",
+    dates: {
+      start: "2024-03-18",
+      end: "2024-03-18"
+    },
+    chiefGuest: "Prof. David Wilson",
+    otherSpeakers: ["Dr. Emma Davis"],
+    participantsCount: 0,
+    highlights: "",
+    isCompleted: false,
+    clubId: 2,
+    clubName: "Robotics Club",
+    location: "Engineering Workshop",
+    banner: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?auto=format&fit=crop&q=80&w=800",
+    description: "Prepare for the upcoming robotics competition with our expert team.",
+    capacity: 20,
+    // For backward compatibility
+    title: "Robotics Competition Prep",
+    date: "2024-03-18",
+    time: "15:30"
+  },
+  {
+    id: 3,
+    natureOfEvent: "CLUBS",
+    typeOfEvent: "HACKATHON",
+    theme: ["Coding", "Innovation"],
+    fundingAgency: "None",
+    dates: {
+      start: "2024-03-20",
+      end: "2024-03-21"
+    },
+    chiefGuest: "Henry Lee",
+    otherSpeakers: ["Jack Wilson", "Kelly Zhang"],
+    participantsCount: 0,
+    highlights: "",
+    isCompleted: false,
+    clubId: 3,
+    clubName: "Coding Club",
+    location: "Innovation Hub",
+    banner: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?auto=format&fit=crop&q=80&w=800",
+    description: "Join us for an exciting 24-hour coding challenge!",
+    capacity: 50,
+    // For backward compatibility
+    title: "Hackathon Kickoff",
+    date: "2024-03-20",
+    time: "09:00"
+  }
+];
+
 export default function StudentClubs() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [showJoinedOnly, setShowJoinedOnly] = useState(false);
   const [clubsList, setClubsList] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<ClubEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
   const isMobile = useIsMobile();
+
+  // Fetch events from API
+  const fetchEvents = async () => {
+    setEventsLoading(true);
+    try {
+      const response = await api.get<ApiEvent[]>('events');
+      
+      if (response.success && response.data) {
+        console.log("API response events:", response.data);
+        
+        // Map API events to our ClubEvent format
+        const transformedEvents = response.data.map(mapApiEventToClubEvent);
+        console.log("Transformed events:", transformedEvents);
+        
+        // Show all events for now (remove filter until we confirm it works)
+        setEvents(transformedEvents);
+        
+        // Uncomment once verified:
+        // Filter out completed events to show only upcoming ones
+        // const upcomingEvents = transformedEvents.filter(event => !event.isCompleted);
+        // setEvents(upcomingEvents);
+      } else {
+        console.error("Failed to fetch events:", response.error);
+        // Use fallback events if API call fails
+        setEvents(fallbackEvents);
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      // Use fallback events if API call fails
+      setEvents(fallbackEvents);
+    } finally {
+      setEventsLoading(false);
+    }
+  };
 
   // Fetch clubs from backend
   useEffect(() => {
@@ -332,7 +426,9 @@ export default function StudentClubs() {
       }
     };
 
+    // Fetch both clubs and events when component mounts
     fetchClubs();
+    fetchEvents();
   }, [toast]);
 
   const handleJoinToggle = (clubId: number) => {
@@ -353,6 +449,13 @@ export default function StudentClubs() {
       club.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
       (showJoinedOnly ? club.joined : true),
   );
+
+  // Debug log to check what's available at render time
+  console.log("Rendering with events data:", {
+    eventsCount: events.length,
+    eventsLoading,
+    firstEvent: events[0],
+  });
 
   return (
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
@@ -375,7 +478,18 @@ export default function StudentClubs() {
             <h2 className="text-2xl font-bold text-foreground mb-6">
               Upcoming Events
             </h2>
-            <EventCarousel events={upcomingEvents} />
+            {eventsLoading ? (
+              <div className="text-center py-8 bg-card rounded-xl shadow-sm">
+                <Loader2 className="h-8 w-8 text-primary mx-auto mb-4 animate-spin" />
+                <p className="text-muted-foreground">Loading events...</p>
+              </div>
+            ) : events.length === 0 ? (
+              <div className="text-center py-8 bg-card rounded-xl shadow-sm">
+                <p className="text-muted-foreground">No upcoming events found</p>
+              </div>
+            ) : (
+              <EventCarousel events={events} />
+            )}
           </div>
 
           {/* Clubs Section */}
