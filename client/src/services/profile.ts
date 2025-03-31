@@ -29,6 +29,17 @@ export interface ProfileInfo {
 }
 
 /**
+ * Interface for create post with media data
+ */
+export interface CreatePostDTO {
+  content: string;
+  type?: string;
+  visibility?: 'PUBLIC' | 'PRIVATE' | 'FOLLOWERS';
+  tags?: string[];
+  clubId?: number;
+}
+
+/**
  * Interface for user profile response from API
  */
 export interface UserProfileResponse {
@@ -262,6 +273,47 @@ export const profileService = {
   },
 
   /**
+   * Create a new post with media
+   */
+  createPostWithMedia: async (postData: CreatePostDTO, mediaFile?: File): Promise<ApiResponse<Post>> => {
+    console.log('Creating post with media');
+    console.log('Post data:', JSON.stringify(postData, null, 2));
+    console.log('Media file:', mediaFile ? {
+      name: mediaFile.name,
+      type: mediaFile.type,
+      size: `${(mediaFile.size / 1024).toFixed(2)} KB`
+    } : 'None');
+
+    // Create FormData object
+    const formData = new FormData();
+
+    // Add post data as a JSON string - this is crucial for Spring @RequestPart
+    formData.append('post', JSON.stringify(postData));
+
+    // Add media file if provided
+    if (mediaFile) {
+      formData.append('mediaFile', mediaFile);
+      console.log(`Added file ${mediaFile.name} to formData`);
+    }
+
+    // Verify the FormData contents
+    console.log('FormData contents verification:');
+    const formDataKeys: string[] = [];
+    formData.forEach((value, key) => {
+      if (value instanceof File) {
+        formDataKeys.push(`${key}: File (${value.name}, ${value.type})`);
+      } else {
+        formDataKeys.push(`${key}: ${typeof value}`);
+      }
+    });
+    console.log(formDataKeys);
+
+    // Use the correct endpoint that supports multipart/form-data
+    // The server expects a POST request to /api/post/create-with-media
+    return api.post<Post>('posts', formData, { headers: { /* leave Content-Type out */ } });
+  },
+
+  /**
    * Create a new post
    */
   createPost: async (postData: Partial<Post>): Promise<ApiResponse<Post>> => {
@@ -287,12 +339,12 @@ export const profileService = {
    */
   updateUserProfile: async (username: string, updateData: any): Promise<ApiResponse<UserProfileResponse>> => {
     console.log(`PATCH request to user/${username} with data:`, JSON.stringify(updateData, null, 2));
-    
+
     // Ensure the about field is correctly formatted if it exists
     if (updateData.about !== undefined) {
       console.log('About field present:', updateData.about);
     }
-    
+
     return api.patch<UserProfileResponse>(`user/${username}`, updateData);
   },
 };

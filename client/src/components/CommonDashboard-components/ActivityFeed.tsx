@@ -429,7 +429,7 @@ const ActivityFeed: React.FC = () => {
                       onClick={() => setSelectedImage(post.media!.url)}
                     >
                       <motion.img
-                        src={post.media.url}
+                        src={post.media}
                         alt="Post content"
                         className="w-full h-64 object-cover transition-all duration-300 group-hover:scale-105"
                         initial={{ filter: "blur(10px)", opacity: 0 }}

@@ -1,101 +1,185 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { postService, PostData, CreatePostData } from "@/services/post";
-import { Post } from "@/pages/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
-// Extended interface that includes id for editing posts
-interface EditPostData extends CreatePostData {
+interface Post {
   id?: string | number;
+  title?: string;
+  content?: string;
+  type?: string;
+  image?: string;
 }
 
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onPostCreated: (post: PostData) => void;
+  onPostCreated: (post: Post) => void;
   editingPost?: Post | null;
 }
 
-const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPostCreated, editingPost }) => {
+const CreatePostModal: React.FC<CreatePostModalProps> = ({
+  isOpen,
+  onClose,
+  onPostCreated,
+  editingPost
+}) => {
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<string>("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [category, setCategory] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Populate form with editing post data when available
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (editingPost) {
       setContent(editingPost.content || "");
       setTitle(editingPost.title || "");
       setCategory(editingPost.type || "");
-      setImageUrl(editingPost.image || "");
+      if (editingPost.image) setPreviewUrl(editingPost.image);
+      else setPreviewUrl(null);
+      setSelectedFile(null);
     } else {
-      // Reset form when not editing
       setContent("");
       setTitle("");
       setCategory("");
-      setImageUrl("");
+      setSelectedFile(null);
+      setPreviewUrl(null);
     }
   }, [editingPost]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const handleFileSelect = (file: File) => {
+    const fileType = file.type;
+    const fileSize = file.size / 1024 / 1024;
+    if (!fileType.startsWith("image/") && !fileType.startsWith("video/")) return;
+    if (fileSize > 10) return;
+    if (previewUrl && previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+  const baseUrl = 'http://localhost:8000/api';
+
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) handleFileSelect(files[0]);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) handleFileSelect(files[0]);
+  };
+
+  const handleRemoveMedia = () => {
+    if (selectedFile && previewUrl && previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const token = localStorage.getItem("token");
+
     try {
-      // Log what we're submitting
-      console.log('Submitting post with title:', title, 'content:', content, 'category:', category);
-      
-      const postData: EditPostData = {
-        title,
-        content,
-        type: category,
-        media: imageUrl ? { type: "image", url: imageUrl } : undefined,
-      };
-      
-      // If editing, preserve the post ID
-      if (editingPost) {
-        postData.id = editingPost.id;
+      const endpoint = `${baseUrl}/posts`;
+      let response: Response;
+
+      if (selectedFile) {
+        // Create FormData object with all required fields
+        const formData = new FormData();
+        formData.append('content', content);
+        formData.append('type', category);
+        formData.append('visibility', 'PUBLIC');
+
+        // Add title if it exists
+        if (title) {
+          formData.append('title', title);
+        }
+
+        // Add tags - example implementation
+        // You can customize this based on your actual tags implementation
+        formData.append('tags[0]', category.toLowerCase());
+
+        // Add media file
+        formData.append('mediaFile', selectedFile);
+
+        response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          mode: 'cors',
+          body: formData
+        });
+      } else {
+        // JSON request without file
+        response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          mode: 'cors',
+          body: JSON.stringify({
+            content,
+            type: category,
+            visibility: 'PUBLIC',
+            title: title || null,
+            tags: [category.toLowerCase()]
+          })
+        });
       }
 
-      let response;
-      if (editingPost) {
-        console.log('Updating existing post:', postData);
-        console.log('Post ID before update:', postData.id, 'Type:', typeof postData.id);
-        
-        // Directly use the original ID without conversion
-        const postId = editingPost.id;
-        console.log('Using original post ID for update:', postId);
-        
-        response = await postService.updatePost(postId, postData);
-      } else {
-        console.log('Creating new post:', postData);
-        response = await postService.createPost(postData);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Request failed: ${errorText}`);
       }
-      
-      console.log('Post response:', response);
-      
-      if (response.success && response.data) {
-        // Log the data before passing it to the parent
-        console.log('Post operation successful:', response.data);
-        onPostCreated(response.data);
-        onClose();
-        // Reset form
-        setContent("");
-        setTitle("");
-        setCategory("");
-        setImageUrl("");
-      }
+
+      const data = await response.json();
+      onPostCreated(data.data || data);
+      onClose();
     } catch (error) {
-      console.error('Failed to handle post operation:', error);
+      console.error("Post submission failed:", error);
+      // Add user notification here (e.g., toast)
     } finally {
       setIsSubmitting(false);
     }
@@ -122,10 +206,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
           <h2 className="text-2xl font-bold">
             {editingPost ? "Edit Post" : "Create New Post"}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -170,41 +251,62 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="image">Image URL (optional)</Label>
-            <div className="flex gap-2">
-              <Input
-                id="image"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="Enter image URL"
-              />
-              {imageUrl && (
+            <Label>Media (Image or Video)</Label>
+            {previewUrl && (
+              <div className="relative mb-2 border rounded-md overflow-hidden">
+                {selectedFile && selectedFile.type.startsWith("video/") ? (
+                  <video src={previewUrl} controls className="max-h-64 mx-auto" />
+                ) : (
+                  <img src={previewUrl} alt="Media preview" className="max-h-64 mx-auto" />
+                )}
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => setImageUrl("")}
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={handleRemoveMedia}
                 >
                   <X className="w-4 h-4" />
                 </Button>
-              )}
-            </div>
+              </div>
+            )}
+            {!previewUrl && (
+              <div
+                className={`border-2 border-dashed rounded-md p-6 text-center cursor-pointer transition-colors ${isDragging ? "border-primary bg-primary/5" : "border-gray-300 hover:border-primary"
+                  }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileInputChange}
+                  accept="image/*,video/*"
+                  className="hidden"
+                />
+                <div className="flex flex-col items-center gap-2">
+                  <Upload className="w-8 h-8 text-gray-400" />
+                  <p className="text-sm text-gray-600">Drag and drop an image or video here, or click to browse</p>
+                  <p className="text-xs text-gray-500">Maximum file size: 10MB</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-            >
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-            >
-              {isSubmitting 
-                ? (editingPost ? "Updating..." : "Creating...") 
-                : (editingPost ? "Update Post" : "Create Post")}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting
+                ? editingPost
+                  ? "Updating..."
+                  : "Creating..."
+                : editingPost
+                  ? "Update Post"
+                  : "Create Post"}
             </Button>
           </div>
         </form>

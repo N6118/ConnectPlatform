@@ -94,10 +94,34 @@ export async function buildRequest<T = any>(
 
     // If using FormData, let the browser set the Content-Type header
     if (mergedConfig.body instanceof FormData) {
-      // Remove content-type to let browser set it with proper boundary
-      if (mergedConfig.headers && 'Content-Type' in mergedConfig.headers) {
+      console.log('FormData detected in request');
+
+      // For multipart form data, we need to remove the default Content-Type
+      // and let the browser set it with the correct boundary
+      if (mergedConfig.headers) {
         delete mergedConfig.headers['Content-Type'];
+        console.log('Removed default Content-Type header');
+
+        // Note: We don't manually set Content-Type for FormData because the browser needs to
+        // generate the correct boundary. The browser will automatically set it to:
+        // multipart/form-data; boundary=----WebKitFormBoundaryXXXX
       }
+    }
+
+    // Log the final request configuration for debugging
+    console.log(`Making ${mergedConfig.method} request to: ${url}`);
+    console.log('Request headers:', JSON.stringify(mergedConfig.headers, null, 2));
+    console.log('Request body type:', mergedConfig.body instanceof FormData ? 'FormData' : typeof mergedConfig.body);
+
+    if (mergedConfig.body instanceof FormData) {
+      console.log('FormData contents:');
+      mergedConfig.body.forEach((value, key) => {
+        if (value instanceof File) {
+          console.log(`- ${key}: File (${value.name}, ${value.type}, ${value.size} bytes)`);
+        } else {
+          console.log(`- ${key}: ${typeof value === 'string' && value.length > 100 ? value.substring(0, 100) + '...' : value}`);
+        }
+      });
     }
 
     // Remove useAuth from the final config as it's not a valid fetch option
@@ -139,9 +163,38 @@ export async function buildRequest<T = any>(
   }
 }
 
-/**
- * Common API methods
- */
+export async function buildMultipartRequest<T = any>(
+  endpoint: string,
+  formData: FormData,
+  config: RequestConfig = {}
+): Promise<ApiResponse<T>> {
+  // Merge with default config, and remove the default Content-Type header
+  const defaultConfig: RequestConfig = {
+    method: 'POST',
+    mode: 'cors',
+    headers: {
+      // No Content-Type here – let the browser set it automatically
+    },
+    useAuth: true,
+  };
+
+  // Merge configurations and remove the Content-Type header if present
+  const mergedConfig: RequestConfig = {
+    ...defaultConfig,
+    ...config,
+    body: formData,
+    headers: addAuthHeader({
+      ...(config.headers || {})
+      // Note: Do not include 'Content-Type' here
+    }, config.useAuth !== undefined ? config.useAuth : defaultConfig.useAuth),
+  };
+
+  // Execute the request using the common buildRequest function
+  // Since our buildRequest already removes Content-Type if body is FormData, this is optional.
+  return buildRequest<T>(endpoint, mergedConfig);
+}
+
+
 export const api = {
   get: <T = any>(endpoint: string, config?: Omit<RequestConfig, 'method' | 'body'>) =>
     buildRequest<T>(endpoint, { ...config, method: 'GET' }),
