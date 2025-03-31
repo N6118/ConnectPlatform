@@ -64,17 +64,39 @@ interface Applicant {
   notes?: string;
 }
 
+interface Project {
+  id: string | number;
+  title: string;
+  description: string;
+  prerequisites: string;
+  techStack: string[];
+  tag: string;
+  duration: string;
+  level: "Easy" | "Medium" | "Difficult";
+  status: "Not Started" | "In Progress" | "Completed";
+  mentor: string;
+  imageUrl: string;
+  team: TeamMember[];
+  tasks: Task[];
+  resources: Resource[];
+  applicants: Applicant[];
+  isOpenForApplications: boolean;
+  projectRepo: string;
+}
+
 export default function StudentProjectDetails({
   params,
 }: {
-  params: { title: string };
+  params: { id: string };
 }) {
+  const [project, setProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
-  const [isEditing, setIsEditing] = useState(false);
-  const [showAddMember, setShowAddMember] = useState(false);
-  const [showAddTask, setShowAddTask] = useState(false);
-  const [showAddResource, setShowAddResource] = useState(false);
-  const [showApplicants, setShowApplicants] = useState(false);
+  const [showApplicantsModal, setShowApplicantsModal] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
+  const [isAddResourceDialogOpen, setIsAddResourceDialogOpen] = useState(false);
   const [newMember, setNewMember] = useState<TeamMember>({
     name: "",
     role: "",
@@ -90,130 +112,185 @@ export default function StudentProjectDetails({
     type: "",
     url: "",
   });
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [progress, setProgress] = useState(0);
 
-  const [applicants, setApplicants] = useState<Applicant[]>([
-    {
-      id: "1",
-      name: "John Smith",
-      email: "john@example.com",
-      status: "pending",
-      appliedDate: "2024-03-20",
-      experience: "3 years of web development experience",
-    },
-    {
-      id: "2",
-      name: "Emma Wilson",
-      email: "emma@example.com",
-      status: "pending",
-      appliedDate: "2024-03-21",
-      experience: "Recent graduate with strong ML background",
-    },
-  ]);
-
-  const [project, setProject] = useState({
-    id: params.title,
-    title: decodeURIComponent(params.title),
-    description: "This is a detailed description of the project.",
-    status: "In Progress" as const,
-    level: "Medium" as const,
-    mentor: "Dr. Jane Smith",
-    prerequisites: "Basic understanding of AI and Machine Learning",
-    techStack: ["React", "Node.js", "TensorFlow"],
-    duration: "3 months",
-    maxTeamSize: 5,
-    skills: "JavaScript, Python, Data Analysis",
-    progress: 60,
-    imageUrl:
-      "https://media.istockphoto.com/id/1432955867/vector/technology-abstract-lines-and-dots-connect-background-with-hexagons-hexagon-grid-hexagons.jpg?s=612x612&w=0&k=20&c=gSMTHNjpqgpDU06e3G8GhQTUcqEcWfvafMFjzT3qzzQ=",
-    team: [
-      { name: "John Doe", role: "Team Lead" },
-      { name: "Jane Smith", role: "Developer" },
-    ],
-    tasks: [
-      {
-        title: "Setup Development Environment",
-        assignedTo: "John Doe",
-        deadline: "2024-03-30",
-        status: "Completed",
-      },
-      {
-        title: "Initial Project Planning",
-        assignedTo: "Jane Smith",
-        deadline: "2024-04-15",
-        status: "Pending",
-      },
-    ],
-    resources: [
-      {
-        name: "Project Documentation",
-        type: "document",
-        url: "/docs/project-doc.pdf",
-      },
-      {
-        name: "GitHub Repository",
-        type: "link",
-        url: "https://github.com/project/repo",
-      },
-    ],
-  });
+  const isMobile = useIsMobile();
+  const defaultImageUrl = "https://via.placeholder.com/600x400";
 
   useEffect(() => {
+    async function fetchProject() {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Authentication token not found');
+        }
+
+        const response = await fetch(`http://localhost:8000/api/project/${params.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch project details');
+        }
+        const result = await response.json();
+        const fetchedProject = result.data;
+        
+        // Map the API response to our local project structure
+        const mappedProject: Project = {
+          id: fetchedProject.id,
+          title: fetchedProject.projectName,
+          description: fetchedProject.projectDescription,
+          prerequisites: fetchedProject.prerequisites,
+          techStack: fetchedProject.techStack || [],
+          tag: (fetchedProject.tags || []).join(', '),
+          duration: fetchedProject.projectDurationMonths.toString(),
+          level: fetchedProject.projectLevel === "EASY" 
+            ? "Easy" 
+            : fetchedProject.projectLevel === "MEDIUM" 
+            ? "Medium" 
+            : "Difficult",
+          status: fetchedProject.projectStatus === "NOT_STARTED"
+            ? "Not Started"
+            : fetchedProject.projectStatus === "IN_PROGRESS"
+            ? "In Progress"
+            : "Completed",
+          mentor: fetchedProject.owner.name,
+          imageUrl: fetchedProject.projectImage || defaultImageUrl,
+          team: fetchedProject.projectTeamMembers || [],
+          tasks: [],
+          resources: [],
+          applicants: [],
+          isOpenForApplications: true,
+          projectRepo: fetchedProject.projectRepo
+        };
+        setProject(mappedProject);
+      } catch (error) {
+        console.error("Error fetching project details:", error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch project details');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void fetchProject();
+  }, [params.id]);
+
+  useEffect(() => {
+    if (!project) return;
+    
     // Calculate progress based on completed tasks
     const completedTasks = project.tasks.filter(
-      (task) => task.status === "Completed",
+      (task) => task.status === "Completed"
     ).length;
     const totalTasks = project.tasks.length;
     const newProgress =
       totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-    setProject((prev) => ({ ...prev, progress: newProgress }));
-  }, [project.tasks]);
+    setProgress(newProgress);
+
+  }, [project?.tasks]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading project details...</div>
+      </div>
+    );
+  }
+
+  if (error || !project) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg text-red-600">{error || 'Project not found'}</div>
+      </div>
+    );
+  }
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProject((prev) => ({ ...prev, imageUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+    if (file && project) {
+      // Here you would typically upload the file to your server
+      // For now, we'll just create a local URL
+      const imageUrl = URL.createObjectURL(file);
+      setProject({
+        ...project,
+        imageUrl,
+      });
     }
   };
 
-  const handleAddMember = () => {
-    if (newMember.name && newMember.role) {
-      setProject((prev) => ({
-        ...prev,
-        team: [...prev.team, newMember],
-      }));
-      setNewMember({ name: "", role: "" });
-      setShowAddMember(false);
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (project && newMember.name) {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Authentication token not found');
+        }
+
+        console.log('Token:', token); // Debug token value
+
+        const response = await fetch('http://localhost:8000/api/project/addMember', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Added back the Bearer prefix
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            projectId: project.id,
+            userName: newMember.name,
+            role: "TEAM_MEMBER"
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error('Error response:', errorData);
+          throw new Error(`Failed to add team member: ${errorData}`);
+        }
+
+        // Update local state only after successful API call
+        setProject({
+          ...project,
+          team: [...project.team, newMember],
+        });
+        setNewMember({ name: "", role: "" });
+        setIsEditDialogOpen(false);
+      } catch (error) {
+        console.error("Error adding team member:", error);
+        // You might want to show an error message to the user here
+      }
     }
   };
 
-  const handleAddTask = () => {
-    if (newTask.title && newTask.assignedTo && newTask.deadline) {
-      setProject((prev) => ({
-        ...prev,
-        tasks: [...prev.tasks, newTask],
-      }));
+  const handleAddTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (project && newTask.title && newTask.assignedTo && newTask.deadline) {
+      setProject({
+        ...project,
+        tasks: [...project.tasks, newTask],
+      });
       setNewTask({
         title: "",
         assignedTo: "",
         deadline: "",
         status: "Pending",
       });
-      setShowAddTask(false);
+      setIsAddTaskDialogOpen(false);
     }
   };
 
-  const handleAddResource = () => {
-    if (newResource.name && newResource.type && newResource.url) {
-      setProject((prev) => ({
-        ...prev,
-        resources: [...(prev.resources || []), newResource],
-      }));
+  const handleAddResource = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (project && newResource.name && newResource.type && newResource.url) {
+      setProject({
+        ...project,
+        resources: [...project.resources, newResource],
+      });
       setNewResource({ name: "", type: "", url: "" });
-      setShowAddResource(false);
+      setIsAddResourceDialogOpen(false);
     }
   };
 
@@ -231,17 +308,20 @@ export default function StudentProjectDetails({
       });
 
       if (response.ok) {
-        setProject((prev) => ({
-          ...prev,
-          tasks: prev.tasks?.map((task) =>
-            task.title === taskTitle
-              ? {
-                  ...task,
-                  status: task.status === "Pending" ? "Completed" : "Pending",
-                }
-              : task
-          ) || [],
-        }));
+        setProject((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            tasks: prev.tasks?.map((task) =>
+              task.title === taskTitle
+                ? {
+                    ...task,
+                    status: task.status === "Pending" ? "Completed" : "Pending",
+                  }
+                : task
+            ) || [],
+          };
+        });
       }
     } catch (error) {
       console.error("Error updating task status:", error);
@@ -250,41 +330,26 @@ export default function StudentProjectDetails({
 
   const handleUpdateApplicantStatus = (
     applicantId: string,
-    newStatus: Applicant["status"],
+    newStatus: Applicant["status"]
   ) => {
-    setApplicants((prev) =>
-      prev.map((app) =>
-        app.id === applicantId ? { ...app, status: newStatus } : app,
-      ),
+    setApplicants((prevApplicants) =>
+      prevApplicants.map((applicant) =>
+        applicant.id === applicantId
+          ? { ...applicant, status: newStatus }
+          : applicant
+      )
     );
-
-    if (newStatus === "accepted") {
-      const approvedApplicant = applicants.find(
-        (app) => app.id === applicantId,
-      );
-      if (approvedApplicant) {
-        setProject((prev) => ({
-          ...prev,
-          team: [
-            ...prev.team,
-            { name: approvedApplicant.name, role: "Team Member" },
-          ],
-        }));
-      }
-    }
   };
 
   const handleAddNote = (applicantId: string, note: string) => {
-    setApplicants((prev) =>
-      prev.map((app) =>
-        app.id === applicantId
-          ? { ...app, notes: app.notes ? `${app.notes}\n${note}` : note }
-          : app,
-      ),
+    setApplicants((prevApplicants) =>
+      prevApplicants.map((applicant) =>
+        applicant.id === applicantId
+          ? { ...applicant, notes: note }
+          : applicant
+      )
     );
   };
-
-  const isMobile = useIsMobile();
 
   return (
     <div className="min-h-screen pb-16 md:pb-0">
@@ -343,7 +408,7 @@ export default function StudentProjectDetails({
                 </div>
               </div>
               <div className="flex gap-2">
-                <Dialog open={showApplicants} onOpenChange={setShowApplicants}>
+                <Dialog open={showApplicantsModal} onOpenChange={setShowApplicantsModal}>
                   <DialogTrigger asChild>
                     <Button variant="outline">
                       <Users className="mr-2" size={16} />
@@ -357,13 +422,13 @@ export default function StudentProjectDetails({
                     <ApplicantsModal
                       projectTitle={project.title}
                       applicants={applicants}
-                      onClose={() => setShowApplicants(false)}
+                      onClose={() => setShowApplicantsModal(false)}
                       onUpdateStatus={handleUpdateApplicantStatus}
                       onAddNote={handleAddNote}
                     />
                   </DialogContent>
                 </Dialog>
-                <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
+                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                   <DialogTrigger asChild>
                     <Button>
                       <Plus className="mr-2" size={16} />
@@ -435,119 +500,40 @@ export default function StudentProjectDetails({
                     <h2 className="text-2xl font-semibold mb-2">
                       Project Description
                     </h2>
-                    {isEditing ? (
-                      <Textarea
-                        value={project.description}
-                        onChange={(e) =>
-                          setProject((prev) => ({
-                            ...prev,
-                            description: e.target.value,
-                          }))
-                        }
-                        className="mb-4"
-                      />
-                    ) : (
-                      <p className="text-muted-foreground">
-                        {project.description}
-                      </p>
-                    )}
+                    <p className="text-muted-foreground">
+                      {project.description}
+                    </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {isEditing ? (
-                      <>
-                        <div>
-                          <Label>Mentor</Label>
-                          <Input
-                            value={project.mentor}
-                            onChange={(e) =>
-                              setProject((prev) => ({
-                                ...prev,
-                                mentor: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Duration</Label>
-                          <Input
-                            value={project.duration}
-                            onChange={(e) =>
-                              setProject((prev) => ({
-                                ...prev,
-                                duration: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Tech Stack</Label>
-                          <Input
-                            value={project.techStack.join(", ")}
-                            onChange={(e) =>
-                              setProject((prev) => ({
-                                ...prev,
-                                techStack: e.target.value
-                                  .split(",")
-                                  .map((s) => s.trim()),
-                              }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Max Team Size</Label>
-                          <Input
-                            type="number"
-                            value={project.maxTeamSize}
-                            onChange={(e) =>
-                              setProject((prev) => ({
-                                ...prev,
-                                maxTeamSize: parseInt(e.target.value),
-                              }))
-                            }
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex items-center space-x-2">
-                          <Book className="text-muted-foreground" size={20} />
-                          <span className="text-muted-foreground">
-                            Mentor: {project.mentor}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Calendar
-                            className="text-muted-foreground"
-                            size={20}
-                          />
-                          <span className="text-muted-foreground">
-                            Duration: {project.duration}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Users className="text-muted-foreground" size={20} />
-                          <span className="text-muted-foreground">
-                            Team Size: {project.team.length} /{" "}
-                            {project.maxTeamSize}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Code className="text-muted-foreground" size={20} />
-                          <span className="text-muted-foreground">
-                            Tech Stack: {project.techStack.join(", ")}
-                          </span>
-                        </div>
-                      </>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      <Book className="text-muted-foreground" size={20} />
+                      <span className="text-muted-foreground">
+                        Mentor: {project.mentor}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Calendar
+                        className="text-muted-foreground"
+                        size={20}
+                      />
+                      <span className="text-muted-foreground">
+                        Duration: {project.duration}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Users className="text-muted-foreground" size={20} />
+                      <span className="text-muted-foreground">
+                        Team Size: {project.team.length}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Code className="text-muted-foreground" size={20} />
+                      <span className="text-muted-foreground">
+                        Tech Stack: {project.techStack.join(", ")}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  onClick={() => setIsEditing(!isEditing)}
-                >
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  {isEditing ? "Save" : "Edit"}
-                </Button>
               </div>
 
               {/* Progress Bar */}
@@ -555,10 +541,10 @@ export default function StudentProjectDetails({
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Overall Progress</span>
                   <span className="text-sm font-medium">
-                    {project.progress}%
+                    {progress}%
                   </span>
                 </div>
-                <Progress value={project.progress} className="h-2" />
+                <Progress value={progress} className="h-2" />
               </div>
             </motion.div>
           </TabsContent>
@@ -590,7 +576,10 @@ export default function StudentProjectDetails({
             >
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                 <h2 className="text-2xl font-semibold">Tasks & Progress</h2>
-                <Dialog open={showAddTask} onOpenChange={setShowAddTask}>
+                <Dialog
+                  open={isAddTaskDialogOpen}
+                  onOpenChange={setIsAddTaskDialogOpen}
+                >
                   <DialogTrigger asChild>
                     <Button>
                       <Plus className="mr-2" size={16} />
@@ -689,8 +678,8 @@ export default function StudentProjectDetails({
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                 <h2 className="text-2xl font-semibold">Project Resources</h2>
                 <Dialog
-                  open={showAddResource}
-                  onOpenChange={setShowAddResource}
+                  open={isAddResourceDialogOpen}
+                  onOpenChange={setIsAddResourceDialogOpen}
                 >
                   <DialogTrigger asChild>
                     <Button>

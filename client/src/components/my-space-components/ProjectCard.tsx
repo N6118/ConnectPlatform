@@ -19,6 +19,7 @@ export const levelColors = {
 
 interface ProjectCardProps {
   project: {
+    id: string;
     title: string;
     description: string;
     tag: string;
@@ -44,7 +45,7 @@ interface ProjectCardProps {
       role: string;
     }[];
   };
-  userType: "faculty" | "student"; // New prop to differentiate user type
+  userType: "faculty" | "student"; 
   onEdit: () => void;
   onDelete: () => void;
   onViewApplicants: () => void;
@@ -58,7 +59,7 @@ export default function ProjectCard({
   onViewApplicants,
 }: ProjectCardProps) {
   const applicantsCount = project.applicants?.length || 0;
-  const projectLink = `/${userType}/project/${encodeURIComponent(project.title)}`;
+  const projectLink = `/${userType}/project/${project.id}`;
 
   return (
     <motion.div
