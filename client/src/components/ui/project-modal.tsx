@@ -10,7 +10,7 @@ interface Project {
   id: number;
   name: string;
   description: string;
-  status: 'Ongoing' | 'Completed';
+  status: 'NOT_STARTED'| 'IN_PROGRESS'|'COMPLETED';
   tags: string[];
   image: string;
   about: string;

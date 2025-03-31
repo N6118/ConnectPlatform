@@ -1,10 +1,54 @@
 import type { z } from 'zod';
 
 export interface User {
+  id: number;
   username: string;
-  password: string;
-  role: "admin" | "faculty" | "student";
+  about: string;
+  email: string;
   name: string;
+  profilePicture: string | null;
+  headline: string;
+  role: "admin" | "faculty" | "student" | "ADMIN" | "FACULTY" | "STUDENT";
+  post: any;
+  socialLinks: {
+    github: string;
+    linkedin: string;
+    portfolio: string;
+  };
+  studentDetails?: {
+    enrollmentNumber: string;
+    branch: string;
+    course: string;
+    college: string;
+    semester: string;
+    graduationYear: string;
+    section: string;
+    totalPerformanceScore: number | null;
+    thresholdLevel: number | null;
+    capacity: number | null;
+    currentProjectPoints: number | null;
+    easyCommitmentScore: number | null;
+    mediumCommitmentScore: number | null;
+    difficultCommitmentScore: number | null;
+    skillPoints: Record<string, any>;
+  };
+  facultyDetails?: {
+    employeeId: string;
+    department: string;
+    designation: string;
+    specialization: string;
+    qualification: string;
+  };
+  achievement: string[];
+  interest: string[];
+  clubMemberships: {
+    clubId: number | null;
+    clubName: string | null;
+    rollNo: string;
+    role: string;
+    userName: string | null;
+  }[];
+  active: boolean;
 }
 
 // Sample users for testing

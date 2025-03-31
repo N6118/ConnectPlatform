@@ -29,13 +29,19 @@ export const authService = {
   login: async (loginData: LoginData): Promise<ApiResponse<UserAuthResponse>> => {
     // For login, we don't use authentication (no token yet)
     const response = await api.post<UserAuthResponse>('auth/login', loginData, { useAuth: false });
-    
+
     if (response.success && response.data) {
+      // Convert role to lowercase before storing
+      const userData = {
+        ...response.data.user,
+        role: response.data.user.role.toLowerCase() as "admin" | "faculty" | "student"
+      };
+
       // Store token and user data in localStorage
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('user', JSON.stringify(userData));
     }
-    
+
     return response;
   },
 

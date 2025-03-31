@@ -2,6 +2,8 @@
  * Generic API service to handle all HTTP requests
  */
 
+import { useLocation } from "wouter";
+
 // Types for request configurations
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -36,10 +38,10 @@ const getAuthToken = (): string | null => {
  */
 const addAuthHeader = (headers: Record<string, string>, useAuth: boolean | undefined): Record<string, string> => {
   if (useAuth === false) return headers;
-  
+
   const token = getAuthToken();
   if (!token) return headers;
-  
+
   return {
     ...headers,
     'Authorization': `Bearer ${token}`
@@ -60,7 +62,7 @@ export async function buildRequest<T = any>(
     // Ensure endpoint starts with /
     const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const url = `${API_BASE_URL}${path}`;
-    
+
     // Default configuration
     const defaultConfig: RequestConfig = {
       method: 'GET',
@@ -70,7 +72,7 @@ export async function buildRequest<T = any>(
       },
       useAuth: true, // Default to using auth
     };
-    
+
     // Merge configurations
     const mergedConfig: RequestConfig = {
       ...defaultConfig,
@@ -84,12 +86,12 @@ export async function buildRequest<T = any>(
         config.useAuth !== undefined ? config.useAuth : defaultConfig.useAuth
       ),
     };
-    
+
     // For methods with body, stringify the body if it's not already a string and not FormData
     if (mergedConfig.body && typeof mergedConfig.body !== 'string' && !(mergedConfig.body instanceof FormData)) {
       mergedConfig.body = JSON.stringify(mergedConfig.body);
     }
-    
+
     // If using FormData, let the browser set the Content-Type header
     if (mergedConfig.body instanceof FormData) {
       // Remove content-type to let browser set it with proper boundary
@@ -97,30 +99,32 @@ export async function buildRequest<T = any>(
         delete mergedConfig.headers['Content-Type'];
       }
     }
-    
+
     // Remove useAuth from the final config as it's not a valid fetch option
     const { useAuth, ...fetchConfig } = mergedConfig;
-    
+
     // Execute the request
     const response = await fetch(url, fetchConfig as RequestInit);
-    
+
     // Parse the JSON response
     const data = await response.json();
-    
+
     // Check if the request was successful
     if (!response.ok) {
       // Handle 401 Unauthorized - token might be expired
       if (response.status === 401 && useAuth) {
-        // Could trigger a refresh token flow here or redirect to login
-        console.warn('Authentication token has expired or is invalid');
+        // Clear auth data and redirect to login
+        // localStorage.removeItem('token');
+        // localStorage.removeItem('user');
+        // window.location.href = '/login';
       }
-      
+
       return {
         success: false,
         error: data.message || `Request failed with status ${response.status}`,
       };
     }
-    
+
     return {
       success: true,
       data: data.data || data,
@@ -139,18 +143,18 @@ export async function buildRequest<T = any>(
  * Common API methods
  */
 export const api = {
-  get: <T = any>(endpoint: string, config?: Omit<RequestConfig, 'method' | 'body'>) => 
+  get: <T = any>(endpoint: string, config?: Omit<RequestConfig, 'method' | 'body'>) =>
     buildRequest<T>(endpoint, { ...config, method: 'GET' }),
-    
-  post: <T = any>(endpoint: string, body?: any, config?: Omit<RequestConfig, 'method'>) => 
+
+  post: <T = any>(endpoint: string, body?: any, config?: Omit<RequestConfig, 'method'>) =>
     buildRequest<T>(endpoint, { ...config, method: 'POST', body }),
-    
-  put: <T = any>(endpoint: string, body?: any, config?: Omit<RequestConfig, 'method'>) => 
+
+  put: <T = any>(endpoint: string, body?: any, config?: Omit<RequestConfig, 'method'>) =>
     buildRequest<T>(endpoint, { ...config, method: 'PUT', body }),
-    
-  patch: <T = any>(endpoint: string, body?: any, config?: Omit<RequestConfig, 'method'>) => 
+
+  patch: <T = any>(endpoint: string, body?: any, config?: Omit<RequestConfig, 'method'>) =>
     buildRequest<T>(endpoint, { ...config, method: 'PATCH', body }),
-    
-  delete: <T = any>(endpoint: string, config?: Omit<RequestConfig, 'method'>) => 
+
+  delete: <T = any>(endpoint: string, config?: Omit<RequestConfig, 'method'>) =>
     buildRequest<T>(endpoint, { ...config, method: 'DELETE' }),
 }; 

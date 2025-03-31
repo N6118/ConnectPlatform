@@ -17,7 +17,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -37,10 +37,13 @@ export default function Login() {
     setIsLoading(true);
 
     try {
+      console.log('Starting login process...'); // Debug log
       const response = await authService.login({
         username: data.username,
         password: data.password,
       });
+
+      console.log('Login response:', response); // Debug log
 
       if (!response.success) {
         throw new Error(response.error || "Invalid username or password");
@@ -54,8 +57,18 @@ export default function Login() {
 
       // Login user with the auth context
       if (auth && response.data?.user) {
-        auth.login(response.data.user);
-        // No need to navigate here, the auth context will handle that
+        // Ensure role is lowercase before passing to auth context
+        const userWithNormalizedRole = {
+          ...response.data.user,
+          role: response.data.user.role.toLowerCase() as "admin" | "faculty" | "student"
+        };
+
+        console.log('Calling auth.login with user:', userWithNormalizedRole); // Debug log
+        console.log('User role before login:', userWithNormalizedRole.role); // Debug log
+
+        auth.login(userWithNormalizedRole);
+      } else {
+        console.error('Auth context or user data missing:', { auth, user: response.data?.user }); // Debug log
       }
     } catch (error) {
       console.error("Login error:", error);

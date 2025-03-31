@@ -24,12 +24,11 @@ export interface ProjectData {
  * Interface for project search parameters
  */
 export interface ProjectSearchParams {
-  searchTerm?: string;
-  level?: 'EASY' | 'MEDIUM' | 'HARD';
-  status?: string;
-  isOpenForApplications?: boolean;
-  tag?: string;
-  mentor?: string;
+  projectName?: string;
+  projectStatus?: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+  projectLevel?: 'EASY' | 'MEDIUM' | 'HARD';
+  tags?: string[];
+  username?: string;
   page?: number;
 }
 
@@ -62,24 +61,36 @@ export interface ProjectApplicationData {
 /**
  * Transform raw API project data to match the Project interface
  */
-export const transformProject = (project: ProjectData): Project => ({
-  id: project.id,
-  name: project.projectName || '',
-  description: project.projectDescription || '',
-  status: (project.projectStatus === 'Ongoing' || project.projectStatus === 'Completed') 
-    ? project.projectStatus 
-    : 'Ongoing',
-  tags: Array.isArray(project.tags) ? project.tags : [],
-  image: project.projectImage || '',
-  about: project.projectDescription || '',
-  techStack: Array.isArray(project.techStack) ? project.techStack : [],
-  prerequisites: project.prerequisites ? [project.prerequisites] : [],
-  members: [], // API doesn't provide members data
-  mentor: project.mentor || "", 
-  projectRepo: project.projectRepo,
-  projectLevel: project.level,
-  projectDurationMonths: project.projectDurationMonths,
-});
+export const transformProject = (project: ProjectData): Project => {
+  // Ensure the status is one of the valid values
+  const validStatus = (status: string): 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' => {
+    switch (status) {
+      case 'NOT_STARTED':
+      case 'IN_PROGRESS':
+      case 'COMPLETED':
+        return status as 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+      default:
+        return 'NOT_STARTED';
+    }
+  };
+
+  return {
+    id: project.id,
+    name: project.projectName || '',
+    description: project.projectDescription || '',
+    status: validStatus(project.projectStatus),
+    tags: Array.isArray(project.tags) ? project.tags : [],
+    image: project.projectImage || '',
+    about: project.projectDescription || '',
+    techStack: Array.isArray(project.techStack) ? project.techStack : [],
+    prerequisites: project.prerequisites ? [project.prerequisites] : [],
+    members: [], // API doesn't provide members data
+    mentor: project.mentor || "",
+    projectRepo: project.projectRepo,
+    projectLevel: project.level,
+    projectDurationMonths: project.projectDurationMonths,
+  };
+};
 
 /**
  * Project service methods
@@ -89,8 +100,8 @@ export const projectService = {
    * Get all projects
    */
   getAllProjects: async (): Promise<ApiResponse<Project[]>> => {
-    const response = await api.get<ProjectData[]>('project/getAllProjects');
-    
+    const response = await api.get<ProjectData[]>('project/search');
+
     if (response.success && response.data) {
       // Transform the API data to match our Project interface
       const transformedProjects = response.data.map(transformProject);
@@ -99,10 +110,10 @@ export const projectService = {
         data: transformedProjects
       };
     }
-    
+
     return {
       success: false,
-      error: response.error || 'Failed to get projects data',
+      error: response.error || 'Failed to get projects',
     };
   },
 
@@ -111,14 +122,14 @@ export const projectService = {
    */
   getProjectById: async (id: number): Promise<ApiResponse<Project>> => {
     const response = await api.get<ProjectData>(`project/getProject/${id}`);
-    
+
     if (response.success && response.data) {
       return {
         ...response,
         data: transformProject(response.data)
       };
     }
-    
+
     return {
       success: false,
       error: response.error || 'Failed to get project data',
@@ -130,14 +141,14 @@ export const projectService = {
    */
   createProject: async (projectData: CreateProjectData): Promise<ApiResponse<Project>> => {
     const response = await api.post<ProjectData>('project/createProject', projectData);
-    
+
     if (response.success && response.data) {
       return {
         ...response,
         data: transformProject(response.data)
       };
     }
-    
+
     return {
       success: false,
       error: response.error || 'Failed to create project',
@@ -150,18 +161,25 @@ export const projectService = {
   searchProjects: async (params: ProjectSearchParams): Promise<ApiResponse<Project[]>> => {
     // Convert params to query string
     const queryParams = new URLSearchParams();
-    
+
     for (const [key, value] of Object.entries(params)) {
-      if (value !== undefined) {
-        queryParams.append(key, String(value));
+      if (value !== undefined && value !== null && value !== '') {
+        // Handle array parameters (like tags)
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            value.forEach(item => queryParams.append(key, item));
+          }
+        } else {
+          queryParams.append(key, String(value));
+        }
       }
     }
-    
+
     const queryString = queryParams.toString();
     const endpoint = `project/search${queryString ? `?${queryString}` : ''}`;
-    
+
     const response = await api.get<ProjectData[]>(endpoint);
-    
+
     if (response.success && response.data) {
       const transformedProjects = response.data.map(transformProject);
       return {
@@ -169,7 +187,7 @@ export const projectService = {
         data: transformedProjects
       };
     }
-    
+
     return {
       success: false,
       error: response.error || 'Failed to search projects',
@@ -181,7 +199,7 @@ export const projectService = {
    */
   getProjectsByUser: async (username: string): Promise<ApiResponse<Project[]>> => {
     const response = await api.get<ProjectData[]>(`project/getProjectsByUser/${username}`);
-    
+
     if (response.success && response.data) {
       const transformedProjects = response.data.map(transformProject);
       return {
@@ -189,7 +207,7 @@ export const projectService = {
         data: transformedProjects
       };
     }
-    
+
     return {
       success: false,
       error: response.error || 'Failed to get user projects',
@@ -201,7 +219,7 @@ export const projectService = {
    */
   getProjectsByMentor: async (mentorUsername: string): Promise<ApiResponse<Project[]>> => {
     const response = await api.get<ProjectData[]>(`project/getProjectsByMentor/${mentorUsername}`);
-    
+
     if (response.success && response.data) {
       const transformedProjects = response.data.map(transformProject);
       return {
@@ -209,7 +227,7 @@ export const projectService = {
         data: transformedProjects
       };
     }
-    
+
     return {
       success: false,
       error: response.error || 'Failed to get mentor projects',

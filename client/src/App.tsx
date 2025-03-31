@@ -60,8 +60,8 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   userRole: "student",
   user: null,
-  login: () => {},
-  logout: () => {},
+  login: () => { },
+  logout: () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -79,6 +79,13 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = (newUser: User) => {
+    console.log('AuthProvider login called with user:', newUser); // Debug log
+    console.log('User role:', newUser.role); // Debug log
+
+    // Convert role to lowercase for route mapping
+    const normalizedRole = newUser.role.toLowerCase() as "admin" | "faculty" | "student";
+    console.log('Normalized role:', normalizedRole); // Debug log
+
     setUser(newUser);
     const roleRoutes: Record<string, string> = {
       admin: "/admin",
@@ -86,13 +93,16 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       student: "/student",
     };
 
-    if (!roleRoutes[newUser.role]) {
+    if (!roleRoutes[normalizedRole]) {
+      console.error('Invalid role:', normalizedRole); // Debug log
       throw new Error("Invalid role detected");
     }
 
-    setTimeout(() => {
-      navigate(roleRoutes[newUser.role]);
-    }, 100);
+    const targetRoute = roleRoutes[normalizedRole];
+    console.log('Redirecting to:', targetRoute); // Debug log
+
+    // Use window.location for a full page reload
+    window.location.href = targetRoute;
   };
 
   const logout = () => {
@@ -127,10 +137,24 @@ function PrivateRoute({
   const [_, navigate] = useLocation();
 
   useEffect(() => {
+    // Debug logging
+    console.log('PrivateRoute Debug:');
+    console.log('Component:', Component.name || 'Unknown Component');
+    console.log('Allowed roles:', roles);
+    console.log('Is authenticated:', isAuthenticated);
+    console.log('Current user role:', userRole);
+    console.log('localStorage token exists:', !!localStorage.getItem('token'));
+    console.log('localStorage user exists:', !!localStorage.getItem('user'));
+
     if (!isAuthenticated) {
+      console.log('REDIRECTING: Not authenticated, redirecting to login');
       navigate("/login");
     } else if (roles && !roles.includes(userRole)) {
+      console.log('REDIRECTING: Unauthorized role, redirecting to unauthorized page');
+      console.log('User role:', userRole, 'Required roles:', roles);
       navigate("/unauthorized");
+    } else {
+      console.log('ACCESS GRANTED: User authenticated and authorized');
     }
   }, [isAuthenticated, userRole, roles, navigate]);
 
@@ -301,7 +325,5 @@ function App() {
     </ThemeProvider>
   );
 }
-
-
 
 export default App;

@@ -11,12 +11,14 @@ import { projectService } from "@/services/project";
 import { useAuth } from "@/App";
 import { useToast } from "@/hooks/use-toast";
 
+type ProjectStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'All';
+
 export default function StudentProjects() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [allProjects, setAllProjects] = useState<Project[]>([]);
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState<ProjectStatus>("All");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,11 +31,21 @@ export default function StudentProjects() {
     const fetchProjects = async () => {
       try {
         setIsLoading(true);
-        const response = await projectService.getAllProjects();
-        
+        const searchParams: any = {};
+
+        // Only add parameters if they have values
+        if (searchTerm) searchParams.projectName = searchTerm;
+        if (statusFilter !== "All") searchParams.projectStatus = statusFilter;
+        if (selectedTags.length > 0) searchParams.tags = selectedTags;
+
+        const response = await projectService.searchProjects(searchParams);
+
         if (response.success && response.data) {
-          setAllProjects(response.data);
           setFilteredProjects(response.data);
+          // Update allProjects only on initial load
+          if (allProjects.length === 0) {
+            setAllProjects(response.data);
+          }
         } else {
           setError(response.error || 'No projects data received from the server');
           // If unauthorized, redirect to login
@@ -55,26 +67,11 @@ export default function StudentProjects() {
     };
 
     fetchProjects();
-  }, [auth, toast]);
+  }, [searchTerm, statusFilter, selectedTags, auth, toast]);
 
   const allTags = Array.from(
     new Set(allProjects.flatMap((project) => project.tags)),
   );
-
-  const handleSearch = useCallback(() => {
-    const filtered = allProjects.filter(
-      (project) =>
-        project.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        (selectedTags.length === 0 ||
-          project.tags.some((tag) => selectedTags.includes(tag))) &&
-        (statusFilter === "All" || project.status === statusFilter),
-    );
-    setFilteredProjects(filtered);
-  }, [searchTerm, selectedTags, statusFilter, allProjects]);
-
-  useEffect(() => {
-    handleSearch();
-  }, [searchTerm, selectedTags, statusFilter, handleSearch]);
 
   const toggleTag = (tag: string) => {
     setSelectedTags((tags) =>

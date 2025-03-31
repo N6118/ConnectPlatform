@@ -19,11 +19,13 @@ interface ProjectFiltersType {
   mentor?: string;
 }
 
+type ProjectStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'All';
+
 interface ProjectFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  statusFilter: string;
-  onStatusChange: (value: string) => void;
+  statusFilter: ProjectStatus;
+  onStatusChange: (value: ProjectStatus) => void;
   selectedTags: string[];
   onTagToggle: (tag: string) => void;
   allTags: string[];
@@ -47,19 +49,19 @@ export const ProjectFilters = ({
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full md:w-64"
         />
-        
+
         <Select
           value={statusFilter}
-          onValueChange={onStatusChange}
+          onValueChange={(value: ProjectStatus) => onStatusChange(value)}
         >
           <SelectTrigger className="w-full md:w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="Not Started">Not Started</SelectItem>
-            <SelectItem value="In Progress">In Progress</SelectItem>
-            <SelectItem value="Completed">Completed</SelectItem>
+            <SelectItem value="All">All Status</SelectItem>
+            <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+            <SelectItem value="COMPLETED">Completed</SelectItem>
           </SelectContent>
         </Select>
 
@@ -82,8 +84,8 @@ export const ProjectFilters = ({
           variant="outline"
           onClick={() => {
             onSearchChange('');
-            onStatusChange('all');
-            onTagToggle('');
+            onStatusChange('All');
+            selectedTags.forEach(tag => onTagToggle(tag)); // Clear all selected tags
           }}
         >
           Clear Filters

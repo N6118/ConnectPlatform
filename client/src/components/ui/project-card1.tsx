@@ -29,7 +29,7 @@ export interface Project {
   id: number;
   name: string;
   description: string;
-  status: 'Ongoing' | 'Completed';
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
   tags: string[];
   image: string;
   about: string;
@@ -50,8 +50,32 @@ interface ProjectCardProps {
 export function ProjectCard({ project, onClick }: ProjectCardProps) {
   const [imageError, setImageError] = useState(false);
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'IN_PROGRESS':
+        return 'default';
+      case 'COMPLETED':
+        return 'secondary';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'IN_PROGRESS':
+        return 'In Progress';
+      case 'NOT_STARTED':
+        return 'Not Started';
+      case 'COMPLETED':
+        return 'Completed';
+      default:
+        return status;
+    }
+  };
+
   return (
-    <Card 
+    <Card
       onClick={() => onClick(project)}
       className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
     >
@@ -64,11 +88,11 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
             onError={() => setImageError(true)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          <Badge 
-            variant={project.status === "Ongoing" ? "default" : "secondary"}
+          <Badge
+            variant={getStatusVariant(project.status)}
             className="absolute top-4 right-4"
           >
-            {project.status}
+            {getStatusText(project.status)}
           </Badge>
         </div>
       </CardHeader>
@@ -84,11 +108,11 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
         </div>
       </CardContent>
       <CardFooter>
-        <Button 
-          variant={project.status === "Ongoing" ? "default" : "secondary"} 
+        <Button
+          variant={project.status === "IN_PROGRESS" ? "default" : "secondary"}
           className="w-full"
         >
-          {project.status === "Ongoing" ? "Apply Now" : "View Details"}
+          {project.status === "IN_PROGRESS" ? "Apply Now" : "View Details"}
         </Button>
       </CardFooter>
     </Card>
