@@ -39,6 +39,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
+  const [userName, setUserName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -57,6 +58,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
       setContent("");
       setTitle("");
       setCategory("");
+      setUserName("");
       setSelectedFile(null);
       setPreviewUrl(null);
     }
@@ -81,7 +83,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
   };
-  const baseUrl = 'http://localhost:8000/api';
+  const baseUrl = 'http://connectbeta-env-1.eba-ht35jqzk.eu-north-1.elasticbeanstalk.com/api';
 
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -129,6 +131,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
         formData.append('content', content);
         formData.append('type', category);
         formData.append('visibility', 'PUBLIC');
+        formData.append('userName', userName);
 
         // Add title if it exists
         if (title) {
@@ -164,6 +167,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
             type: category,
             visibility: 'PUBLIC',
             title: title || null,
+            userName: userName,
             tags: [category.toLowerCase()]
           })
         });
@@ -219,6 +223,17 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter post title"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="userName">Username</Label>
+            <Input
+              id="userName"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder="Enter your userName"
               required
             />
           </div>

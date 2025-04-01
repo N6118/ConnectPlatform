@@ -126,7 +126,7 @@ export default function StudentProjectDetails({
           throw new Error('Authentication token not found');
         }
 
-        const response = await fetch(`http://localhost:8000/api/project/${params.id}`, {
+        const response = await fetch(`http://connectbeta-env-1.eba-ht35jqzk.eu-north-1.elasticbeanstalk.com/api/project/${params.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -232,7 +232,7 @@ export default function StudentProjectDetails({
 
         console.log('Token:', token); // Debug token value
 
-        const response = await fetch('http://localhost:8000/api/project/addMember', {
+        const response = await fetch('http://connectbeta-env-1.eba-ht35jqzk.eu-north-1.elasticbeanstalk.com/api/project/addMember', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`, // Added back the Bearer prefix

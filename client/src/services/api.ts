@@ -24,7 +24,7 @@ export interface ApiResponse<T = any> {
 }
 
 // Base URL from environment variables or fallback to localhost
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://connectbeta-env-1.eba-ht35jqzk.eu-north-1.elasticbeanstalk.com/api';
 
 /**
  * Get auth token from local storage

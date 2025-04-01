@@ -19,6 +19,15 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { postService, PostData, PostComment, CreateCommentData } from "@/services/post";
 import CreatePostModal from "./CreatePostModal";
 
+// Local Post interface to match CreatePostModal's definition
+interface LocalPost {
+  id?: string | number;
+  title?: string;
+  content?: string;
+  type?: string;
+  image?: string;
+}
+
 interface ImageModalProps {
   url: string;
   onClose: () => void;
@@ -195,9 +204,36 @@ const ActivityFeed: React.FC = () => {
       try {
         const response = await postService.getAllPosts(page);
         if (response.success && response.data) {
-          const newPosts = response.data.filter((post): post is PostData => post !== undefined);
-          setPosts(prev => [...prev, ...newPosts]);
-          setHasMore(newPosts.length === 10); // Assuming 10 is our page size
+          // Process response data that may contain user objects
+          const processedPosts = response.data.map(item => {
+            // Check if the item has a user property structure
+            if (item && typeof item === 'object' && 'user' in item) {
+              const author = item.author || {};
+              return {
+                id: item.id,
+                title: item.title || '',
+                content: item.content || '',
+                author: {
+                  headline: author.headline || '',
+                  name: author.name || 'Unknown User',
+                  profilePicture: author.profilePicture || ''
+                },
+                createdAt: item.createdAt ? new Date(item.createdAt).toISOString() : new Date().toISOString(),
+                updatedAt: item.updatedAt ? new Date(item.updatedAt).toISOString() : new Date().toISOString(),
+                likes: [{ count: item.likes ? item.likes.length : 0 }],
+                comments: [{ count: item.comments ? item.comments.length : 0 }],
+                type: item.type || 'EVENT',
+                media: item.media,
+                isLiked: item.isLiked || false,
+                isBookmarked: item.isBookmarked || false,
+              } as PostData;
+            }
+            // If it's already in PostData format or can be used as is
+            return item;
+          }).filter((post): post is PostData => post !== undefined);
+
+          setPosts(prev => [...prev, ...processedPosts]);
+          setHasMore(processedPosts.length === 10); // Assuming 10 is our page size
         }
       } catch (error) {
         console.error('Failed to fetch posts:', error);
@@ -295,8 +331,27 @@ const ActivityFeed: React.FC = () => {
     (post) => filter === "ALL" || post.type === filter
   );
 
-  const handlePostCreated = (newPost: PostData) => {
-    setPosts(prev => [newPost, ...prev]);
+  const handlePostCreated = (newPost: LocalPost) => {
+    // Convert Post from modal to PostData and add to state
+    // We need to make sure the post structure matches what the component expects
+    const convertedPost: PostData = {
+      id: typeof newPost.id === 'string' ? parseInt(newPost.id) : (newPost.id as number) || 0,
+      title: newPost.title || '',
+      content: newPost.content || '',
+      type: newPost.type || 'EVENT',
+      author: {
+        headline: '',
+        name: '',
+        profilePicture: '',
+      }, 
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      likes: [],
+      comments: [],
+      media: newPost.image ? { type: 'image', url: newPost.image } : undefined
+    };
+
+    setPosts(prev => [convertedPost, ...prev]);
   };
 
   return (
@@ -350,11 +405,10 @@ const ActivityFeed: React.FC = () => {
             (category) => (
               <motion.button
                 key={category}
-                className={`px-4 py-2 rounded-full transition-colors duration-300 whitespace-nowrap flex items-center space-x-2 ${
-                  filter === category
-                    ? "bg-blue-600 text-white shadow-md border-2 border-blue-700"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300 hover:border-gray-400"
-                }`}
+                className={`px-4 py-2 rounded-full transition-colors duration-300 whitespace-nowrap flex items-center space-x-2 ${filter === category
+                  ? "bg-blue-600 text-white shadow-md border-2 border-blue-700"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300 hover:border-gray-400"
+                  }`}
                 onClick={() => handleFilterChange(category as typeof filter)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -393,21 +447,21 @@ const ActivityFeed: React.FC = () => {
                 <div className="p-4 flex items-center space-x-3">
                   <Avatar className="w-10 h-10">
                     <AvatarImage
-                      src={post.authorAvatar}
-                      alt={post.authorName}
+                      src={post.author?.profilePicture||""}
+                      alt={post.author?.name}
                       className="object-cover"
                     />
                     <AvatarFallback className="bg-blue-500 text-white">
-                      {(post.authorName || 'U').charAt(0).toUpperCase()}
+                      {(post.author?.name || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <p className="font-semibold text-gray-800">
-                      {post.authorName}
+                      {post.author?.name}
                     </p>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-500">
-                        {post.authorName}
+                        {post.author?.name}
                       </span>
                       <span className="text-sm text-gray-400">•</span>
                       <span className="text-xs text-gray-400">
@@ -426,10 +480,10 @@ const ActivityFeed: React.FC = () => {
                       className="rounded-lg overflow-hidden mb-3 relative group cursor-pointer"
                       whileHover={{ scale: 1.02 }}
                       transition={{ duration: 0.2 }}
-                      onClick={() => setSelectedImage(post.media!.url)}
+                      onClick={() => setSelectedImage(post.media?.url || '')}
                     >
                       <motion.img
-                        src={post.media}
+                        src={typeof post.media === 'string' ? post.media : post.media.url}
                         alt="Post content"
                         className="w-full h-64 object-cover transition-all duration-300 group-hover:scale-105"
                         initial={{ filter: "blur(10px)", opacity: 0 }}
@@ -458,27 +512,26 @@ const ActivityFeed: React.FC = () => {
                 <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
                   <div className="flex space-x-6">
                     <motion.button
-                      className={`flex items-center space-x-2 ${
-                        post.isLiked
-                          ? "text-red-500"
-                          : "text-gray-500 hover:text-red-500"
-                      } transition-colors`}
+                      className={`flex items-center space-x-2 ${post.isLiked
+                        ? "text-red-500"
+                        : "text-gray-500 hover:text-red-500"
+                        } transition-colors`}
                       onClick={() => handleLike(post.id)}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       animate={
                         post.isLiked
                           ? {
-                              scale: [1, 1.2, 1],
-                              transition: { duration: 0.3 },
-                            }
+                            scale: [1, 1.2, 1],
+                            transition: { duration: 0.3 },
+                          }
                           : {}
                       }
                     >
                       <Heart
                         className={`w-5 h-5 ${post.isLiked ? "fill-current" : ""}`}
                       />
-                      <span>{post.likes}</span>
+                      <span>{post.likes?.length}</span>
                     </motion.button>
                     <motion.button
                       className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors"
@@ -487,7 +540,7 @@ const ActivityFeed: React.FC = () => {
                       whileTap={{ scale: 0.9 }}
                     >
                       <MessageCircle className="w-5 h-5" />
-                      <span>{post.comments}</span>
+                      <span>{post.comments?.length}</span>
                     </motion.button>
                     <motion.button
                       className="flex items-center space-x-2 text-gray-500 hover:text-green-500 transition-colors"
@@ -499,20 +552,19 @@ const ActivityFeed: React.FC = () => {
                     </motion.button>
                   </div>
                   <motion.button
-                    className={`${
-                      post.isBookmarked
-                        ? "text-yellow-500"
-                        : "text-gray-500 hover:text-yellow-500"
-                    } transition-colors`}
+                    className={`${post.isBookmarked
+                      ? "text-yellow-500"
+                      : "text-gray-500 hover:text-yellow-500"
+                      } transition-colors`}
                     onClick={() => handleBookmark(post.id)}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     animate={
                       post.isBookmarked
                         ? {
-                            scale: [1, 1.2, 1],
-                            transition: { duration: 0.3 },
-                          }
+                          scale: [1, 1.2, 1],
+                          transition: { duration: 0.3 },
+                        }
                         : {}
                     }
                   >

@@ -7,13 +7,11 @@ export interface PostData {
   id: number;
   title: string;
   content: string;
-  authorId: number;
-  authorName: string;
-  authorAvatar?: string;
+  author:PostAuthor;
   createdAt: string;
   updatedAt: string;
-  likes: number;
-  comments: number;
+  likes: Record<string,number>[];
+  comments: Record<string,number>[];
   type: string;
   media?: {
     type: 'image' | 'video';
@@ -21,6 +19,12 @@ export interface PostData {
   };
   isLiked?: boolean;
   isBookmarked?: boolean;
+}
+
+export interface PostAuthor{
+  headline:string;
+  name:string;
+  profilePicture:string;
 }
 
 /**
@@ -85,7 +89,7 @@ export const postService = {
    * Get all posts with pagination
    */
   getAllPosts: async (page: number = 1, limit: number = 10): Promise<ApiResponse<PostData[]>> => {
-    const response = await api.get<PostData[]>(`posts?page=${page}&limit=${limit}`);
+    const response = await api.get<PostData[]>(`feed?page=${page}&limit=${limit}`);
     
     if (response.success && response.data) {
       return {

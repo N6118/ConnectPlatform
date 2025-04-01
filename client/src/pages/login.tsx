@@ -212,6 +212,19 @@ export default function Login() {
                 Forgot your password?
               </button>
             </motion.div>
+
+            <motion.div className="text-center mt-4">
+              <p className="text-gray-600">
+                Don't have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/register")}
+                  className="text-indigo-600 hover:text-indigo-500 transition font-medium"
+                >
+                  Register now
+                </button>
+              </p>
+            </motion.div>
           </motion.form>
         </motion.div>
       </motion.div>

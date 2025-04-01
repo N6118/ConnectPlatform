@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
+import Register from "@/pages/register";
 import ForgotCredentials from "@/pages/forgot-credentials";
 import OTPVerification from "@/pages/otp-verification";
 import ResetPassword from "@/pages/reset-password";
@@ -167,6 +168,7 @@ function Router() {
       {/* Public routes */}
       <Route path="/" component={() => <Landing />} />
       <Route path="/login" component={() => <Login />} />
+      <Route path="/register" component={() => <Register />} />
       <Route path="/forgot-credentials" component={() => <ForgotCredentials />} />
       <Route path="/otp-verification" component={() => <OTPVerification />} />
       <Route path="/reset-password" component={ResetPassword} />

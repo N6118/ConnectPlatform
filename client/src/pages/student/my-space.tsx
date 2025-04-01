@@ -189,7 +189,7 @@ export default function StudentMySpace() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        "http://localhost:8000/api/project/createProject",
+        "http://connectbeta-env-1.eba-ht35jqzk.eu-north-1.elasticbeanstalk.com/api/project/createProject",
         {
           method: "POST",
           headers: {
