@@ -21,17 +21,7 @@ const PerformanceOverview = () => {
         Performance Overview
       </h2>
       <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
-        <div className="w-32 sm:w-1/3">
-          <CircularProgressbar
-            value={tps * 100}
-            text={`${(tps * 100).toFixed(0)}%`}
-            styles={buildStyles({
-              textColor: "#3B82F6",
-              pathColor: "#3B82F6",
-              trailColor: "#D1D5DB",
-            })}
-          />
-        </div>
+        <img src="../../assets/Beginner.png" alt="TPS" className="w-40" />
         <motion.div
           whileHover={{ scale: 1.1 }}
           className={`px-4 py-2 rounded-full text-white text-sm font-bold shadow-lg ${

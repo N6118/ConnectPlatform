@@ -98,7 +98,8 @@ export default function Login() {
       >
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-blue-500" />
 
-        <motion.div className="w-full p-8 md:p-12">
+        {/* Left side - Login form */}
+        <motion.div className="w-1/2 p-8 md:p-12">
           <div className="text-center mb-8">
             <motion.div
               initial={{ y: -20, opacity: 0 }}
@@ -226,6 +227,20 @@ export default function Login() {
               </p>
             </motion.div>
           </motion.form>
+        </motion.div>
+
+        {/* Right side - Image */}
+        <motion.div 
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="hidden md:block w-1/2 h-full"
+        >
+          <img 
+            src="/assets/login.png" 
+            alt="Login illustration" 
+            className="w-full h-full object-cover rounded-r-3xl"
+          />
         </motion.div>
       </motion.div>
     </div>

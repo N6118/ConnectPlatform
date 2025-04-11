@@ -87,19 +87,39 @@ export default function StudentProjects() {
   return (
     <div className="min-h-screen bg-background pb-16 md:pb-0">
       <StudentNavbar />
-      <div className="container mx-auto p-6 md:p-8 space-y-8">
+       <div className="container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col md:flex-row items-center justify-between gap-6"
+          className="mb-8"
         >
-          <div className="space-y-2">
-            <h1 className="text-4xl md:text-5xl font-bold">Projects</h1>
-            <p className="text-xl text-muted-foreground">
-              Discover and collaborate on exciting projects
-            </p>
-          </div>
+          
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+            <div className="w-full md:w-1/2">
+      <h1 className="text-4xl md:text-5xl font-bold">
+      Projects
+      </h1>
+      <p className="text-xl text-muted-foreground">
+      Discover and collaborate on exciting projects              
+      </p>
+    </div>
+    <div className="w-full md:w-1/2 flex justify-center md:justify-end">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="relative w-full max-w-md"
+              >
+        <img
+          src="/assets/projects.png"
+          alt="Projects Illustration"
+          className="w-80 h-80 rounded-lg"
+        />
+      </motion.div>
+    </div>
+
+  </div>
         </motion.div>
 
         <ProjectFilters

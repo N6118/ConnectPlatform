@@ -316,51 +316,71 @@ export default function StudentMySpace() {
   const filteredProjects = projects;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
+    <div className="min-h-screen bg-gray-50">
       <StudentNavbar />
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto px-4 py-8">
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          className="mb-8"
         >
-          <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4 md:mb-0">
-              Student Projects
-            </h1>
-            <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-              <div className="relative w-full md:w-64">
-                <Input
-                  type="text"
-                  placeholder="Search projects..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  size={20}
-                />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+            <div className="w-full md:w-1/2">
+            <h1 className="text-4xl md:text-5xl font-bold">My Space</h1>
+              <p className="text-xl text-muted-foreground mb-6">
+                Manage your projects, track applications, and collaborate with team members.
+              </p>
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={() => {
+                    setEditingProject(null);
+                    setShowModal(true);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Add Project
+                </Button>
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+                  <Input
+                    type="text"
+                    placeholder="Search projects..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="Not Started">Not Started</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={() => setShowModal(true)}
-                className="w-full md:w-auto"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Project
-              </Button>
             </div>
+            <div className="w-full md:w-1/2 flex justify-center md:justify-end">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="relative w-full max-w-md"
+              >
+                <img
+                  src="/assets/myspace.png"
+                  alt="My Space Illustration"
+                  className="w-full h-auto rounded-lg "
+                />
+              </motion.div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4 mb-8">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="Not Started">Not Started</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {loading ? (

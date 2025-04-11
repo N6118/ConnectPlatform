@@ -73,11 +73,12 @@ app.use('/api', profileRoutes);
       try {
         await new Promise((resolve, reject) => {
           const testServer = new Server();
-          testServer.listen(port, () => {
+          testServer.once('error', reject);
+          testServer.once('listening', () => {
             testServer.close();
             resolve(port);
           });
-          testServer.on('error', reject);
+          testServer.listen(port);
         });
         return port;
       } catch (err: any) {
@@ -90,8 +91,9 @@ app.use('/api', profileRoutes);
   const startServer = async (desiredPort: number) => {
     try {
       const port = await findAvailablePort(desiredPort);
-      server.listen(port);
-      console.log(`Server running on port ${port}`);
+      server.listen(port, () => {
+        console.log(`Server running on port ${port}`);
+      });
     } catch (error: any) {
       console.error('Failed to start server:', error.message);
       process.exit(1);

@@ -31,6 +31,7 @@ import { clubService, ClubData } from "@/services/club";
 import { useToast } from "@/hooks/use-toast";
 import { api, ApiResponse } from "@/services/api";
 import { eventService, Event as ServiceEvent } from "@/services/event";
+import { motion } from "framer-motion";
 
 // Extend the base Club type to include roles
 type Club = BaseClub & {
@@ -463,24 +464,52 @@ export default function StudentClubs() {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto py-8 px-4 md:px-0">
           {/* Header Section */}
-          <div className="space-y-2">
-            <h1 className="text-4xl md:text-5xl font-bold">
-              Clubs & Activities
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              Stay connected with your favorite clubs and discover exciting new
-              opportunities.
-            </p>
-          </div>
+          <div className="flex flex-col md:flex-row items-center md:items-center justify-between space-y-4 md:space-y-0">
+    <div className="md:w-2/3 space-y-2">
+      <h1 className="text-4xl md:text-5xl font-bold">
+        Clubs & Activities
+      </h1>
+      <p className="text-xl text-muted-foreground">
+        Stay connected with your favorite clubs and discover exciting new
+        opportunities.
+      </p>
+    </div>
+    <div className="w-full md:w-1/2 flex justify-center md:justify-end">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="relative w-full max-w-md"
+              >
+                <img
+                  src="/assets/collab.png"
+                  alt="My Space Illustration"
+                  className="w-full h-auto rounded-lg "
+                />
+              </motion.div>
+            </div>
+
+  </div>
 
           {/* Upcoming Events Section */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-foreground mb-6">
-              Upcoming Events
-            </h2>
+          <div className="mb-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">
+                  Upcoming Events
+                </h2>
+                <p className="text-muted-foreground">
+                  Stay updated with the latest club activities
+                </p>
+              </div>
+              <Button variant="outline" onClick={() => fetchEvents()}>
+                Refresh Events
+              </Button>
+            </div>
+
             {eventsLoading ? (
               <div className="text-center py-8 bg-card rounded-xl shadow-sm">
-                <Loader2 className="h-8 w-8 text-primary mx-auto mb-4 animate-spin" />
+                <Loader2 className="h-8 w-8 text-primary mx-auto mb-2 animate-spin" />
                 <p className="text-muted-foreground">Loading events...</p>
               </div>
             ) : events.length === 0 ? (
@@ -488,7 +517,9 @@ export default function StudentClubs() {
                 <p className="text-muted-foreground">No upcoming events found</p>
               </div>
             ) : (
-              <EventCarousel events={events} />
+              <div className="relative w-full rounded-lg overflow-hidden">
+                <EventCarousel events={events} />
+              </div>
             )}
           </div>
 
