@@ -3,6 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import WorkList from "@/components/WorkList";
 import WorkModal from "@/components/WorkModal";
+import ProjectModal from "@/components/my-space-components/ProjectModal";
+import PaperModal from "@/components/profile-components/PaperModal";
+import InternshipModal from "@/components/profile-components/InternshipModal";
+import ExtracurricularModal from "@/components/profile-components/ExtracurricularModal";
 import PostsList from "@/components/PostsList";
 import PerformanceOverview from "@/components/StudentDashboard-components/PerformanceOverview";
 import SkillDevelopment from "@/components/StudentDashboard-components/SkillDevelopment";
@@ -36,6 +40,10 @@ import StudentNavbar from "@/components/navigation/StudentNavbar";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { profileService, ProfileInfo, WorkData, WorkItem, UpdateProfileData, UserProfileResponse } from "@/services/profile";
+import { projectService, CreateProjectData } from "@/services/project";
+import { paperService, CreatePaperData } from "@/services/paper";
+import { internshipService, CreateInternshipData } from "@/services/internship";
+import { extracurricularService, CreateExtracurricularData } from "@/services/extracurricular";
 import { api } from "@/services/api";
 import { Post } from "@/pages/types";
 import { useAuth } from "@/App";
@@ -86,6 +94,10 @@ export default function StudentProfile() {
 
   const [selectedTab, setSelectedTab] = useState("PROJECTS");
   const [showModal, setShowModal] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showPaperModal, setShowPaperModal] = useState(false);
+  const [showInternshipModal, setShowInternshipModal] = useState(false);
+  const [showExtracurricularModal, setShowExtracurricularModal] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showEditDetails, setShowEditDetails] = useState(false);
   const [editItem, setEditItem] = useState<WorkItem | null>(null);
@@ -390,12 +402,290 @@ export default function StudentProfile() {
 
   const handleAddItem = () => {
     setEditItem(null);
-    setShowModal(true);
+    
+    // Show the appropriate modal based on the selected tab
+    switch (selectedTab) {
+      case "PROJECTS":
+        setShowProjectModal(true);
+        break;
+      case "PAPERS":
+        setShowPaperModal(true);
+        break;
+      case "INTERNSHIPS":
+        setShowInternshipModal(true);
+        break;
+      case "EXTRACURRICULAR":
+        setShowExtracurricularModal(true);
+        break;
+      default:
+        setShowModal(true);
+        break;
+    }
   };
 
   const handleEditItem = (item: WorkItem) => {
     setEditItem(item);
-    setShowModal(true);
+    
+    // Show the appropriate modal based on the selected tab
+    switch (selectedTab) {
+      case "PROJECTS":
+        setShowProjectModal(true);
+        break;
+      case "PAPERS":
+        setShowPaperModal(true);
+        break;
+      case "INTERNSHIPS":
+        setShowInternshipModal(true);
+        break;
+      case "EXTRACURRICULAR":
+        setShowExtracurricularModal(true);
+        break;
+      default:
+        setShowModal(true);
+        break;
+    }
+  };
+
+  // Handle saving projects through the ProjectModal
+  const handleSaveProject = async (projectData: any) => {
+    try {
+      // Convert the project data to the format expected by the API
+      const createProjectData: CreateProjectData = {
+        projectName: projectData.title,
+        projectDescription: projectData.description,
+        prerequisites: projectData.prerequisites,
+        techStack: projectData.techStack.split(",").map((tech: string) => tech.trim()),
+        tags: projectData.tag.split(",").map((tag: string) => tag.trim()),
+        projectDurationMonths: parseInt(projectData.duration),
+        projectStatus: projectData.status.toUpperCase().replace(" ", "_"),
+        level: projectData.level.toUpperCase() as "EASY" | "MEDIUM" | "HARD",
+        isOpenForApplications: projectData.isOpenForApplications,
+      };
+
+      // Call the project service to create the project
+      const response = await projectService.createProject(createProjectData);
+      
+      if (response.success && response.data) {
+        // Close the modal
+        setShowProjectModal(false);
+        
+        // Add the new project to the PROJECTS array in workData
+        const newProject = {
+          id: response.data.id,
+          name: response.data.name,
+          description: response.data.description,
+          status: response.data.status,
+          level: response.data.projectLevel,
+          techStack: response.data.techStack,
+          tags: response.data.tags,
+          type: "Project"
+        };
+        
+        setWorkData(prevData => ({
+          ...prevData,
+          PROJECTS: [...prevData.PROJECTS, newProject]
+        }));
+        
+        toast({
+          title: "Success",
+          description: "Project created successfully.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to create project",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle saving papers through the PaperModal
+  const handleSavePaper = async (paperData: any) => {
+    try {
+      // Convert the paper data to the format expected by the API
+      const createPaperData: CreatePaperData = {
+        title: paperData.title,
+        description: paperData.description,
+        authors: paperData.authors,
+        journal: paperData.journal,
+        publicationDate: paperData.publicationDate,
+        doi: paperData.doi,
+        status: paperData.status,
+        tags: paperData.tags.split(",").map((tag: string) => tag.trim()),
+        url: paperData.url,
+        citations: parseInt(paperData.citations) || 0,
+      };
+
+      // Call the paper service to create the paper
+      const response = await paperService.createPaper(createPaperData);
+      
+      if (response.success && response.data) {
+        // Close the modal
+        setShowPaperModal(false);
+        
+        // Add the new paper to the PAPERS array in workData
+        const newPaper: WorkItem = {
+          id: response.data.id || 0, // Ensure id is a number
+          title: response.data.title || '',
+          name: response.data.title || '', // Set both title and name for compatibility
+          description: response.data.description || '',
+          status: response.data.status || '',
+          journal: response.data.journal || '',
+          citations: response.data.citations || 0
+        };
+        
+        setWorkData(prevData => ({
+          ...prevData,
+          PAPERS: [...prevData.PAPERS, newPaper]
+        }));
+        
+        toast({
+          title: "Success",
+          description: "Paper created successfully.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to create paper",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle saving internships through the InternshipModal
+  const handleSaveInternship = async (internshipData: any) => {
+    try {
+      // Convert the internship data to the format expected by the API
+      const createInternshipData: CreateInternshipData = {
+        title: internshipData.title,
+        company: internshipData.company,
+        location: internshipData.location,
+        description: internshipData.description,
+        startDate: internshipData.startDate,
+        endDate: internshipData.endDate,
+        status: internshipData.status,
+        skills: internshipData.skills.split(",").map((skill: string) => skill.trim()),
+        supervisor: internshipData.supervisor,
+        certificate: internshipData.certificate,
+      };
+
+      // Call the internship service to create the internship
+      const response = await internshipService.createInternship(createInternshipData);
+      
+      if (response.success && response.data) {
+        // Close the modal
+        setShowInternshipModal(false);
+        
+        // Add the new internship to the INTERNSHIPS array in workData
+        const newInternship: WorkItem = {
+          id: response.data.id || 0, // Ensure id is a number
+          title: response.data.title || '',
+          name: response.data.title || '', // Set both title and name for compatibility
+          description: response.data.description || '',
+          status: response.data.status || ''
+          // Other fields can be added as needed based on the WorkItem interface
+        };
+        
+        setWorkData(prevData => ({
+          ...prevData,
+          INTERNSHIPS: [...prevData.INTERNSHIPS, newInternship]
+        }));
+        
+        toast({
+          title: "Success",
+          description: "Internship created successfully.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to create internship",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle saving extracurricular activities through the ExtracurricularModal
+  const handleSaveExtracurricular = async (extracurricularData: any) => {
+    try {
+      // Convert the extracurricular data to the format expected by the API
+      const createExtracurricularData: CreateExtracurricularData = {
+        title: extracurricularData.title,
+        organization: extracurricularData.organization,
+        role: extracurricularData.role,
+        description: extracurricularData.description,
+        startDate: extracurricularData.startDate,
+        endDate: extracurricularData.endDate,
+        status: extracurricularData.status,
+        achievements: extracurricularData.achievements,
+        skills: extracurricularData.skills.split(",").map((skill: string) => skill.trim()),
+        url: extracurricularData.url,
+      };
+
+      // Call the extracurricular service to create the extracurricular activity
+      const response = await extracurricularService.createExtracurricular(createExtracurricularData);
+      
+      if (response.success && response.data) {
+        // Close the modal
+        setShowExtracurricularModal(false);
+        
+        // Add the new extracurricular to the EXTRACURRICULAR array in workData
+        const newExtracurricular: WorkItem = {
+          id: response.data.id || 0, // Ensure id is a number
+          title: response.data.title || '',
+          name: response.data.title || '', // Set both title and name for compatibility
+          description: response.data.description || '',
+          status: response.data.status || '',
+          activity: response.data.organization || '' // Use activity field for organization
+        };
+        
+        setWorkData(prevData => ({
+          ...prevData,
+          EXTRACURRICULAR: [...prevData.EXTRACURRICULAR, newExtracurricular]
+        }));
+        
+        toast({
+          title: "Success",
+          description: "Extracurricular activity created successfully.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to create extracurricular activity",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteItem = async (id: number) => {
@@ -453,6 +743,38 @@ export default function StudentProfile() {
 
   const handleSaveItem = async (formData: any) => {
     try {
+      // If this is a project created through the ProjectModal, it's already been saved to the API
+      // and we just need to update our local state
+      if (formData.type === "Project" && formData.id) {
+        console.log("Project created through ProjectModal:", formData);
+        
+        // Update the workData state with the new project
+        const newProject = {
+          id: formData.id,
+          name: formData.name,
+          description: formData.description,
+          status: formData.status,
+          level: formData.level,
+          techStack: formData.techStack,
+          tags: formData.tags,
+          type: "Project"
+        };
+        
+        // Add the new project to the PROJECTS array in workData
+        setWorkData(prevData => ({
+          ...prevData,
+          PROJECTS: [...prevData.PROJECTS, newProject]
+        }));
+        
+        toast({
+          title: "Success",
+          description: "Project created successfully.",
+        });
+        
+        return;
+      }
+      
+      // For other work types, continue with the existing flow
       const type = (formData.type.toUpperCase() + "S") as keyof WorkData;
 
       // Get username from localStorage
@@ -889,6 +1211,90 @@ export default function StudentProfile() {
         )}
       </div>
 
+      {/* Project Modal */}
+      {showProjectModal && (
+        <ProjectModal
+          project={editItem ? {
+            title: editItem.name || (editItem as any).title || "",
+            description: editItem.description || "",
+            prerequisites: (editItem as any).prerequisites || "",
+            mentor: editItem.faculty || "",
+            tag: Array.isArray((editItem as any).tags) ? (editItem as any).tags.join(", ") : ((editItem as any).tag || ""),
+            techStack: Array.isArray(editItem.techStack) ? editItem.techStack.join(", ") : ((editItem as any).techStack || ""),
+            level: (editItem.level as "Easy" | "Medium" | "Difficult") || "Medium",
+            duration: (editItem as any).duration || "1",
+            status: editItem.status === "Ongoing" ? "In Progress" : 
+                   editItem.status === "Completed" ? "Completed" : "Not Started",
+            skills: (editItem as any).skills || "",
+            maxTeamSize: (editItem as any).maxTeamSize || "4",
+            isOpenForApplications: (editItem as any).isOpenForApplications !== undefined ? (editItem as any).isOpenForApplications : true,
+          } : undefined}
+          onClose={() => setShowProjectModal(false)}
+          onSave={handleSaveProject}
+        />
+      )}
+
+      {/* Paper Modal */}
+      {showPaperModal && (
+        <PaperModal
+          paper={editItem ? {
+            title: editItem.name || (editItem as any).title || "",
+            description: editItem.description || "",
+            authors: (editItem as any).authors || "",
+            journal: (editItem as any).journal || "",
+            publicationDate: (editItem as any).date || "",
+            doi: (editItem as any).doi || "",
+            status: editItem.status as "Draft" | "Submitted" | "Published" | "Rejected",
+            tags: Array.isArray((editItem as any).tags) ? (editItem as any).tags.join(", ") : "",
+            url: (editItem as any).url || "",
+            citations: String((editItem as any).citations || "0"),
+          } : undefined}
+          onClose={() => setShowPaperModal(false)}
+          onSave={handleSavePaper}
+        />
+      )}
+
+      {/* Internship Modal */}
+      {showInternshipModal && (
+        <InternshipModal
+          internship={editItem ? {
+            title: editItem.name || (editItem as any).title || "",
+            description: editItem.description || "",
+            company: (editItem as any).company || "",
+            location: (editItem as any).location || "",
+            startDate: (editItem as any).startDate || "",
+            endDate: (editItem as any).endDate || "",
+            status: editItem.status as "Ongoing" | "Completed" | "Upcoming",
+            skills: Array.isArray((editItem as any).skills) ? (editItem as any).skills.join(", ") : ((editItem as any).skills || ""),
+            supervisor: (editItem as any).supervisor || "",
+            certificate: (editItem as any).certificate || "",
+          } : undefined}
+          onClose={() => setShowInternshipModal(false)}
+          onSave={handleSaveInternship}
+        />
+      )}
+
+      {/* Extracurricular Modal */}
+      {showExtracurricularModal && (
+        <ExtracurricularModal
+          extracurricular={editItem ? {
+            title: editItem.name || (editItem as any).title || "",
+            description: editItem.description || "",
+            organization: (editItem as any).organization || (editItem as any).activity || "",
+            role: (editItem as any).role || "",
+            startDate: (editItem as any).startDate || "",
+            endDate: (editItem as any).endDate || "",
+            status: editItem.status as "Ongoing" | "Completed" | "Upcoming",
+            achievements: (editItem as any).achievement || "",
+            skills: Array.isArray((editItem as any).skills) ? (editItem as any).skills.join(", ") : ((editItem as any).skills || ""),
+            url: (editItem as any).url || "",
+          } : undefined}
+          onClose={() => setShowExtracurricularModal(false)}
+          onSave={handleSaveExtracurricular}
+        />
+      )}
+
+      {/* Regular WorkModal for non-project items */}
       <WorkModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -1048,6 +1454,8 @@ export default function StudentProfile() {
     </div>
   );
 }
+
+
 
 const ProfileInfoItem = ({ label, value }: { label: string; value: string }) => (
   <div className="flex flex-col sm:flex-row sm:gap-4">

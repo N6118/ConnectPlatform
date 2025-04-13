@@ -1,8 +1,11 @@
 import { FaEdit, FaGithub, FaLinkedin, FaGlobe } from "react-icons/fa";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import WorkList from "@/components/WorkList";
 import WorkModal from "@/components/WorkModal";
+import ProjectModal from "@/components/my-space-components/ProjectModal";
+import PaperModal from "@/components/profile-components/PaperModal";
+
 import PostsList from "@/components/PostsList";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +34,8 @@ import {
 import ActivityFeed from "@/components/Profile-ActivityFeed";
 import { useToast } from "@/hooks/use-toast";
 import FacultyNavbar from "@/components/navigation/FacultyNavbar";
+import { projectService, CreateProjectData } from "@/services/project";
+import { paperService, CreatePaperData } from "@/services/paper";
 
 interface ProfileFormData {
   about: string;
@@ -95,19 +100,45 @@ interface Supervision {
   year: string;
 }
 
+interface WorkItem {
+  id: number;
+  name: string;
+  description: string;
+  status: string;
+  type?: string;
+  // Project specific fields
+  level?: string;
+  techStack?: string[];
+  tags?: string[];
+  // Paper specific fields
+  journal?: string;
+  title?: string;
+  year?: string;
+  citations?: number;
+  impact?: number;
+  // Internship specific fields
+  company?: string;
+  location?: string;
+  // Extracurricular specific fields
+  organization?: string;
+  role?: string;
+  faculty?: string;
+  activity?: string;
+}
+
 interface WorkData {
-  PROJECTS: Project[];
-  PAPERS: Paper[];
-  COURSES: Course[];
-  SUPERVISION: Supervision[];
+  PROJECTS: WorkItem[];
+  PAPERS: WorkItem[];
 }
 
 export default function FacultyProfile() {
   const [selectedTab, setSelectedTab] = useState("PROJECTS");
   const [showModal, setShowModal] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showPaperModal, setShowPaperModal] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showEditDetails, setShowEditDetails] = useState(false);
-  const [editItem, setEditItem] = useState(null);
+  const [editItem, setEditItem] = useState<WorkItem | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
 
   const [userData, setUserData] = useState({
@@ -216,79 +247,81 @@ export default function FacultyProfile() {
     PROJECTS: [
       {
         id: 1,
-        name: "AI-Driven Healthcare Diagnostics",
-        description: "Research project funded by DST on early disease detection",
+        name: "AI-Powered Healthcare Diagnostics",
+        description:
+          "Developing machine learning models for early disease detection",
         status: "Ongoing",
-        fundingAmount: "₹45 Lakhs",
-        teamSize: "6 researchers",
-        collaborators: ["AIMS Hospital"],
+        level: "Difficult",
+        techStack: ["Python", "TensorFlow", "Medical Imaging"],
       },
       {
         id: 2,
-        name: "Smart Campus Initiative",
-        description: "IoT-based campus monitoring system",
+        name: "Quantum Computing Algorithms",
+        description:
+          "Research on novel quantum algorithms for optimization problems",
         status: "Completed",
-        fundingAmount: "₹20 Lakhs",
-        teamSize: "4 researchers",
-        collaborators: ["University IT Department"],
+        level: "Difficult",
+        techStack: ["Qiskit", "Python", "Linear Algebra"],
       },
     ],
     PAPERS: [
       {
         id: 1,
-        title: "Deep Learning in Medical Imaging: A Comprehensive Survey",
-        journal: "IEEE Transactions on Medical Imaging",
+        title: "Advances in Neural Network Architectures",
+        name: "Advances in Neural Network Architectures",
+        description:
+          "A comprehensive survey of recent innovations in neural network design",
+        journal: "IEEE Transactions on Neural Networks",
         year: "2023",
         citations: 45,
-        impact: 7.8,
-      },
-    ],
-    COURSES: [
-      {
-        id: 1,
-        name: "Advanced Machine Learning",
-        code: "CSE4002",
-        semester: "Fall 2024",
-        students: 60,
-        rating: 4.8,
+        status: "Published",
       },
       {
         id: 2,
-        name: "Deep Learning",
-        code: "CSE4003",
-        semester: "Spring 2024",
-        students: 45,
-        rating: 4.9,
-      },
-    ],
-    SUPERVISION: [
-      {
-        id: 1,
-        type: "PhD",
-        studentName: "John Doe",
-        topic: "Federated Learning in Healthcare",
-        status: "Ongoing",
-        year: "2022-present",
-      },
-      {
-        id: 2,
-        type: "Masters",
-        studentName: "Jane Smith",
-        topic: "Computer Vision for Medical Diagnosis",
-        status: "Completed",
-        year: "2023",
+        title: "Ethical Implications of AI in Education",
+        name: "Ethical Implications of AI in Education",
+        description:
+          "Analysis of the ethical considerations when deploying AI systems in educational settings",
+        journal: "Journal of AI Ethics",
+        year: "2022",
+        citations: 28,
+        status: "Published",
       },
     ],
   });
 
   const handleAddItem = () => {
     setEditItem(null);
-    setShowModal(true);
+    
+    // Show the appropriate modal based on the selected tab
+    switch (selectedTab) {
+      case "PROJECTS":
+        setShowProjectModal(true);
+        break;
+      case "PAPERS":
+        setShowPaperModal(true);
+        break;
+      default:
+        setShowModal(true);
+        break;
+    }
   };
 
-  const handleEditItem = (item: any) => {
+  const handleEditItem = (item: WorkItem) => {
     setEditItem(item);
-    setShowModal(true);
+    
+    // Show the appropriate modal based on the selected tab
+    switch (selectedTab) {
+      case "PROJECTS":
+        setShowProjectModal(true);
+        break;
+      case "PAPERS":
+        setShowPaperModal(true);
+        break;
+      default:
+        setShowModal(true);
+        break;
+    }
   };
 
   const handleDeleteItem = (id: number) => {
@@ -316,6 +349,129 @@ export default function FacultyProfile() {
     setShowModal(false);
     setEditItem(null);
   };
+
+  // Handle saving projects through the ProjectModal
+  const handleSaveProject = async (projectData: any) => {
+    try {
+      // Convert the project data to the format expected by the API
+      const createProjectData: CreateProjectData = {
+        projectName: projectData.title,
+        projectDescription: projectData.description,
+        prerequisites: projectData.prerequisites,
+        techStack: projectData.techStack.split(",").map((tech: string) => tech.trim()),
+        tags: projectData.tag.split(",").map((tag: string) => tag.trim()),
+        projectDurationMonths: parseInt(projectData.duration),
+        projectStatus: projectData.status.toUpperCase().replace(" ", "_"),
+        level: projectData.level.toUpperCase() as "EASY" | "MEDIUM" | "HARD",
+        isOpenForApplications: projectData.isOpenForApplications,
+      };
+
+      // Call the project service to create the project
+      const response = await projectService.createProject(createProjectData);
+      
+      if (response.success && response.data) {
+        // Close the modal
+        setShowProjectModal(false);
+        
+        // Add the new project to the PROJECTS array in workData
+        const newProject: WorkItem = {
+          id: response.data.id || 0,
+          name: response.data.name,
+          description: response.data.description,
+          status: response.data.status,
+          level: response.data.projectLevel,
+          techStack: response.data.techStack,
+          tags: response.data.tags
+        };
+        
+        setWorkData(prevData => ({
+          ...prevData,
+          PROJECTS: [...prevData.PROJECTS, newProject]
+        }));
+        
+        toast({
+          title: "Success",
+          description: "Project created successfully.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to create project",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle saving papers through the PaperModal
+  const handleSavePaper = async (paperData: any) => {
+    try {
+      // Convert the paper data to the format expected by the API
+      const createPaperData: CreatePaperData = {
+        title: paperData.title,
+        description: paperData.description,
+        authors: paperData.authors,
+        journal: paperData.journal,
+        publicationDate: paperData.publicationDate,
+        doi: paperData.doi,
+        status: paperData.status,
+        tags: paperData.tags.split(",").map((tag: string) => tag.trim()),
+        url: paperData.url,
+        citations: parseInt(paperData.citations) || 0,
+      };
+
+      // Call the paper service to create the paper
+      const response = await paperService.createPaper(createPaperData);
+      
+      if (response.success && response.data) {
+        // Close the modal
+        setShowPaperModal(false);
+        
+        // Add the new paper to the PAPERS array in workData
+        const newPaper: WorkItem = {
+          id: response.data.id || 0, // Ensure id is a number
+          title: response.data.title || '',
+          name: response.data.title || '', // Set both title and name for compatibility
+          description: response.data.description || '',
+          status: response.data.status || '',
+          journal: response.data.journal || '',
+          citations: response.data.citations || 0
+        };
+        
+        setWorkData(prevData => ({
+          ...prevData,
+          PAPERS: [...prevData.PAPERS, newPaper]
+        }));
+        
+        toast({
+          title: "Success",
+          description: "Paper created successfully.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to create paper",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+
 
   const handleSaveDetails = (formData: ProfileFormData) => {
     setUserData({
@@ -491,7 +647,7 @@ export default function FacultyProfile() {
       <div className="container mx-auto py-8 px-4">
         <div className="border-b border-gray-200 mb-6">
           <nav className="flex space-x-8" aria-label="Work Categories">
-            {["Projects", "Papers", "Courses", "Supervision"].map(
+            {["Projects", "Papers"].map(
               (tab) => (
                 <TabOption
                   key={tab}
@@ -535,12 +691,58 @@ export default function FacultyProfile() {
         />
       </div>
 
+      {/* Regular WorkModal for generic items */}
       <WorkModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onSave={handleSaveItem}
         item={editItem}
       />
+
+      {/* Project Modal */}
+      {showProjectModal && (
+        <ProjectModal
+          project={editItem ? {
+            title: editItem.name || (editItem as any).title || "",
+            description: editItem.description || "",
+            prerequisites: (editItem as any).prerequisites || "",
+            mentor: editItem.faculty || "",
+            tag: Array.isArray((editItem as any).tags) ? (editItem as any).tags.join(", ") : ((editItem as any).tag || ""),
+            techStack: Array.isArray(editItem.techStack) ? editItem.techStack.join(", ") : ((editItem as any).techStack || ""),
+            level: (editItem.level as "Easy" | "Medium" | "Difficult") || "Medium",
+            duration: (editItem as any).duration || "1",
+            status: editItem.status === "Ongoing" ? "In Progress" : 
+                   editItem.status === "Completed" ? "Completed" : "Not Started",
+            skills: (editItem as any).skills || "",
+            maxTeamSize: (editItem as any).maxTeamSize || "4",
+            isOpenForApplications: (editItem as any).isOpenForApplications !== undefined ? (editItem as any).isOpenForApplications : true,
+          } : undefined}
+          onClose={() => setShowProjectModal(false)}
+          onSave={handleSaveProject}
+        />
+      )}
+
+      {/* Paper Modal */}
+      {showPaperModal && (
+        <PaperModal
+          paper={editItem ? {
+            title: editItem.name || (editItem as any).title || "",
+            description: editItem.description || "",
+            authors: (editItem as any).authors || "",
+            journal: (editItem as any).journal || "",
+            publicationDate: (editItem as any).year || "",
+            doi: (editItem as any).doi || "",
+            status: editItem.status as "Draft" | "Submitted" | "Published" | "Rejected",
+            tags: Array.isArray((editItem as any).tags) ? (editItem as any).tags.join(", ") : "",
+            url: (editItem as any).url || "",
+            citations: String((editItem as any).citations || "0"),
+          } : undefined}
+          onClose={() => setShowPaperModal(false)}
+          onSave={handleSavePaper}
+        />
+      )}
+
+
 
       <Dialog open={showEditProfile} onOpenChange={setShowEditProfile}>
         <DialogContent>

@@ -7,7 +7,7 @@ import MessageInput from "@/components/messaging-components/MessageInput";
 import CreateGroup from "@/components/messaging-components/CreateGroup";
 import ChatSettings from "@/components/messaging-components/ChatSettings";
 import { Bell, MoreVertical, ArrowLeft } from "lucide-react";
-import type { Message, Chat } from "@/types";
+import type { Message, Chat } from "../types";
 import { AnimatePresence, motion } from "framer-motion";
 import WelcomeScreen from "@/components/messaging-components/WelcomeScreen";
 import StudentNavbar from "@/components/navigation/StudentNavbar";
