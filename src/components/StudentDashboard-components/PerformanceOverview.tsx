@@ -21,7 +21,7 @@ const PerformanceOverview = () => {
         Performance Overview
       </h2>
       <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
-        <img src="../../assets/Beginner.png" alt="TPS" className="w-40" />
+        <img src="assets/Beginner.png" alt="TPS" className="w-40" />
         <motion.div
           whileHover={{ scale: 1.1 }}
           className={`px-4 py-2 rounded-full text-white text-sm font-bold shadow-lg ${
